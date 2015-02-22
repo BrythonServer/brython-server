@@ -48,6 +48,7 @@ them, using this priority scheme:
 3. Execute the only file named `main.py`.
 
 Enhancement option 1: Enhanced parsing of the Github URL to allow providing the URL of an individual file.
+
 Enhancement option 2: Examine repository files for an `if __name__ == "__main__":` block and execute any 
 file containing it.
 
@@ -107,6 +108,7 @@ The main Python 3 source file may `import` the same standard libraries that Bryt
 to any other Python 3 modules provided by the user at the same level as the main file.
 
 Goal: Resource files included at the same level are also available on a read-only basis. 
+
 Goal: Some support for read and write file i/o on the client side; it should be impossible to write data 
 on the server!
 
