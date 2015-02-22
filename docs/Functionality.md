@@ -21,3 +21,34 @@ The Brython-Server project addresses these issues by providing students with:
 5. Support for executing code online, from sources maintained in Github, for the purpose of 
    evaluating student work and sharing student work publically.
 
+##Functionality - Overview
+
+A Brython-Server instance will consist of a web site where the user can enter the URL of a Github 
+project or repository (consisting of Python 3 sources). Brython-Server will retrieve the source files
+from Github and return a web page with embedded links to the Brython distribution and the user's 
+Python source. The web page will execute the user's code in the browser, interact via console output and 
+input, and (optionally) create dynamic and interactive imagery via HTML5 canvas.
+
+The main Brython-Server page presents the following elements to the visitor:
+
+1. Text box labeled: "Execute Python 3 from URL"
+2. Button labeled: "Execute Python 3 console"
+
+The following sections describe these and other modes of operation in greater detail.
+
+###Use Case: Github
+
+Suppose the user has a Github repository with one or more Python 3 source files in it. The user may visit
+the Brython-Server main page and paste the URL of the Github repository page in the text box. Brython-Server
+will retrieve the list of top-level files from the repository and invoke the Brython interpreter on one of
+them, using this priority scheme:
+
+1. Execute the only file with a .py extension.
+2. Execute the only file named __main__.py.
+3. Execute the only file named main.py.
+
+Enhancement option 1: Enhanced parsing of the Github URL to allow providing the URL of an individual file.
+Enhancement option 2: Examine repository files for an `if __name__ == "__main__":` block and execute any 
+file containing it.
+
+
