@@ -74,6 +74,10 @@ after committing files on Github before the updates are available to execute.
 It is expected that the typical user will **not** use Github as a development IDE. While Github has 
 excellent online code editing support, the turnaround time from edit to execution is relatively slow. 
 
+This approach should only work for **public** Github repositories. If the user wishes to execute from 
+**private** repositories, then the user would have to grant Brython-Server permission to access her 
+repositories. Ability to access private repositories is a **GOAL** of this project.
+
 ###Use Case: Cloud 9
 
 Suppose the user is using Cloud 9 as an online IDE, with an active project containing one or more Python 3
@@ -156,4 +160,37 @@ environment. Supporting operation in a headless environment will permit some uni
 that depends on graphics.
 
 ##Appendix: Use in Educational Setting
+
+Although outside the scope of this functional specification, it seems worthwhile to briefly discuss
+how Brython-Server might be integrated in to the educational setting as part of an introductory course
+on computer programming.
+
+We envision using Brython-Server in concert with Github. The instructor would create a repository of assignments,
+or a collection of assignment repositories,
+which each student would clone in to her own account. With each assignment there is a corresponding automated
+test defined, which the student is expected to run to validate her work. When each assignment is complete, the 
+student would make a pull request to the assignment repository, whereupon the instructor would run 
+the requisite test, evaluate the code, and provide feedback and a formal assessment (grade).
+
+At any time, teacher or student may use Brython-Server to execute the submitted code, provided the Github
+repository is public. Ability to access private repositories is a goal of this project. It is assumed that
+the instructor is *not* limited to cloud-based devices and will be able to evaluate code using a native
+Python 3 interpreter and graphics installation.
+
+With Brython-Server the student also has the option of sharing her work with friends, by sharing the 
+Brython-Server Github URL for her repository. Again, the repository must be public for this to work.
+
+Up to this point, nothing in this appendix *depends* on the existence of Brython-Server. However, with
+increasing use of Chromebooks in the classroom, many students will find it inconvenient to install
+native Python 3 and graphics libraries on their own devices. For these students, a cloud-based IDE like
+Cloud 9 is a viable alternative. 
+
+With a Cloud 9 workspace, students can freely develop and test Python 3 console applications. The
+actorgraphics module will not be useful, however, unless the student is able to test her code on a 
+Brython-Server. Brython-Server and Cloud 9 will support this, if a little awkwardly. To run a Cloud 9
+project on Brython-Server, the student would have to execute the `Apache httpd` runner, which will
+create a dedicated web server for serving her source code to the outside world. Passing the server 
+URL to the Brython-Server will allow full execution with the actorgraphics module. The student
+would be expected to do development in the Cloud 9 environment, then commit and push her changes
+back to Github for formal testing and assessment.
 
