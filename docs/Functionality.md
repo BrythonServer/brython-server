@@ -114,7 +114,46 @@ on the server!
 
 ##Graphics Support
 
+A key requirement of this system is support for graphics and user keyboard/mouse interaction with executing
+python code, similar to the functionality possible with Pygame. Brython supports the same basic functionality
+for working with the HTML5 Canvas that is present in Javascript. In addition, Brython supports interaction
+with 3rd party graphics libraries (e.g. [Pixi.js](www.pixijs.com)). Unforunately, the APIs available in 
+the browser are very different from what is available in native desktop Python installations. Consequently,
+this project will implement a simple graphics abstraction layer that will sit between the underlying
+graphics APIs and the user code. The abstraction layer will be in the form of a single Python 3 module
+that the user may import and use in either the Brython-Server environment, or a desktop environment.
 
+The abstraction module/layer will be called **actorgraphics** (notional name).
 
+###actorgraphics
 
+The actorgraphics module will be a single Python 3 module, which will autodect its environment and provide
+simple graphics and UI services from an available underlying graphics/UI library. In the web environment, this
+could be provided, in part, for example by [paper.js](paperjs.org) or [Pixi.js](www.pixijs.com). In the desktop
+environment this could be provided at minimum by Tkinter (required), Pyglet or Pygame (goal). **Minimum** 
+functionality implemented by actorgraphics include:
+
+1. Event driven architecture.
+2. Timed callbacks.
+3. Keyboard, mouse movement and button events handled at application level.
+4. Single window application.
+5. Window background color or bitmap.
+6. Sprite "actor" class.
+7. Builtin sprite types support bitmap, rectangle, ellipse and polygon.
+8. Builtin sprite attributes (set/get) include visibility, color, bitmap, position and rotation.
+9. Builtin sprite methods include collision detection.
+10. Goal: sound file playback.
+11. Goal: turtle graphics functions: pen functionality associated with sprites.
+
+The actorgraphics module is not automatically available to programs executed by Brython-Server. It may be 
+available to the user as a download from the Brython-Server landing page. 
+
+User programs that depend on the actorgraphics module may be executed in either the desktop or Brython-Server
+environment, and will exhibit similar behavior in each. If the user program is executed in a so-called 
+headless environment where no underlying graphics support is available, then it will execute normally, but
+will not be able to respond to mouse events. It *may* be possible to respond to keypress events in any 
+environment. Supporting operation in a headless environment will permit some unit testing of user code
+that depends on graphics.
+
+##Appendix: Use in Educational Setting
 
