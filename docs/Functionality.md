@@ -50,10 +50,11 @@ With the enhancement option 1 implemented, the following is also possible:
 
 Once execution of the chosen python source file is complete, the code may be re-loaded and executed again by reloading the web page. The execution page will include the following elements:
 
-1. Console input/output (input from console is implemented as a popup dialog).
-2. Graphics canvas (if the application is graphical)
-3. Error output
-4. Link to main landing page (e.g. `http://brython-server.org`)
+1. Text indicating what file is executing (e.g. Executing __main__.py from https://github.com/tiggerntatie/brython-student-test)
+2. Console input/output (input from console is implemented as a popup dialog).
+3. Graphics canvas (if the application is graphical)
+4. Error output
+5. Link to main landing page (e.g. `http://brython-server.org`)
 
 The user may reload and execute the code as often as desired. Note that there may be a delay of several seconds after committing files on Github before the updates are available to execute.
 
