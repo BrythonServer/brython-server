@@ -1,8 +1,11 @@
 import os, shutil
 import tempfile, urllib.request, json
-from flask import Flask, render_template, session
+from flask import Flask, render_template, session, request
+from reverseproxied import ReverseProxied
 
 application = app = Flask(__name__)
+app.wsgi_app = ReverseProxied(app.wsgi_app)
+
 # change this, of course!
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 app.debug = True
@@ -45,14 +48,15 @@ def gocloud9(user, project, path=""):
 @app.route('/github/<user>/<repo>')
 @app.route('/github/<user>/<repo>/<path>')
 def gogithub(user, repo, path=""):
+    print(request.url)  # DEBUG
     mainfile = ""
     newtempdir()
     url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
     token = os.environ['githubtoken']
     urllib.request.urlcleanup()
-    request = urllib.request.Request(url)
-    request.add_header('Authorization', 'token {0}'.format(token))
-    response = urllib.request.urlopen(request)
+    gitrequest = urllib.request.Request(url)
+    gitrequest.add_header('Authorization', 'token {0}'.format(token))
+    response = urllib.request.urlopen(gitrequest)
     #print(response.getheaders())
     jsresponse = json.loads(response.read().decode("utf-8"))
     for f in jsresponse:
@@ -63,12 +67,12 @@ def gogithub(user, repo, path=""):
             if name in ["main.py", "__main__.py"]:
                 mainfile = name
             fileurl = f['download_url']
-            request = urllib.request.Request(fileurl)
-            request.add_header('Authorization', 'token {0}'.format(token))
-            rfile = urllib.request.urlopen(request)
+            gitrequest = urllib.request.Request(fileurl)
+            gitrequest.add_header('Authorization', 'token {0}'.format(token))
+            rfile = urllib.request.urlopen(gitrequest)
             with open(os.path.join(tempdir(), name), 'w') as f:
                 f.write(rfile.read().decode("utf-8"))
-    return render_template('index.html', main=mainfile)
+    return render_template('index.html', main=mainfile, root=request.script_root)
 
 if __name__ == "__main__":
     app.run(host=os.environ['IP'],port=int(os.environ['PORT']))
