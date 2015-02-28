@@ -48,7 +48,7 @@ def gocloud9(user, project, path=""):
 @app.route('/github/<user>/<repo>')
 @app.route('/github/<user>/<repo>/<path>')
 def gogithub(user, repo, path=""):
-    print(request.url)  # DEBUG
+    # print(request.url)  # DEBUG
     mainfile = ""
     newtempdir()
     url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
@@ -56,23 +56,29 @@ def gogithub(user, repo, path=""):
     urllib.request.urlcleanup()
     gitrequest = urllib.request.Request(url)
     gitrequest.add_header('Authorization', 'token {0}'.format(token))
-    response = urllib.request.urlopen(gitrequest)
-    #print(response.getheaders())
-    jsresponse = json.loads(response.read().decode("utf-8"))
-    for f in jsresponse:
-        if f['type'] == 'file':
-            name = f['name']
-            if mainfile == "" and len(name) > 3 and name[-3:] == '.py':
-                mainfile = name
-            if name in ["main.py", "__main__.py"]:
-                mainfile = name
-            fileurl = f['download_url']
-            gitrequest = urllib.request.Request(fileurl)
-            gitrequest.add_header('Authorization', 'token {0}'.format(token))
-            rfile = urllib.request.urlopen(gitrequest)
-            with open(os.path.join(tempdir(), name), 'w') as f:
-                f.write(rfile.read().decode("utf-8"))
-    return render_template('index.html', main=mainfile, root=request.script_root)
+    # print(url) # DEBUG
+    try:
+        response = urllib.request.urlopen(gitrequest)
+        #print(response.getheaders())
+        jsresponse = json.loads(response.read().decode("utf-8"))
+        for f in jsresponse:
+            if f['type'] == 'file':
+                name = f['name']
+                if mainfile == "" and len(name) > 3 and name[-3:] == '.py':
+                    mainfile = name
+                if name in ["main.py", "__main__.py"]:
+                    mainfile = name
+                fileurl = f['download_url']
+                gitrequest = urllib.request.Request(fileurl)
+                gitrequest.add_header('Authorization', 'token {0}'.format(token))
+                rfile = urllib.request.urlopen(gitrequest)
+                with open(os.path.join(tempdir(), name), 'w') as f:
+                    f.write(rfile.read().decode("utf-8"))
+        return render_template('index.html', main=mainfile, root=request.script_root)
+    except urllib.error.HTTPError as err:
+        print("Github error: " + err.msg + ", token was ", token)
+        return "Oops. Something went wrong with github..."
+    
 
 if __name__ == "__main__":
     app.run(host=os.environ['IP'],port=int(os.environ['PORT']))
