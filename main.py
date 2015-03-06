@@ -24,7 +24,7 @@ def tempdir():
 
 @app.route('/')
 def root():
-  return render_template('index.html')
+  return render_template('index.html', main=None)
 
 @app.route('/<filename>')
 def file(filename):
@@ -74,7 +74,7 @@ def gogithub(user, repo, path=""):
                 rfile = urllib.request.urlopen(gitrequest)
                 with open(os.path.join(tempdir(), name), 'w') as f:
                     f.write(rfile.read().decode("utf-8"))
-        return render_template('index.html', main=mainfile, root=request.script_root)
+        return render_template('run.html', main=mainfile, root=request.script_root)
     except urllib.error.HTTPError as err:
         print("Github error: " + err.msg + ", token was ", token)
         return "Oops. Something went wrong with github..."
