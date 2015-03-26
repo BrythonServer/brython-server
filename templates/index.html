@@ -1,1 +1,27 @@
 {% extends "layout.html" %}
+{% block body %}
+
+<form>
+  <label for="url_input">Retrieve Python 3 source URL (e.g. Github repo URL)</label>
+  <input type="text" name="url" id="url_input"><br>
+  <input type="button" id="url_submit" value="Run it!" onclick="processURL()">
+</form>
+
+<script>
+function processURL() {
+  var url_input = document.getElementById('url_input').value;
+  var gitmatch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+).*/);
+  if (gitmatch) {
+    window.location.href = "github/"+gitmatch[1]+"/"+gitmatch[2];
+  }
+}
+
+$("#url_input").keyup(function(event){
+    if(event.keyCode == 13){
+        event.preventDefault();
+        $("#url_submit").click();
+    }
+});
+</script>
+
+{% endblock %}
