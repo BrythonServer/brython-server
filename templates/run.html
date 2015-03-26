@@ -13,6 +13,7 @@ import sys, time
 class StdOut(object):
   def write(self, data):
     document["console"] <= data
+    document["console"].focus()
   
 class StdErr(object):
   def write(self, data):
