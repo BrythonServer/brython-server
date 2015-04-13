@@ -60,5 +60,5 @@ URL             |   /api/v1/load
 Description     |   Load and cache file(s) from the named Github repository
 Allowed Methods |   POST
 Data Input      |   user, repo, [path]
-Data Output     |   name {main file name}, content {main file content}
+Data Output     |   name {main file name}, path {main file path}, content {main file content}
 
