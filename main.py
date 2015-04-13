@@ -30,6 +30,10 @@ def root():
 def favicon():
     return app.send_static_file('favicon.ico') 
 
+@app.route('/_debug')
+def debug():
+    return render_template('test.html')
+
 @app.route('/<filename>')
 def file(filename):
     with open(os.path.join(tempdir(),filename)) as f:
@@ -47,7 +51,44 @@ def gocloud9(user, project, path=""):
     newtempdir()
     url = "https://{0}-{1}.c9.io/{2}".format(project, user, path)
     urllib.request.urlcleanup()
-    
+
+        
+@app.route('/api/v1/load', methods=['PUT'])
+def v1_load():
+    content = request.json
+    user = content['user']
+    repo = content['repo']
+    path = ""
+    if 'file' in content:
+        path = content['file']
+    mainfile = ""
+    newtempdir()
+    url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
+    token = os.environ['githubtoken']
+    urllib.request.urlcleanup()
+    gitrequest = urllib.request.Request(url)
+    gitrequest.add_header('Authorization', 'token {0}'.format(token))
+    try:
+        response = urllib.request.urlopen(gitrequest)
+        jsresponse = json.loads(response.read().decode("utf-8"))
+        for f in jsresponse:
+            if f['type'] == 'file':
+                name = f['name']
+                if mainfile == "" and len(name) > 3 and name[-3:] == '.py':
+                    mainfile = name
+                if name in ["main.py", "__main__.py"]:
+                    mainfile = name
+                fileurl = f['download_url']
+                gitrequest = urllib.request.Request(fileurl)
+                gitrequest.add_header('Authorization', 'token {0}'.format(token))
+                gitrequest.add_header('Pragma', 'no-cache')
+                rfile = urllib.request.urlopen(gitrequest)
+                with open(os.path.join(tempdir(), name), 'w') as f:
+                    f.write(rfile.read().decode("utf-8"))
+        return json.dumps({'success':True, 'main':mainfile}), 200, {'ContentType':'application/json'}
+    except urllib.error.HTTPError as err:
+        print("Github error: " + err.msg + ", token was ", token)
+        return json.dumps({'success':False, 'message':err.msg}), 200, {'ContentType':'application/json'} 
 
 @app.route('/github/<user>/<repo>')
 @app.route('/github/<user>/<repo>/<path>')
@@ -78,7 +119,7 @@ def gogithub(user, repo, path=""):
                 rfile = urllib.request.urlopen(gitrequest)
                 with open(os.path.join(tempdir(), name), 'w') as f:
                     f.write(rfile.read().decode("utf-8"))
-        return render_template('run.html', main=mainfile, root=request.script_root)
+        return render_template('run.html', main=mainfile, root=request.script_root, src="{0}/{1}/{2}".format(user, repo, path))
     except urllib.error.HTTPError as err:
         print("Github error: " + err.msg + ", token was ", token)
         return "Oops. Something went wrong with github..."

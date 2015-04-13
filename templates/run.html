@@ -1,41 +1,54 @@
 {% extends "layout.html" %}
-{% block head %}
-<script type="text/javascript" src="https://cdn.rawgit.com/brython-dev/brython/3.0.2/src/brython.js"></script>
-<script>
-  window.onload = function(){
-    brython(1);
-  }
-</script>
-<script type="text/python">
-from browser import document
-import sys, time
+{% block scripts %}
+  <script type="text/javascript" src="https://cdn.rawgit.com/brython-dev/brython/3.1.1/www/src/brython.js"></script>
 
-class StdOut(object):
-  def write(self, data):
-    document["console"] <= data
-    document["console"].focus()
+<!--
+  <script type="text/python" id="pythonenvironment">
+  from browser import document
+  import sys, time
   
-class StdErr(object):
-  def write(self, data):
-    document["errorconsole"] <= data
+  class StdOut(object):
+    def write(self, data):
+      document["console"] <= data
+      document["console"].focus()
+    
+  class StdErr(object):
+    def write(self, data):
+      document["console"] <= data
+    
+  _input = input
   
-_input = input
+  
+  def input(prompt):
+    print(prompt, end="")
+    retval = _input(prompt)
+    return retval if retval else ""
+  
+  sys.stdout = StdOut()
+  sys.stderr = StdErr()
+  
+  
+  </script>
+-->
 
-def input(prompt):
-  print(prompt, end="")
-  retval = _input(prompt)
-  return retval if retval else ""
-
-sys.stdout = StdOut()
-sys.stderr = StdErr()
-
-</script>
-<script type="text/python" src="{{ root }}/{{ main }}"></script>
+{% if main %}
+  <script>
+    loadMainScript("{{ root }}/{{ main }}")
+  </script>
+{% endif %}
+  
+  <!--  LOAD python source 
+  <script id="mainfile" type="text/python" src="{{ root }}/{{ main }}"></script>
+   -->
 {% endblock %}
 
-{% block body %}
-<h3>User I/O</h3>
-<textarea rows="6" cols="80" id="console"></textarea>
-<h3>Errors</h3>
-<div  id="errorconsole"></div>
+
+{% block bodyleft %}
+  left
 {% endblock %}
+
+
+{% block foot %}
+	  footing
+{% endblock %}
+

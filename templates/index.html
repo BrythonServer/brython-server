@@ -1,27 +1,36 @@
-{% extends "layout.html" %}
-{% block body %}
+<!doctype html>
+<title>Brython Server</title>
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">    
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bssite.css') }}" media="screen" />
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js" ></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js" ></script>
+<script type="text/javascript" src="https://cdn.rawgit.com/brython-dev/brython/3.1.1/www/src/brython.js"></script>
+<script type="text/python" id="pythonenvironment" src="{{ url_for('static', filename='bs.py') }}"></script>
 
-<form>
-  <label for="url_input">Retrieve Python 3 source URL (e.g. Github repo URL)</label>
-  <input type="text" name="url" id="url_input"><br>
-  <input type="button" id="url_submit" value="Run it!" onclick="processURL()">
-</form>
 
-<script>
-function processURL() {
-  var url_input = document.getElementById('url_input').value;
-  var gitmatch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+).*/);
-  if (gitmatch) {
-    window.location.href = "github/"+gitmatch[1]+"/"+gitmatch[2];
-  }
-}
+<div class="container">
+    <div class="row" id="nav-row">
+        <div class="one-third column">
+            <input class="u-full-width" type="url" placeholder="Python3 source URL Github" id="url_input">
+        </div>
+        <div class="two-thirds column">
+            <button  class="button" id="url_submit" onclick="runGithub()">Load/Run</button>
+            <button  class="button" id="url_submit" onclick="runCurrent()">Run</button>
+            {{ src }}
+        </div>
+    </div>
+    
+    
+    <div class="row" id="body-row">
+        <div class="six columns">
+            Left
+        </div>
+        <div class="six columns" id="code-column">
+        <textarea readonly cols="80" id="console"></textarea>
+    	</div>
+    </div>
+</div>
 
-$("#url_input").keyup(function(event){
-    if(event.keyCode == 13){
-        event.preventDefault();
-        $("#url_submit").click();
-    }
-});
-</script>
-
-{% endblock %}
+<script type="text/javascript" src="{{ url_for('static', filename='bs.js') }}"></script>
