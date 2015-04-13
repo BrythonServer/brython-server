@@ -69,23 +69,30 @@ def v1_load():
     gitrequest = urllib.request.Request(url)
     gitrequest.add_header('Authorization', 'token {0}'.format(token))
     try:
+        maincontent = ""
         response = urllib.request.urlopen(gitrequest)
         jsresponse = json.loads(response.read().decode("utf-8"))
         for f in jsresponse:
             if f['type'] == 'file':
+                ismain = False
                 name = f['name']
                 if mainfile == "" and len(name) > 3 and name[-3:] == '.py':
                     mainfile = name
+                    ismain = True
                 if name in ["main.py", "__main__.py"]:
                     mainfile = name
+                    ismain = True
                 fileurl = f['download_url']
                 gitrequest = urllib.request.Request(fileurl)
                 gitrequest.add_header('Authorization', 'token {0}'.format(token))
                 gitrequest.add_header('Pragma', 'no-cache')
                 rfile = urllib.request.urlopen(gitrequest)
                 with open(os.path.join(tempdir(), name), 'w') as f:
-                    f.write(rfile.read().decode("utf-8"))
-        return json.dumps({'success':True, 'main':mainfile}), 200, {'ContentType':'application/json'}
+                    temp = rfile.read().decode("utf-8")
+                    if ismain:
+                        maincontent = temp
+                    f.write(temp)
+        return json.dumps({'success':True, 'name':mainfile, 'content':maincontent}), 200, {'ContentType':'application/json'}
     except urllib.error.HTTPError as err:
         print("Github error: " + err.msg + ", token was ", token)
         return json.dumps({'success':False, 'message':err.msg}), 200, {'ContentType':'application/json'} 
