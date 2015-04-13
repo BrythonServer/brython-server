@@ -53,4 +53,12 @@ Typical use case:
    version that will allow visitors to simply execute the program. The Edit link
    will give a visitor their own editor and output panes.
 
-/api/
+####RESTful API
+
+URL             |   /api/v1/load
+---             |   ---
+Description     |   Load and cache file(s) from the named Github repository
+Allowed Methods |   POST
+Data Input      |   user, repo, [file]
+Data Output     |   main {main file name}
+
