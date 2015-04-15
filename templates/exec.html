@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div class="full-width-container">
+    <div class="row" id="nav-row">
+        <div class="twelve columns">
+            <button  class="button" onclick="runCurrent()">Run</button>
+            <button class="button" onclick="runEdit()">Edit</button>
+            <a class="button" target="_blank" id="github_url" href="http://github.com">@Github</a>
+        </div>
+    </div>
+    
+    
+    <div class="row" id="body-row">
+        <div class="twelve columns" id="output-column">
+        <textarea readonly cols="80" id="console"></textarea>
+    	</div>
+    </div>
+</div>
+
+<form id="run_edit_form" action="/" method="post" target="_blank">
+  <input id="run_edit" name="run_edit" type="hidden" value="">
+</form>
+
+{% endblock %}
+
+{% block foot %}
+{{ super() }}
+<script type="text/javascript">
+    var data = {'user':'{{ user }}', 'repo':'{{ repo }}', 'path':'{{ path }}', 'name':'{{ name }}' };
+    window.onload = runGithub(data);
+</script>
+{% endblock %}

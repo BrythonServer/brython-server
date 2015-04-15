@@ -1,3 +1,5 @@
+# Brython Server default Python
+
 from browser import document, alert
 import sys, time
 
@@ -21,4 +23,6 @@ sys.stdout = StdOut()
 sys.stderr = StdErr()
 
 document["console"].clear()
-print(sys.version)
+
+print("** Welcome to Brython Server (Python {0}.{1}.{2}) **".format(*sys.version_info[:3]))
+print("")
