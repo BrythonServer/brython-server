@@ -28,8 +28,8 @@ GITHUB_COMMIT = 'github_commit'
 URL_GITHUBAUTHORIZE = 'https://github.com/login/oauth/authorize'
 URL_GITHUBRETRIEVETOKEN = 'https://github.com/login/oauth/access_token'
 
-github_client_id = os.environ[ENV_GITHUBCLIENTID]
-github_client_secret = os.environ[ENV_GITHUBSECRET]
+github_client_id = os.environ.get(ENV_GITHUBCLIENTID,'')
+github_client_secret = os.environ.get(ENV_GITHUBSECRET,'')
 app.secret_key = os.environ.get(ENV_FLASKSECRET,'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT')
 app.debug = True
 
