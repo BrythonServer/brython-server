@@ -120,7 +120,7 @@ function parseGithub() {
 function loadGithubtoScript(data) {
     if (data) {
         var xhr = new XMLHttpRequest();
-        xhr.open('PUT', '/api/v1/load', false);  // synchronous
+        xhr.open('PUT', 'api/v1/load', false);  // synchronous
         xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
         // send the collected data as JSON
         xhr.send(JSON.stringify(data));
@@ -188,7 +188,7 @@ function sendEditorChange() {
     var data = {'editcontent':editor.getValue(), 
         'url_input':document.getElementById('url_input').value};
     var xhr = new XMLHttpRequest();
-    xhr.open('PUT', '/api/v1/update', false);  // synchronous
+    xhr.open('PUT', 'api/v1/update', false);  // synchronous
     xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
     // send the collected data as JSON
     xhr.send(JSON.stringify(data));
@@ -216,7 +216,7 @@ function commitGithub() {
     data['editcontent'] = editor.getValue();
     data['commitmsg'] = "Updated from Brython Server: "+ds+" "+ts;
     var xhr = new XMLHttpRequest();
-    xhr.open('PUT', '/api/v1/commit', false);  // synchronous
+    xhr.open('PUT', 'api/v1/commit', false);  // synchronous
     xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
     // send the collected data as JSON
     xhr.send(JSON.stringify(data));
