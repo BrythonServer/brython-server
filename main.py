@@ -102,6 +102,29 @@ def githubretrievetoken(code):
 def githubforgetauth():
     session[SESSION_ACCESSTOKEN] = ""
 
+# githubcontentsurl
+# Get the github api contents URL
+def githubcontentsurl(user, repo, path):
+    url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
+    return url
+
+# githubrequest
+# Initiate a request to the github content api
+def githubrequest(user, repo, path, method='GET'):
+    url = githubcontentsurl(user, repo, path)
+    token = session.get(SESSION_ACCESSTOKEN, os.environ.get(ENV_DEVTOKEN))
+    gitrequest = urllib.request.Request(url, method=method)
+    gitrequest.add_header('Authorization', 'token {0}'.format(token))
+    return gitrequest
+    
+
+# githubretrievefile
+# Get a specific file, via API
+def githubretrievefile(user, repo, path):
+    gitrequest = githubrequest(user, repo, path)
+    response = urllib.request.urlopen(gitrequest)
+    jsresponse = json.loads(response.read().decode("utf-8"))
+    return base64.b64decode(jsresponse['content'].encode('utf-8')).decode('utf-8')
 
 # Root path
 # If GET with repo data, use the exec.html template
@@ -204,13 +227,9 @@ def v1_commit():
         path += "/" + name
     else:
         path += name
-    url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
-    token = session.get(SESSION_ACCESSTOKEN)
-    # formulate the call to github
-    gitrequest = urllib.request.Request(url, method='PUT')
+    gitrequest = githubrequest(user, repo, path, 'PUT')
     gitrequest.add_header('Content-Type', 'application/json; charset=utf-8')
     gitrequest.add_header('Accept', 'application/json')
-    gitrequest.add_header('Authorization', 'token {0}'.format(token))
     parameters = {'message':msg,
         'content':base64.b64encode(editcontent.encode('utf-8')).decode('utf-8'),
         'sha':session[SESSION_MAINSHA]}
@@ -245,12 +264,8 @@ def v1_load():
     mainfile = ""
     mainsha = ""
     newtempdir()
-    url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
-    token = session.get(SESSION_ACCESSTOKEN, os.environ.get(ENV_DEVTOKEN))
-    # token = os.environ[ENV_DEVTOKEN]
     urllib.request.urlcleanup()
-    gitrequest = urllib.request.Request(url)
-    gitrequest.add_header('Authorization', 'token {0}'.format(token))
+    gitrequest = githubrequest(user, repo, path)
     try:
         maincontent = ""
         response = urllib.request.urlopen(gitrequest)
@@ -272,13 +287,9 @@ def v1_load():
                     ismain = True
                 fileurl = f['download_url']
                 # Read each file in the directory, regardless...
-                gitrequest = urllib.request.Request(fileurl)
-                gitrequest.add_header('Authorization', 'token {0}'.format(token))
-                gitrequest.add_header('Pragma', 'no-cache')
-                rfile = urllib.request.urlopen(gitrequest)
-                with open(os.path.join(tempdir(), foundname), 'w') as f:
-                    temp = rfile.read().decode("utf-8")
-                    f.write(temp)
+                with open(os.path.join(tempdir(), foundname), 'w') as cachefile:
+                    temp = githubretrievefile(user, repo, f['path'])
+                    cachefile.write(temp)
                     # If this is THE file, hold on to the content
                     if ismain:
                         maincontent = temp
