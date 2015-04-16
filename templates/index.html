@@ -9,16 +9,22 @@
         </div>
         <div class="two-thirds column">
             <button  class="button" id="url_submit" onclick="loadGithub()">Load</button>
-            <button  class="button" onclick="runEditor()">Run</button>
+            <button  class="button" onclick="runEditor()">&gt;</button>
             <a class="button" target="_blank" id="github_url" href="http://github.com">@Github</a>
             <a class="button" target="_blank" id="share_url" href="#">Share</a>
+{% if github %}
+            <button class="button" onclick="commitGithub()">Commit</button>
+            <button class="button" onclick="logoutGithub()">Logout</button>
+{% else %}
+            <button class="button" onclick="loginGithub()">Login</button>
+{% endif %}
         </div>
     </div>
     
     
     <div class="row" id="body-row">
         <div class="seven columns" id="editor-column">
-            <pre id="editor">print("Hello, world.")</pre>
+            <pre id="editor">{{ editcontent }}</pre>
         </div>
         <div class="five columns" id="output-column">
         <textarea readonly cols="80" id="console"></textarea>
@@ -34,6 +40,14 @@
         data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png">
 </a>
 
+<form id="run_auth_request" action="/" method="post">
+  <input id="auth_request" name="auth_request" type="hidden" value="">
+</form>
+<form id="run_auth_forget" action="/" method="post">
+  <input id="auth_forget" name="auth_forget" type="hidden" value="">
+</form>
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.9/ace.js" type="text/javascript" charset="utf-8" ></script>
 
 {% endblock %}
@@ -46,7 +60,8 @@
     editor.setShowPrintMargin(true);
     editor.setDisplayIndentGuides(true);
     editor.getSession().setMode("ace/mode/python");
-{% if edit != "" %}
+    // editor.on("change", sendEditorChange());
+{% if edit != '' and editcontent == '' %}
     window.onload(loadGithub());    
 {% endif %}
 

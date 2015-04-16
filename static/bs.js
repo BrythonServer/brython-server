@@ -66,6 +66,23 @@ function runEdit(path) {
     $('#run_edit_form').submit();
 }
 
+// create a Github file path
+function createGithubPath(data) {
+    var path = data['path'];
+    if (path.length > 0 && path.substr(path.length-1) != "/") {
+        path += "/";
+    }
+    path += data['name'];
+    return path
+}
+
+// create a Github URL text for speciic file
+function createGithubURL(data) {
+    var url = "https://github.com/" + data['user'] + "/" + data['repo'] 
+    url += "/blob/master/" + createGithubPath(data);
+    return url
+}
+
 // parse Github URL text
 function parseGithubURL(url_input) {
     var data = null;
@@ -148,17 +165,60 @@ function loadGithub() {
     if (result) {
         // now that we have a full URL for the file, parse again
         data = parseGithubURL(result['path']);
+        document.getElementById('url_input').value = createGithubURL(data);
         showShareURL(data);
         editor.setValue(maincontent);
         editor.selection.clearSelection();
+        sendEditorChange();
     }
 }
 
-// execute contents of editor
+// execute contents of editor and update server with new content
 function runEditor() {
-    setMainValue(editor.getValue())
+    sendEditorChange();
+    setMainValue(editor.getValue());
     if (mainscript) {
         brython({debug:1, ipy_id:['pythonenvironment', 'mainscript']});
     }
 }
 
+
+// update server with new editor content (all the time!)
+function sendEditorChange() {
+    var data = {'editcontent':editor.getValue(), 
+        'url_input':document.getElementById('url_input').value};
+    var xhr = new XMLHttpRequest();
+    xhr.open('PUT', '/api/v1/update', false);  // synchronous
+    xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    // send the collected data as JSON
+    xhr.send(JSON.stringify(data));
+    var result = JSON.parse(xhr.responseText);
+}
+
+// send request to login to github
+function loginGithub() {
+    sendEditorChange()
+    $('#run_auth_request').submit();
+}
+
+// send request to logout of github
+// only FORGETS out github authorization - does not log out of github, per se
+function logoutGithub() {
+    $('#run_auth_forget').submit();
+}
+
+// send request to commit/save to github
+function commitGithub() {
+    var d = new Date()
+    var ds = d.toLocaleDateString()
+    var ts = d.toLocaleTimeString()
+    var data = parseGithub();
+    data['editcontent'] = editor.getValue();
+    data['commitmsg'] = "Updated from Brython Server: "+ds+" "+ts;
+    var xhr = new XMLHttpRequest();
+    xhr.open('PUT', '/api/v1/commit', false);  // synchronous
+    xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    // send the collected data as JSON
+    xhr.send(JSON.stringify(data));
+    var result = JSON.parse(xhr.responseText);
+}
