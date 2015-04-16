@@ -6,13 +6,11 @@ from reverseproxied import ReverseProxied
 application = app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 
-# change this, of course!
-app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
-app.debug = True
 
 ENV_GITHUBCLIENTID = 'githubclientid'
 ENV_GITHUBSECRET = 'githubsecret'
 ENV_DEVTOKEN = 'githubtoken'
+ENV_FLASKSECRET = 'flasksecret'
 
 SESSION_TEMPDIR = 'tempdir'
 SESSION_GITHUBSTATE = 'githubstate'
@@ -32,6 +30,8 @@ URL_GITHUBRETRIEVETOKEN = 'https://github.com/login/oauth/access_token'
 
 github_client_id = os.environ[ENV_GITHUBCLIENTID]
 github_client_secret = os.environ[ENV_GITHUBSECRET]
+app.secret_key = os.environ.get(ENV_FLASKSECRET,'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT')
+app.debug = True
 
 def newtempdir():
     if SESSION_TEMPDIR in session:
