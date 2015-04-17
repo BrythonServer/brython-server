@@ -25,4 +25,4 @@ like to save your work back to Github, just press the **COMMIT** button.
 NOTE: If you paste in a repository URL that points to multiple Python 3
 source files, Brython-Server will make a feeble attempt to identify a primary
 source file. If you want to force a specific file, then past the URL to that 
-specific file.Brief Instructions
+specific file.
