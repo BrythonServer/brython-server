@@ -17,7 +17,7 @@ body {
 }
 
 #body-row {
-    height:85%;
+    height:83%;
     background-color:#FAFAEC;
 }
 
@@ -41,6 +41,11 @@ body {
 
 #output-column, #editor-column {
     padding-bottom:10px;
+}
+
+#footer-row {
+    padding:10px;
+    text-align:right;
 }
 
 textarea {
