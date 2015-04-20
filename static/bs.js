@@ -2,6 +2,13 @@
 
 var mainscript = null;
 var maincontent = "";
+var consolequeue = [];
+var consoletimer = null;
+const CONSOLETIMEOUT = 10;
+const CONSOLEID = "console";
+const OLDPROMPT = window.prompt;
+const __MAIN__ = "__main__";
+
 
 // Github link is not visible by default
 document.getElementById("github_url").style.visibility = "hidden";
@@ -9,6 +16,66 @@ document.getElementById("github_url").style.visibility = "hidden";
 var share_link = document.getElementById("share_url");
 if (share_link) {
     share_link.style.visibility = "hidden";
+}
+
+// periodically update the console control
+function consoleTimeout() {
+    var textarea = document.getElementById(CONSOLEID);
+    textarea.innerHTML += consolequeue.join("");
+    textarea.scrollTop = textarea.scrollHeight;
+    consolequeue = [];
+    consoletimer = null;
+}
+
+// Console hijacker - http://tobyho.com/2012/07/27/taking-over-console-log/
+// target is ID of alternate destination
+function takeOverConsole(){
+    var console = window.console
+    if (!console) return
+    function intercept(method){
+        var original = console[method]
+        console[method] = function(){
+            for (i = 0; i < arguments.length; i++) {
+                if (arguments[i].indexOf("Error 404 means that Python module") != 0) {
+                    if (!consoletimer) {
+                        consoletimer = window.setTimeout(consoleTimeout, CONSOLETIMEOUT);
+                    }
+                    consolequeue.push(arguments[i]);
+                }
+            }            
+            if (original.apply){
+                // Do this for normal browsers
+                original.apply(console, arguments)
+            }else{
+                // Do this for IE
+                var message = Array.prototype.slice.apply(arguments).join(' ')
+                original(message)
+            }
+        }
+    }
+    var methods = ['log', 'warn', 'error']
+    for (var i = 0; i < methods.length; i++)
+        intercept(methods[i])
+}
+
+
+// take over the console and sendit to OUR console!
+takeOverConsole();
+
+// take over the prompt dialog so we can display prompt text in the console
+window.prompt = function(text, defvalue) {
+    // flush any pending console writes
+    if (consoletimer) {
+        window.clearTimeout(consoletimer);
+    }
+    consolequeue.push(text);
+    consoleTimeout();
+    return OLDPROMPT(text, defvalue);
+}
+
+function runBrython(argdict) {
+    document.getElementById('console').innerHTML = "";
+    brython(argdict);
 }
 
 function setMainScript(src) {
@@ -19,7 +86,7 @@ function setMainScript(src) {
     mainscript.src = src;
     mainscript.type = "text/python";
     mainscript.async = false;
-    mainscript.id = "mainscript";
+    mainscript.id = __MAIN__;
     document.head.appendChild(mainscript);
 }
 
@@ -30,7 +97,7 @@ function setMainValue(txt) {
     mainscript = document.createElement('script');
     mainscript.innerHTML = txt;
     mainscript.type = "text/python";
-    mainscript.id = "mainscript";
+    mainscript.id = __MAIN__;
     document.head.appendChild(mainscript);
 }
 
@@ -146,7 +213,7 @@ function runGithub(data) {
     if (result) {
         setMainValue(maincontent);
         if (mainscript) {
-            brython({debug:1, ipy_id:['pythonenvironment', 'mainscript']});
+            runBrython({debug:1, ipy_id:[__MAIN__]});
         }
     }
 }
@@ -154,7 +221,7 @@ function runGithub(data) {
 // re-execute current mainscript
 function runCurrent() {
     if (mainscript) {
-            brython({debug:1, ipy_id:['pythonenvironment', 'mainscript']});
+            runBrython({debug:1, ipy_id:[__MAIN__]});
     }
 }
 
@@ -178,7 +245,7 @@ function runEditor() {
     sendEditorChange();
     setMainValue(editor.getValue());
     if (mainscript) {
-        brython({debug:1, ipy_id:['pythonenvironment', 'mainscript']});
+        runBrython({debug:1, ipy_id:[__MAIN__]});
     }
 }
 

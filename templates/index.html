@@ -63,6 +63,7 @@
     editor.setShowPrintMargin(true);
     editor.setDisplayIndentGuides(true);
     editor.getSession().setMode("ace/mode/python");
+    editor.$blockScrolling = Infinity;
     // editor.on("change", sendEditorChange());
 {% if edit != '' and editcontent == '' %}
     window.onload(loadGithub());    
