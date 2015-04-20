@@ -115,16 +115,16 @@ def githubrequest(user, repo, path, method='GET'):
     token = session.get(SESSION_ACCESSTOKEN, os.environ.get(ENV_DEVTOKEN))
     gitrequest = urllib.request.Request(url, method=method)
     gitrequest.add_header('Authorization', 'token {0}'.format(token))
-    return gitrequest
+    return gitrequest, token
     
 
 # githubretrievefile
 # Get a specific file, via API
 def githubretrievefile(user, repo, path):
-    gitrequest = githubrequest(user, repo, path)
+    gitrequest, token = githubrequest(user, repo, path)
     response = urllib.request.urlopen(gitrequest)
     jsresponse = json.loads(response.read().decode("utf-8"))
-    return base64.b64decode(jsresponse['content'].encode('utf-8')).decode('utf-8')
+    return base64.b64decode(jsresponse['content'].encode('utf-8')).decode('utf-8'), token
 
 # Root path
 # If GET with repo data, use the exec.html template
@@ -227,7 +227,7 @@ def v1_commit():
         path += "/" + name
     else:
         path += name
-    gitrequest = githubrequest(user, repo, path, 'PUT')
+    gitrequest, token = githubrequest(user, repo, path, 'PUT')
     gitrequest.add_header('Content-Type', 'application/json; charset=utf-8')
     gitrequest.add_header('Accept', 'application/json')
     parameters = {'message':msg,
@@ -265,7 +265,7 @@ def v1_load():
     mainsha = ""
     newtempdir()
     urllib.request.urlcleanup()
-    gitrequest = githubrequest(user, repo, path)
+    gitrequest, token = githubrequest(user, repo, path)
     try:
         maincontent = ""
         response = urllib.request.urlopen(gitrequest)
@@ -288,7 +288,7 @@ def v1_load():
                 fileurl = f['download_url']
                 # Read each file in the directory, regardless...
                 with open(os.path.join(tempdir(), foundname), 'w') as cachefile:
-                    temp = githubretrievefile(user, repo, f['path'])
+                    temp, token = githubretrievefile(user, repo, f['path'])
                     cachefile.write(temp)
                     # If this is THE file, hold on to the content
                     if ismain:
