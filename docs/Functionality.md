@@ -9,23 +9,39 @@ In addition, with the advent of cloud-based platforms, and many students carryin
 The Brython-Server project addresses these issues by providing students with:
 
 1. A browser-based environment ([Brython](http://brython.info)) for executing Python 3 code.
-2. Support for browser-based development using an online IDE, such as [Cloud 9](c9.io).
-3. Support for a graphical programming environment using 3rd party Javascript components 
+2. Support for a graphical programming environment using 3rd party Javascript components 
    (e.g. [Pixi.js](www.pixijs.com)) for  in-browser graphics.
-4. Support for native development using Python 3 and Pygame and/or Pyglet. 
-5. Support for executing code online, from sources maintained in Github, for the purpose of 
+3. Support for native development using Python 3 and Pygame and/or Pyglet. 
+4. Support for executing code online, from sources maintained in Github, for the purpose of 
    evaluating student work and sharing student work publically.
+5. Support for editing/revising Github repository code online, and committing directly to Github.
 
 ##Functionality - Overview
 
-A Brython-Server instance will consist of a web site where the user can enter the URL of a Github project or repository (consisting of Python 3 sources). Brython-Server will retrieve the source files from Github and return a web page with embedded links to the Brython distribution and the user's Python source. The web page will execute the user's code in the browser, interact via console output and input, and (optionally) create dynamic and interactive imagery via HTML5 canvas.
+A Brython-Server instance will consist of a web site where the user can enter the URL of a Github repository 
+(consisting of Python 3 sources) or individual source file within a repository. Brython-Server will retrieve 
+the source file (and any included files) from Github and return a web page with embedded links to the Brython 
+distribution and the user's Python source. The web page will execute the user's code in the browser, interact 
+via console output and input, and (optionally) create dynamic and interactive imagery via HTML5 canvas.
 
-The main Brython-Server page (e.g. `http://brython-server.org`) presents the following elements to the visitor:
+The main Brython-Server page (e.g. `http://hsscp.org/brython-server`) presents the following elements to the visitor:
 
-1. Text box labeled: "Execute Python 3 from URL"
-2. Button labeled: "Execute Python 3 console"
+1. Text box with placeholder text suggesting the user paste a Github repository URL.
+2. Text box for editing Python source code.
+3. Button for loading source from Github.
+4. Button for executing source.
+5. Button for sharing the project as a hyperlink.
+6. Button for linking to a Github user and signing in.
+7. Button for unlinking from the Github user.
 
 The following sections describe these and other modes of operation in greater detail.
+
+###Use Case: Interactive Edit and Execute
+
+Upon arriving at the main Brython-Server page, the user may begin editing code immediately. Code may be executed
+at any time by pressing the execute, ">" button. Output will be displayed in separate console I/O text box. It is a goal
+of the project to support the ACE online code editor for this functionality. No support is envisioned for loading or 
+saving source code to the user's local machine.
 
 ###Use Case: Github
 
@@ -35,48 +51,39 @@ Suppose the user has a Github repository with one or more Python 3 source files 
 2. Execute the only file named `__main__.py`.
 3. Execute the only file named `main.py`.
 
-Enhancement option 1: Enhanced parsing of the Github URL to allow providing the URL of an individual file.
+If the user pastes the Github URL for a specific file in the repository, then Brython-Server will retrieve that file
+as the primary file to execute. Other files in the repository may be named as imports.
 
-Enhancement option 2: Examine repository files for an `if __name__ == "__main__":` block and execute any 
-file containing it.
+Once execution of the chosen python source file is complete, the code may be re-loaded by pressing
+the "load" button again. Code may be executed as many times as desired, using the ">" button.
 
-When the visitor enters a Github URL in the textbox the page will reload with the following URL:
-
-`http://brython-server.org/github/<username>/<repository>`
-
-With the enhancement option 1 implemented, the following is also possible:
-
-`http://brython-server.org/github/<username>/<repository>/<filename>`
-
-Once execution of the chosen python source file is complete, the code may be re-loaded and executed again by reloading the web page. The execution page will include the following elements:
+With code loaded, the page shall display at least the following elements:
 
 1. Text indicating what file is executing (e.g. Executing __main__.py from https://github.com/tiggerntatie/brython-student-test)
-2. Console input/output (input from console is implemented as a popup dialog).
-3. Graphics canvas (if the application is graphical)
-4. Error output
-5. Link to main landing page (e.g. `http://brython-server.org`)
+2. Console input/output (input from console is implemented as a default browsesr prompt/popup dialog).
+3. Graphics canvas (if the application is graphical).
+4. Error output (included in the console display).
 
-The user may reload and execute the code as often as desired. Note that there may be a delay of several seconds after committing files on Github before the updates are available to execute.
+The user may reload and execute the code as often as desired. 
 
 It is expected that the typical user will **not** use Github as a development IDE. While Github has excellent online code editing support, the turnaround time from edit to execution is relatively slow. 
 
-This approach should only work for **public** Github repositories. If the user wishes to execute from **private** repositories, then the user would have to grant Brython-Server permission to access her repositories. Ability to access private repositories is a **GOAL** of this project.
+This approach will work for **public** Github repositories. If the user wishes to execute from **private** repositories, then the user would have to grant Brython-Server permission to access their repositories. 
 
-###Use Case: Cloud 9
+With access granted (via the "LOG IN" 
+button), the user may edit the loaded source code directly, execute, and, if desired, **commit the code back to Github** (via
+the "COMMIT" button). The "COMMIT" button is only available when the user has logged in to Github. Commit message will default
+to indicating a commit from Brython Server, with the date and time of the commit.
 
-Suppose the user is using Cloud 9 as an online IDE, with an active project containing one or more Python 3 source files. The user can "publish" the files by executing the `Apache httpd (HTML,PHP)` runner and pasting the URL (of the form: `https://<projectname>-<username>.c9.io`) into the Brython-Server "Execute from URL" text box. Brython-Server will retrieve the file list from the URL (assuming there is no `index.html` in the project) and invoke the Brython interpreter using the same priority scheme outlined above for Github.
+####Sharing Projects
 
-With this use case, the user/developer may invoke the Brython interpreter as often as desired by reloading the Brython-Server home page. 
+When working with a Github repository, the Brython-Server page will include a "SHARE" button that links back to 
+Brython-Server with URL parameters to specify the user, repository and source file. For example:
 
-The advantage of the Cloud 9 use case over the Github use case is in the speed of iterating source code changes. In order for source edits directly on Github to become live they must go through the Git commit process. In order for source edits on Cloud 9 to become live they must merely be saved in the UI. 
+    http://hhscp.org/brython-server/?user=tiggerntatie&repo=brython-student-test&name=loopdemo.py
 
-It is *expected* that the user will ultimately push her Cloud 9 project files to a Github repository. 
-
-Cloud 9 users have the option of executing console-based Python 3 code directly in the Cloud 9 console window. When this option is feasible, it is preferred over using Brython-Server.
-
-###Use Case: Python 3 Console
-
-If the visitor clicks the "Console" button, then she will be taken to a fully interactive Python 3 shell. There is no interaction between this shell and any files executed from Github or Cloud 9.
+This link may be shared via e-mail, etc., to allow anyone with a modern browser to execute the Python source file
+using Brython-Server.
 
 ##Support for Python Features
 
@@ -119,13 +126,11 @@ User programs that depend on the actorgraphics module may be executed in either 
 
 Although outside the scope of this functional specification, it seems worthwhile to briefly discuss how Brython-Server might be integrated in to the educational setting as part of an introductory course on computer programming.
 
-We envision using Brython-Server in concert with Github. The instructor would create a repository of assignments, or a collection of assignment repositories,which each student would clone in to her own account. With each assignment there is a corresponding automated test defined, which the student is expected to run to validate her work. When each assignment is complete, the student would make a pull request to the assignment repository, whereupon the instructor would run the requisite test, evaluate the code, and provide feedback and a formal assessment (grade).
+We envision using Brython-Server in concert with Github. The instructor would create a repository of assignments, or a collection of assignment repositories,which each student would clone in to her own account. With each assignment there is a corresponding automated test defined, which the student is expected to run to validate their work. When each assignment is complete, the student would make a pull request to the assignment repository, whereupon the instructor would run the requisite test, evaluate the code, and provide feedback and a formal assessment (grade).
 
 At any time, teacher or student may use Brython-Server to execute the submitted code, provided the Github repository is public. Ability to access private repositories is a goal of this project. It is assumed that the instructor is *not* limited to cloud-based devices and will be able to evaluate code using a native Python 3 interpreter and graphics installation.
 
-With Brython-Server the student also has the option of sharing her work with friends, by sharing the Brython-Server Github URL for her repository. Again, the repository must be public for this to work.
+With Brython-Server the student also has the option of sharing work with friends, by sharing the Brython-Server Github URL for the repository. Again, the repository must be public for this to work.
 
-Up to this point, nothing in this appendix *depends* on the existence of Brython-Server. However, with increasing use of Chromebooks in the classroom, many students will find it inconvenient to install native Python 3 and graphics libraries on their own devices. For these students, a cloud-based IDE like Cloud 9 is a viable alternative. 
-
-With a Cloud 9 workspace, students can freely develop and test Python 3 console applications. The actorgraphics module will not be useful, however, unless the student is able to test her code on a Brython-Server. Brython-Server and Cloud 9 will support this, if a little awkwardly. To run a Cloud 9 project on Brython-Server, the student would have to execute the `Apache httpd` runner, which will create a dedicated web server for serving her source code to the outside world. Passing the server URL to the Brython-Server will allow full execution with the actorgraphics module. The student would be expected to do development in the Cloud 9 environment, then commit and push her changes back to Github for formal testing and assessment.
+Up to this point, nothing in this appendix *depends* on the existence of Brython-Server. However, with increasing use of Chromebooks in the classroom, many students will find it inconvenient to install native Python 3 and graphics libraries on their own devices. For these students, editing code and commiting to Github is a viable alternative. 
 
