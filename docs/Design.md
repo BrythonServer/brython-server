@@ -33,14 +33,11 @@ Python file are only provided in the context of executing from a Github reposito
 The server responds to several API URLs. These are used to communicate directly with the
 client side, using JSON as the encoding method.
 
-##### Method: `load`
+`method`  | Description   | Allowed Methods | Data Input  | Data Output
+---       | ---           | ---             | ---         | ---
+`load`    | Load and cache file(s) from the named Github repository | POST | (JSON) user, repo, {path or path fragment} | (JSON) name {main file name}, path {main file path}, content {main file content}
 
-URL             |   /api/v1/load
----             |   ---
-Description     |   Load and cache file(s) from the named Github repository
-Allowed Methods |   POST
-Data Input      |   (JSON) user, repo, {path or path fragment}
-Data Output     |   (JSON) name {main file name}, path {main file path}, content {main file content}
+
 
 The client parses the user-provided Github URL to identify the user, repo and optional partial or full
 path to a specific file or sub-folder. The `load` command will cause the server side to retrieve the 
