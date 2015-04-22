@@ -33,17 +33,7 @@ Python file are only provided in the context of executing from a Github reposito
 The server responds to several API URLs. These are used to communicate directly with the
 client side, using JSON as the encoding method.
 
-`method`  | Description   | Allowed Methods | Data Input  | Data Output
----       | ---           | ---             | ---         | ---
-`load`    | Load and cache file(s) from the named Github repository | POST | (JSON) user, repo, {path or path fragment} | (JSON) name {main file name}, path {main file path}, content {main file content}
-
-
-
-The client parses the user-provided Github URL to identify the user, repo and optional partial or full
-path to a specific file or sub-folder. The `load` command will cause the server side to retrieve the 
-contents of the named folder/path and cache the files locally.
-
-In the process of caching, the server will attempt to identify a single Python source file that will
-be loaded into the Brython-Server editor. The name of this file, the path to it, and the file's full
-content will be returned to the caller.
+`method`  | Description   | Allowed Methods | Data Input (JSON)  | Data Output (JSON)
+---       | ---           | ---             | ---         | --- 
+`load`    | Load and cache file(s) from the named Github repository. Identify single main file, return its name and content. | POST | `user`, `repo`, `path` {path or path fragment} | `name` {main file name}, `path` {main file path}, `content` {main file content} 
 
