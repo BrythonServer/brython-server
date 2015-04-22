@@ -67,10 +67,15 @@ window.prompt = function(text, defvalue) {
     // flush any pending console writes
     if (consoletimer) {
         window.clearTimeout(consoletimer);
+        consoleTimeout(); // flush the queue
     }
-    consolequeue.push(text);
+    consolequeue.push(text);  // put prompt 
+    consoleTimeout(); // onto console
+    var returnedValue = OLDPROMPT(text, defvalue);
+    consolequeue.push(returnedValue);  // and the response...
+    consolequeue.push('\n');
     consoleTimeout();
-    return OLDPROMPT(text, defvalue);
+    return returnedValue;
 }
 
 function runBrython(argdict) {
