@@ -73,6 +73,24 @@ enabling the different buttons and links that the user is able to access, depend
 and whether they have loaded any code from Github. Finally, there are routines that "hijack" the browser's 
 alert and prompt functions in Javascript, re-routing text to a console textarea on the browser page.
 
-The main web page has two flavors, an index.html and a exec.html, both of which are rendered from the root URL
-of the server, depending on how it was used.
+The main web page has two flavors, determined by the html templates index.html and a exec.html, both of which are rendered from the root URL (`/`) of the server, depending on how it was used.
 
+####`index.html`
+
+This template is used when visiting the server root, and presents the visitor with a Python code editing pane on the
+left hand side, drive by the Ace Javascript editor. The Python execution console is shown in a smaller right-hand pane.
+The user may begin writing/editing code immediately and executing it by pressing the '>' button. When the '>' button 
+is pressed the `brython` function is executed, naming the editor ID as an argument.
+
+Once a file or project has been loaded from Github, this page will also show a 'SHARE' button which will, when
+pressed, open a new tab/window using the `exec.html` template.
+
+####`exec.html`
+
+This template is used when visiting the server root with arguments in the URL to indicate a specific
+Github user, repository and file path. In this instance, the Python execution console consumes a full width pane
+on the page and the code is loaded from Github and executed without delay. The URL shown in this mode may be 
+copied and pasted as a hyperlink on another page or in an e-mail (i.e. "shared").
+
+In this instance a button is available which allows the user to edit the main file using the `index.html` template by 
+opening a new window/tab.
