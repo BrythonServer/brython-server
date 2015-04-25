@@ -1,6 +1,6 @@
 """Brython-Server main module with Flask route points.
 """
-import os, string, random
+import os
 import urllib.request, json, urllib.parse, base64
 from flask import Flask, render_template, session, request, redirect, url_for, abort
 from reverseproxied import ReverseProxied
@@ -12,8 +12,6 @@ application = app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 app.session_interface = RedisSessionInterface()
 
-github_client_id = os.environ.get(ENV_GITHUBCLIENTID,'')
-github_client_secret = os.environ.get(ENV_GITHUBSECRET,'')
 app.secret_key = os.environ.get(ENV_FLASKSECRET,'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT')
 app.debug = True
 

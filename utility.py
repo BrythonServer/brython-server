@@ -1,9 +1,18 @@
 """Brython-Server utility functions for Github and session/cache management
 
 """
-import os, urllib, json, base64
-from flask import session
+import os, urllib, json, base64, random, string
+from flask import session, url_for
 from definitions import *
+
+def github_client_id():
+    """Retrieve the Github Client ID."""
+    return os.environ.get(ENV_GITHUBCLIENTID,'')
+    
+    
+def github_client_secret():
+    """Retriev the Github Client Secret."""
+    return os.environ.get(ENV_GITHUBSECRET,'')
 
 
 def newgithubstate():
@@ -58,7 +67,7 @@ def githubauthurl():
     Return the URL
     """
     url = URL_GITHUBAUTHORIZE + "?"
-    url += "client_id="+github_client_id
+    url += "client_id="+github_client_id()
     url += "&redirect_uri="+getredirecturl()
     url += "&scope=repo&state="+newgithubstate()
     print(url)
@@ -72,8 +81,8 @@ def githubretrievetoken(code):
     """
     gitrequest = urllib.request.Request(URL_GITHUBRETRIEVETOKEN)
     gitrequest.add_header('Accept', 'application/json')
-    parameters = {'client_id':github_client_id,
-        'client_secret':github_client_secret,
+    parameters = {'client_id':github_client_id(),
+        'client_secret':github_client_secret(),
         'code':code,
         'redirect_uri':getredirecturl()}
     data = urllib.parse.urlencode(parameters)
