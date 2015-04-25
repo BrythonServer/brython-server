@@ -28,8 +28,12 @@ Path for retrieving any imported files required for the main executing Python fi
 for files outside of the main source file's root folder. Support for imported files or resources for the main
 Python file are only provided in the context of executing from a Github repository or file.
 
-The files available at this routing point exist internally as files in a per-session temporary folder on the server,
-which has been populated from sources on Github as a result of the `load` API method (see next section).
+Files available at this routing point exist internally as elements of a dictionary
+stored as session data by Flask. Brython-Server overrides the default session
+implementation (cookies) and uses a Redis backend for all session data. This
+permits storage of arbitrarily large temporary files without using the host
+file system directly. The session data is populated from sources on Github
+as a result of the `load` API method (see next section).
 
 #### `/api/v1/<method>  (POST, PUT, GET)`
 
