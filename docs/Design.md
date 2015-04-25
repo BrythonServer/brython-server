@@ -2,7 +2,7 @@
 
 ## Architecture
 
-### Server Side
+### Server Side Routes
 
 The Brython-Server server side is built using the Python-based Flask application framework, running under
 Python 3. The server will provide the following main entry points:
@@ -16,10 +16,7 @@ described in more detail in another section.
 
 #### `/static/<file>`
 
-Path for retrieving static content, including CSS files and any client-side scripts required. **ISSUE**: If future 
-support is provided for full directory support of imports and resource files, a conflict may arise with the 
-`static` name, if the name is used for a project subdirectory. In this case, investigate renaming `static` to 
-`_static`.
+Path for retrieving static content, including CSS files and any client-side scripts required. 
 
 #### `/favicon.ico`
 
@@ -31,73 +28,69 @@ Path for retrieving any imported files required for the main executing Python fi
 for files outside of the main source file's root folder. Support for imported files or resources for the main
 Python file are only provided in the context of executing from a Github repository or file.
 
+The files available at this routing point exist internally as files in a per-session temporary folder on the server,
+which has been populated from sources on Github as a result of the `load` API method (see next section).
+
 #### `/api/v1/<method>  (POST, PUT, GET)`
 
-APIs required for communicating between the web client and this server are provided via JSON data
-transfer. These APIs will be described in greater detail in another section.
+The server responds to several API URLs. These are used to communicate directly with the
+client side, using JSON as the encoding method.
 
-#### `/?user=<githubuser>&repo=<githubrepo>&name=<mainfilename>`
+`method`  | Description   | Allowed Methods | Data Input (JSON)  | Data Output (JSON)
+---       | ---           | ---             | ---         | --- 
+`load`    | Load and cache file(s) from the named Github repository. Identify single main file, return its name and content. | POST | `user`, `repo`, `path` {optional path fragment}, `name` {optional main file name} | `name` {main file name}, `path` {main file path}, `content` {main file content}, `success` {true/false}
+`update`  | Notify server of changes to the main file being edited in the browser. Prevents user losing work if they accidentally close the tab. | POST  | `editcontent` {current editor content}, `url_input` {current github pasted URL} | `success` {true/false} 
+`commit`  | Commit main file changes made by the user to the originating Github file. | PUT   | `user`, `repo`, `path` {path fragment}, `name` {main file name}, `editcontent` {current editor content}, `commitmsg` {message to use for Github commit} | `success` {true/false} 
 
-Execute Brython Server immediately using the given username, repo and Python 3 source file.
+### Server Github Integration
 
-## Basic Operation
+The server side handles all interaction with Github, via the Github V3 API.
 
-### With Github
+If the user is not authenticated with Github, then authentication with the Github API uses the Brython-Server
+developer token, which allows up to 5000 transactions per hour, *globally*. In this situation, the user may modifiy code 
+shown in their browser, and execute it, but will not be able to commit any modifications back to Github.
 
-When a user visits the server, they may specify a github URL that identifies a repository or 
-file within a repository. The repository should have at least one Python source file. When the 
-"Load/Exec" button is pressed, the repository is scanned and all files are retrieved and cached
-locally on the brython-server machine for the duration of the user's session.
+The user may press the 'LOGIN' button on the Brython-Server page, which will redirect to a Github login page. Github
+will then ask the user if they wish to authorize Brython-Server to have read/write access to their private 
+repositories. If the user approves, Github will return to Brython server with an authorization token for the 
+session. All subsequent Github interactions with Brython-Server, during the user's browser session, will be
+authorized with this custom token. While logged in the user is subject to their own 5000 transaction per hour
+limitation.
 
-Code may be edited and re-executed on the site. An option to update/commit the code back to
-Github is a goal of the project and will require authorization with Github.
+While the user is logged in to Github, there will be a 'LOG OUT' button provided on the Brython-Server web page.
+When the user presses 'LOG OUT', the user's session will forget its access token and will not be able to make 
+further commits to any Github repository. If the user wishes to log back in, they will immediately be issued
+a new access token, provided they are still have a session active with the Github web site.
 
-### Stand Alone
+### Client Side
 
-When a user visits the server, they may begin editing a source "file" using the code editor
-on the main page. The code may be executed at any time and is cached on the server under the name
-"__main__.py". Code created in this way can not be saved or shared via URL.
+The Brython-Server client side system consists of a single Javascript include, which is loaded with the
+Brython-Server web page.
 
-URLS
+The principal responsibility of the client side code is to provide communication with the Brython-Server
+server side API (`load`, `update` and `commit`), described earlier. In addition, there is code for dynamically 
+enabling the different buttons and links that the user is able to access, depending on their current login state
+and whether they have loaded any code from Github. Finally, there are routines that "hijack" the browser's 
+alert and prompt functions in Javascript, re-routing text to a console textarea on the browser page.
 
-#### Stand alone execution
+The main web page has two flavors, determined by the html templates index.html and a exec.html, both of which are rendered from the root URL (`/`) of the server, depending on how it was used.
 
-    /exec/<user>/<repo>[/<file>]
+####`index.html`
 
-Load and execute specified file(s), using full browser window for output (text or graphical).
+This template is used when visiting the server root, and presents the visitor with a Python code editing pane on the
+left hand side, drive by the Ace Javascript editor. The Python execution console is shown in a smaller right-hand pane.
+The user may begin writing/editing code immediately and executing it by pressing the '>' button. When the '>' button 
+is pressed the `brython` function is executed, naming the editor ID as an argument.
 
-This URL entry point is valuable as a way of sharing and linking to specific python
-repositories on Github. 
+Once a file or project has been loaded from Github, this page will also show a 'SHARE' button which will, when
+pressed, open a new tab/window using the `exec.html` template.
 
-    /edit/<user>/<repo>[/<file>]
+####`exec.html`
 
-Load specified file(s), using edit and output panes. Do not execute. Redirect to /.
+This template is used when visiting the server root with arguments in the URL to indicate a specific
+Github user, repository and file path. In this instance, the Python execution console consumes a full width pane
+on the page and the code is loaded from Github and executed without delay. The URL shown in this mode may be 
+copied and pasted as a hyperlink on another page or in an e-mail (i.e. "shared").
 
-#### Retrieve file
-
-    /<file>
-
-If a session is active, this will return the cached copy of the file named. 
-
-
-#### Interactive 
-
-Typical use case:
-
-1. User visits brython-server (e.g. http://brython-server.org)
-2. User pastes github repo URL into textbox and clicks "Load/Exec" button.
-3. Source appears in left hand pane and program output appears in right hand pane
-4. If a graphical program, a new window pops with canvas.
-5. Share and Edit links available for distribution. The Share link is the exec 
-   version that will allow visitors to simply execute the program. The Edit link
-   will give a visitor their own editor and output panes.
-
-####RESTful API
-
-URL             |   /api/v1/load
----             |   ---
-Description     |   Load and cache file(s) from the named Github repository
-Allowed Methods |   POST
-Data Input      |   user, repo, [path]
-Data Output     |   name {main file name}, path {main file path}, content {main file content}
-
+In this instance a button is available which allows the user to edit the main file using the `index.html` template by 
+opening a new window/tab.
