@@ -1,139 +1,45 @@
-import os, shutil, string, random
-import tempfile, urllib.request, json, urllib.parse, base64
+"""Brython-Server main module with Flask route points.
+"""
+import os, string, random
+import urllib.request, json, urllib.parse, base64
 from flask import Flask, render_template, session, request, redirect, url_for
 from reverseproxied import ReverseProxied
+from redissessions import RedisSessionInterface
+from definitions import *
+from utility import *
 
 application = app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
-
-
-ENV_GITHUBCLIENTID = 'githubclientid'
-ENV_GITHUBSECRET = 'githubsecret'
-ENV_DEVTOKEN = 'githubtoken'
-ENV_FLASKSECRET = 'flasksecret'
-
-SESSION_TEMPDIR = 'tempdir'
-SESSION_GITHUBSTATE = 'githubstate'
-SESSION_ACCESSTOKEN = 'accesstoken'
-SESSION_URLINPUT = 'urlinput'
-SESSION_EDITCONTENT = 'editcontent'
-SESSION_MAINFILE = 'mainfile'
-SESSION_MAINSHA = 'mainsha'
-
-RUN_EDIT = 'run_edit'
-AUTH_REQUEST = 'auth_request'
-AUTH_FORGET = 'auth_forget'
-GITHUB_COMMIT = 'github_commit'
-
-URL_GITHUBAUTHORIZE = 'https://github.com/login/oauth/authorize'
-URL_GITHUBRETRIEVETOKEN = 'https://github.com/login/oauth/access_token'
+app.session_interface = RedisSessionInterface()
 
 github_client_id = os.environ.get(ENV_GITHUBCLIENTID,'')
 github_client_secret = os.environ.get(ENV_GITHUBSECRET,'')
 app.secret_key = os.environ.get(ENV_FLASKSECRET,'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT')
 app.debug = True
 
-def newtempdir():
-    if SESSION_TEMPDIR in session:
-        try:
-            shutil.rmtree(tempdir())
-        except:
-            pass
-    session[SESSION_TEMPDIR] = tempfile.mkdtemp()
 
-def tempdir():
-    return session[SESSION_TEMPDIR]
-
-
-# newgithubstate
-# Set a random string as local session state for github, if not
-# already set
-def newgithubstate():
-    state = session.get(SESSION_GITHUBSTATE, '')
-    if SESSION_GITHUBSTATE not in session:
-        N = 20
-        state = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(N))
-        session[SESSION_GITHUBSTATE] = state
-    return state
-    
-# checkgithubstate
-# return True if state matches, otherwise False
-def checkgithubstate(state):
-    return state == session.get(SESSION_GITHUBSTATE, '')
-
-# getredirecturl
-# Return URL to redirect to from github
-# Needs some scrubbing to put in acceptible format
-def getredirecturl():
-    url = url_for('root', _external=True)
-    if url.endswith(":80"):
-        url = url[:-3]
-    return url
-
-# githubauthurl
-# generate a redirect URL to github
-def githubauthurl():
-    #print(url_for('root', _external=True))
-    url = URL_GITHUBAUTHORIZE + "?"
-    url += "client_id="+github_client_id
-    url += "&redirect_uri="+getredirecturl()
-    url += "&scope=repo&state="+newgithubstate()
-    print(url)
-    return url
-
-# githubretrievetoken
-# retrieve an access token for the user via URL_GITHUBRETRIEVETOKEN
-def githubretrievetoken(code):
-    gitrequest = urllib.request.Request(URL_GITHUBRETRIEVETOKEN)
-    gitrequest.add_header('Accept', 'application/json')
-    parameters = {'client_id':github_client_id,
-        'client_secret':github_client_secret,
-        'code':code,
-        'redirect_uri':getredirecturl()}
-    data = urllib.parse.urlencode(parameters)
-    data = data.encode('utf-8')
-    response = urllib.request.urlopen(gitrequest, data)
-    jsresponse = json.loads(response.read().decode("utf-8"))
-    if 'access_token' in jsresponse:
-        session[SESSION_ACCESSTOKEN] = jsresponse.get('access_token')
-    
-# githubforgetauth
-# forget the current github authorization
-def githubforgetauth():
-    session[SESSION_ACCESSTOKEN] = ""
-
-# githubcontentsurl
-# Get the github api contents URL
-def githubcontentsurl(user, repo, path):
-    url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
-    return url
-
-# githubrequest
-# Initiate a request to the github content api
-def githubrequest(user, repo, path, method='GET'):
-    url = githubcontentsurl(user, repo, path)
-    token = session.get(SESSION_ACCESSTOKEN, os.environ.get(ENV_DEVTOKEN))
-    gitrequest = urllib.request.Request(url, method=method)
-    gitrequest.add_header('Authorization', 'token {0}'.format(token))
-    return gitrequest, token
-    
-
-# githubretrievefile
-# Get a specific file, via API
-def githubretrievefile(user, repo, path):
-    gitrequest, token = githubrequest(user, repo, path)
-    response = urllib.request.urlopen(gitrequest)
-    jsresponse = json.loads(response.read().decode("utf-8"))
-    return base64.b64decode(jsresponse['content'].encode('utf-8')).decode('utf-8'), token
-
-# Root path
-# If GET with repo data, use the exec.html template
-# If GET with nothing, plain old index.html 
-# Otherwise, if POST, index.html with pre-populated github path
 @app.route('/', methods=['POST', 'GET'])
 def root():
-    github_token = session.get(SESSION_ACCESSTOKEN)
-    github_loggedin = True if github_token else False    
+    """Root server URL.
+    
+    This default path for the web site is used for a variety of things, 
+    via voth POST and GET methods. 
+    
+    With GET, the URL may include an argument list, which is used to load 
+    a particularl Github repository/file. This is useful for sharing code
+    via e-mail or hyperlink. This URL/method is also used as a return
+    URL from Github when the user authorizes the application. In this
+    case the argument list includes a STATE and access TOKEN.
+    
+    With POST, the user has requested a switch to EDIT mode (from exec.html),
+    or to login at Github or forget login at Github.
+    
+    Returns one of the following:
+    index.html -- render template
+    exec.html -- render template
+    redirect -- to / or github
+    """
+    github_loggedin = githubloggedin()   
     if request.method == 'GET':
         if 'user' in request.args:
             user = request.args.get('user')
@@ -152,8 +58,8 @@ def root():
             return redirect(url_for('root'))
         else:
             return render_template('index.html', 
-                edit=session.get(SESSION_URLINPUT,''), 
-                editcontent = session.get(SESSION_EDITCONTENT,'print("Hello, world.")'),
+                edit=cachedurl(), 
+                editcontent = cachedcontent(),
                 github = github_loggedin)
     elif request.method == 'POST':
         if RUN_EDIT in request.form:
@@ -170,51 +76,58 @@ def root():
             githubforgetauth()
             return redirect(url_for('root'))
 
+
 @app.route('/favicon.ico')
 def favicon():
+    """Return favicon.ico.
+    
+    Since web browsers are inclined to request the favicon.ico from the root
+    of the web server, we should be able to provide it. Note that this will
+    cause a problem if the Github python app has a resource called favicon.ico.
+    """
     return app.send_static_file('favicon.ico') 
 
-@app.route('/_debug')
-def debug():
-    return render_template('test.html')
 
-# Default handler for any single file name: these are pulled
-# from the Python source temporary cache folder
-@app.route('/<filename>')
+@app.route('/<path:filename>')
 def file(filename):
-    with open(os.path.join(tempdir(),filename)) as f:
-        return f.read()
+    """Return cached file for the current Github repo.
+    """
+    return cachedfile(filename)
 
-# Build a valid github URL out of user, repo, path and name
-# Perhaps there is a github API for doing this that will be more 
-# stable?
-def githubpath(user, repo, path, name):
-    retval = "https://github.com/{0}/{1}/blob/master/".format(user,repo)
-    if path:
-        retval += path
-        if name not in path:
-            retval +=  "/" + name
-    else:
-        retval += name
-    return retval
 
-## /api/v1/update
-##
-## Inform server of edits/updates to the editor content and url_input
-## Server will cache the content in session data and recover it
-## when the page is reloaded.
+## API routes
+
 @app.route('/api/v1/update', methods=['PUT'])
 def v1_update():
+    """Inform server of edits/updates to the web page editor content and url.
+    
+    JSON arguments:
+    editcontent -- current content of web page editor.
+    
+    JSON return:
+    success -- True/False
+    """
     content = request.json
-    session[SESSION_EDITCONTENT] = content.get('editcontent','')
-    session[SESSION_URLINPUT] = content.get('url_input','')
+    cachecontent(content.get('editcontent',''))
+    cacheurl(content.get('url_input',''))
     return json.dumps({'success':True}, 200, {'ContentType':'application/json'})
 
-## /api/v1/commit
-##
-## Server will issue a commit to github
+
 @app.route('/api/v1/commit', methods=['PUT'])
 def v1_commit():
+    """Commit changes in editor to the current main file on Github.
+
+    JSON arguments:
+    user -- Github user name
+    repo -- Github user's repo name
+    path -- path (fragment) to a specific file
+    name -- specific file name
+    editcontent -- contents of editor on web page
+    commitmsg -- commit message
+    
+    JSON return:
+    success -- True/False
+    """
     content = request.json
     content = request.json
     user = content.get('user')
@@ -243,19 +156,23 @@ def v1_commit():
         print("Github error: " + err.msg + " " + str(err.code) + ", token was ", token)
         return json.dumps({'success':False, 'message':err.msg}), 200, {'ContentType':'application/json'} 
 
-## /api/v1/load
-##
-## Retrieve specified user/repo/path from Github
-## and cache the file and any other files in its directory
-## Return the primary file name and content
-## If given a path or root folder, will attempt to identify a single
-## python file as the main file to execute.
-## Input/json: user, repo, path, name (of file)
-## Output/json: full github URL (path), file (name), content
-##
-## Function is too big..
+
 @app.route('/api/v1/load', methods=['PUT'])
 def v1_load():
+    """Load source code and resources from Github
+
+    JSON arguments:
+    user -- Github user name
+    repo -- Github user's repo name
+    path -- optional path (fragment) to a specific file
+    name -- optional specific file name
+    
+    JSON return:
+    success -- True/False
+    name -- name of main file to execute
+    path -- path to main file 
+    content -- content of main file
+    """
     content = request.json
     user = content.get('user')
     repo = content.get('repo')
@@ -263,7 +180,7 @@ def v1_load():
     name = content.get('name','')
     mainfile = ""
     mainsha = ""
-    newtempdir()
+    clearfilecache()
     urllib.request.urlcleanup()
     gitrequest, token = githubrequest(user, repo, path)
     try:
@@ -287,12 +204,10 @@ def v1_load():
                     ismain = True
                 fileurl = f['download_url']
                 # Read each file in the directory, regardless...
-                with open(os.path.join(tempdir(), foundname), 'w') as cachefile:
-                    temp, token = githubretrievefile(user, repo, f['path'])
-                    cachefile.write(temp)
-                    # If this is THE file, hold on to the content
-                    if ismain:
-                        maincontent = temp
+                temp, token = githubretrievefile(user, repo, f['path'])
+                cachefile(foundname, temp)
+                if ismain:
+                    maincontent = temp
         # All files read, save primary name and sha
         session[SESSION_MAINFILE] = mainfile
         session[SESSION_MAINSHA] = mainsha
@@ -306,14 +221,6 @@ def v1_load():
         return json.dumps({'success':False, 'message':err.msg}), 200, {'ContentType':'application/json'} 
 
 
-## Execute specific script from github
-## Input user, repo, filename, path fragment (not including file name)
-@app.route('/_exec/<user>/<repo>/<name>/<path:path>/')
-@app.route('/_exec/<user>/<repo>/<name>/')
-def exec_github(user, repo, name, path=""):
-    return render_template('exec.html', user=user, repo=repo, name=name, path=path)
-    
 
 if __name__ == "__main__":
     app.run(host=os.environ['IP'],port=int(os.environ['PORT']))
-
