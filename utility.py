@@ -171,9 +171,10 @@ def cachedfile(path):
     
     Returns the file content text.
     """
-    if SESSION_FILECACHE not in session:
-        return ""
-    return session[SESSION_FILECACHE].get(path, '')
+    if SESSION_FILECACHE not in session or path not in session[SESSION_FILECACHE]:
+        raise FileNotFoundError()
+    else:
+        return session[SESSION_FILECACHE][path]
 
 
 def clearfilecache():

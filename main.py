@@ -2,7 +2,7 @@
 """
 import os, string, random
 import urllib.request, json, urllib.parse, base64
-from flask import Flask, render_template, session, request, redirect, url_for
+from flask import Flask, render_template, session, request, redirect, url_for, abort
 from reverseproxied import ReverseProxied
 from redissessions import RedisSessionInterface
 from definitions import *
@@ -92,7 +92,11 @@ def favicon():
 def file(filename):
     """Return cached file for the current Github repo.
     """
-    return cachedfile(filename)
+    try:
+        return cachedfile(filename)
+    except FileNotFoundError:
+        abort(404)
+        
 
 
 ## API routes
