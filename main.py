@@ -2,7 +2,7 @@
 """
 import os
 import urllib.request, json, urllib.parse, base64
-from flask import Flask, render_template, session, request, redirect, url_for, abort
+from flask import Flask, render_template, session, request, redirect, url_for, abort, Response
 from reverseproxied import ReverseProxied
 from redissessions import RedisSessionInterface
 from definitions import *
@@ -91,7 +91,11 @@ def file(filename):
     """Return cached file for the current Github repo.
     """
     try:
-        return cachedfile(filename)
+        content = cachedfile(filename)
+        if type(content) is bytes:
+            return Response(content, mimetype='application/octet-stream')        
+        else:
+            return Response(content)
     except FileNotFoundError:
         abort(404)
         

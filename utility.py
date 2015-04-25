@@ -133,7 +133,34 @@ def githubretrievefile(user, repo, path):
     gitrequest, token = githubrequest(user, repo, path)
     response = urllib.request.urlopen(gitrequest)
     jsresponse = json.loads(response.read().decode("utf-8"))
-    return base64.b64decode(jsresponse['content'].encode('utf-8')).decode('utf-8'), token
+    binreturn = base64.b64decode(jsresponse['content'].encode('utf-8'))
+    try:
+        return binreturn.decode('utf-8'), token
+    except UnicodeDecodeError:
+        return binreturn, token
+
+
+def githubpath(user, repo, path, name):
+    """Build a valid URL to file on Github.
+    
+    Note: This is sensitive to changes in how Github URLs work.
+    
+    Arguments:
+    user -- the Github user ID/name
+    repo -- the Github user's repository name
+    path -- specific path to file within the repo
+    name -- specific file name
+    
+    Returns URL to Github file.
+    """
+    retval = "https://github.com/{0}/{1}/blob/master/".format(user,repo)
+    if path:
+        retval += path
+        if name not in path:
+            retval +=  "/" + name
+    else:
+        retval += name
+    return retval
 
 
 def githubloggedin():
@@ -191,24 +218,3 @@ def clearfilecache():
     session[SESSION_FILECACHE] = {}
 
 
-def githubpath(user, repo, path, name):
-    """Build a valid URL to file on Github.
-    
-    Note: This is sensitive to changes in how Github URLs work.
-    
-    Arguments:
-    user -- the Github user ID/name
-    repo -- the Github user's repository name
-    path -- specific path to file within the repo
-    name -- specific file name
-    
-    Returns URL to Github file.
-    """
-    retval = "https://github.com/{0}/{1}/blob/master/".format(user,repo)
-    if path:
-        retval += path
-        if name not in path:
-            retval +=  "/" + name
-    else:
-        retval += name
-    return retval
