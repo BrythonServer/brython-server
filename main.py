@@ -8,7 +8,7 @@ from redissessions import RedisSessionInterface
 from definitions import *
 from utility import *
 
-application = app = Flask(__name__)
+application = app = Flask(__name__, static_url_path='/__static')
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 app.session_interface = RedisSessionInterface()
 
