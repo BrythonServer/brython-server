@@ -98,3 +98,98 @@ copied and pasted as a hyperlink on another page or in an e-mail (i.e. "shared")
 
 In this instance a button is available which allows the user to edit the main file using the `index.html` template by 
 opening a new window/tab.
+
+###Deployment
+
+Following are steps for deploying Brython-Server to a Linux host:
+
+####Prerequisites
+
+1. Use the system package manager to install Python 3. 
+2. Follow these instructions to install [Redis](http://redis.io/topics/quickstart).
+
+####Clone Brython-Server
+
+Create a local copy of the Brython-Server sources:
+
+    git clone https://github.com/tiggerntatie/brython-server.git
+
+####Create Virtualenv
+
+Create a virtual environment for the server:
+
+    virtualenv brython-server
+
+Note that this directory should not necessarily be within the Brython-Server source
+tree, or vice versa. 
+
+Activate your virtual environment:
+
+    source brython-server/bin/activate
+
+Then install the following dependencies using PIP:
+
+1. flask
+2. gunicorn
+3. redis
+
+Test the server locally by running:
+
+    python main.py
+
+
+####Configure for Automatic Startup
+
+Create a startup script in `/etc/init`. For example: `/etc/init/brython-server.conf` with
+the following contents:
+
+    description "brython-server"
+    start on (filesystem)
+    stop on runlevel [016]
+    
+    env githubtoken=<Github developer token, if any>
+    env githubsecret=<Github app secret token>
+    env githubclientid=<Github app client ID>
+    env flasksecret=<Flask session secret key>
+    
+    respawn
+    setuid <system user to run as>
+    setgid <system user to run as>
+    chdir <path to virtualenv folder>
+    
+    exec <path to virtualenv gunicorn executable> -b <listen ip address>:<port> main:app
+
+Text enclosed in `<>` brackets indicates information specific to your installation.
+
+The `env` lines provide installation-specific secret information needed for Brython-Server
+to operate properly. Do not archive this information (or this configuration file) with
+your project source code.
+
+In order to support Github integration, you will have to register a Github app. The callback 
+URL for Brython-Server is its root URL `/`. Once registered, Github will provide you with 
+a secret token and client ID. See the [Flask session documentation](http://flask.pocoo.org/docs/0.10/quickstart/) 
+for information on creating a Flask session secret key.
+
+With this file in place, you can start the server with:
+
+    sudo start brython-server
+
+####Use with NGINX
+
+The gunicorn server can be the sole web server for this application, or you can use it with NGINX
+via proxy. Configure your NGINX server thus:
+
+    location /brython-server/ {    # <<< put the desired URL path here
+              proxy_redirect     off;
+              proxy_set_header   Host $host;
+              proxy_set_header   X-Real-IP $remote_addr;
+              proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header   X-Forwarded-Host $server_name;
+              proxy_set_header   X-Scheme $scheme;
+              proxy_set_header   X-Script-Name /brython-server;
+              proxy_pass         http://127.0.0.1:<port>/;
+          }
+
+In this case, configure gunicorn to operate with ip address: `127.0.0.1` and the same port 
+shown in the NGINX configuration.
+

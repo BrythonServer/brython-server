@@ -26,3 +26,8 @@ NOTE: If you paste in a repository URL that points to multiple Python 3
 source files, Brython-Server will make a feeble attempt to identify a primary
 source file. If you want to force a specific file, then past the URL to that 
 specific file.
+
+##Deployment
+
+See [these instructions](https://github.com/tiggerntatie/brython-server/blob/master/docs/Design.md#deployment)
+for deploying Brython-Server to a Linux web server.
