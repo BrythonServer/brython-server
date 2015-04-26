@@ -159,7 +159,7 @@ def v1_commit():
         jsresponse = json.loads(response.read().decode("utf-8"))
         return json.dumps({'success':True}, 200, {'ContentType':'application/json'})
     except urllib.error.HTTPError as err:
-        print("Github error: " + err.msg + " " + str(err.code) + ", token was ", token)
+        print("Github error: " + err.msg + " " + str(err.code) + ", token was ", token, ", path was ", user, repo, path)
         return json.dumps({'success':False, 'message':err.msg}), 200, {'ContentType':'application/json'} 
 
 
@@ -223,7 +223,7 @@ def v1_load():
                     'path':githubpath(user,repo,path,mainfile),
                     'content':maincontent}), 200, {'ContentType':'application/json'}
     except urllib.error.HTTPError as err:
-        print("Github error: " + err.msg + ", token was ", token)
+        print("Github error: " + err.msg + ", token was ", token, ", path was ", user, repo, path)
         return json.dumps({'success':False, 'message':err.msg}), 200, {'ContentType':'application/json'} 
 
 

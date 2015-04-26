@@ -1,296 +1,427 @@
-// Brython-server defualt javascript
+/*
+ * Brython-server default javascript
+ */
+ 
+ 
+/*
+ * bsConsole
+ * 
+ * Console Proxy routes alert and prompt calls to our own handler.
+ */
+var bsConsole = function(){
+    var consolequeue = [];
+    var consoletimer = null;
+    const CONSOLETIMEOUT = 10;
+    const CONSOLEID = "#console";
+    const OLDPROMPT = window.prompt;
+    
+    // periodically update the console control
+    function Timeout() {
+        var textarea = $(CONSOLEID)
+        textarea.append(consolequeue.join(""))
+        textarea.scrollTop(textarea[0].scrollHeight);
+        consolequeue = [];
+        consoletimer = null;
+    }    
 
-var mainscript = null;
-var maincontent = "";
-var consolequeue = [];
-var consoletimer = null;
-const CONSOLETIMEOUT = 10;
-const CONSOLEID = "console";
-const OLDPROMPT = window.prompt;
-const __MAIN__ = "__main__";
+    function Initialize() {
+        // take over the prompt dialog so we can display prompt text in the console
+        window.prompt = function(text, defvalue) {
+            // flush any pending console writes
+            if (consoletimer) {
+                window.clearTimeout(consoletimer);
+                Timeout(); // flush the queue
+            }
+            consolequeue.push(text);  // put prompt 
+            Timeout(); // onto console
+            var returnedValue = OLDPROMPT(text, defvalue);
+            consolequeue.push(returnedValue);  // and the response...
+            consolequeue.push('\n');
+            Timeout();
+            return returnedValue;
+        }
+        // now seize the output
+        takeOverConsole();
+    }
 
-
-// Github link is not visible by default
-document.getElementById("github_url").style.visibility = "hidden";
-// Share link is not visible by default
-var share_link = document.getElementById("share_url");
-if (share_link) {
-    share_link.style.visibility = "hidden";
-}
-
-// periodically update the console control
-function consoleTimeout() {
-    var textarea = document.getElementById(CONSOLEID);
-    textarea.innerHTML += consolequeue.join("");
-    textarea.scrollTop = textarea.scrollHeight;
-    consolequeue = [];
-    consoletimer = null;
-}
-
-// Console hijacker - http://tobyho.com/2012/07/27/taking-over-console-log/
-// target is ID of alternate destination
-function takeOverConsole(){
-    var console = window.console
-    if (!console) return
-    function intercept(method){
-        var original = console[method]
-        console[method] = function(){
-            for (i = 0; i < arguments.length; i++) {
-                if (arguments[i].indexOf("Error 404 means that Python module") != 0) {
-                    if (!consoletimer) {
-                        consoletimer = window.setTimeout(consoleTimeout, CONSOLETIMEOUT);
+    // Console hijacker - http://tobyho.com/2012/07/27/taking-over-console-log/
+    // target is ID of alternate destination
+    function takeOverConsole(){
+        var console = window.console;
+        if (!console) return;
+        function intercept(method){
+            var original = console[method]
+            console[method] = function(){
+                for (i = 0; i < arguments.length; i++) {
+                    if (arguments[i].indexOf("Error 404 means that Python module") != 0) {
+                        if (!consoletimer) {
+                            consoletimer = window.setTimeout(Timeout, CONSOLETIMEOUT);
+                        }
+                        consolequeue.push(arguments[i]);
                     }
-                    consolequeue.push(arguments[i]);
+                }            
+                if (original.apply){
+                    // Do this for normal browsers
+                    original.apply(console, arguments)
+                }else{
+                    // Do this for IE
+                    var message = Array.prototype.slice.apply(arguments).join(' ')
+                    original(message)
                 }
-            }            
-            if (original.apply){
-                // Do this for normal browsers
-                original.apply(console, arguments)
-            }else{
-                // Do this for IE
-                var message = Array.prototype.slice.apply(arguments).join(' ')
-                original(message)
+            }
+        }
+        var methods = ['log', 'warn', 'error']
+        for (var i = 0; i < methods.length; i++)
+            intercept(methods[i])
+    }
+
+    // clear the console output
+    function clearConsole() {
+        $(CONSOLEID).html('');
+    }
+
+    // public API
+    return{
+        timeout:Timeout,
+        init:Initialize,
+        clear:clearConsole
+    }
+}();
+
+/* END bsConsole */
+
+
+/*
+ * bsUI
+ * 
+ * User Interface Functionality
+ */
+var bsUI = function(){
+
+    const GITHUB_URL = '#github_url'
+    const SHARE_URL = '#share_url'
+    const URL_SUBMIT = '#url_submit'
+    const URL_INPUT = '#url_input'
+    const RUN_EDIT = '#run_edit'
+    const RUN_EDIT_FORM = '#run_edit_form'
+    
+    var editor = null;
+    
+    function Initialize() {
+        // Github link is not visible by default
+        $(GITHUB_URL).hide();
+        // Share link is not visible by default
+        var share_link = $(SHARE_URL);
+        if (share_link) {
+            share_link.hide();
+        }
+        // Capture <enter> key on GITHUB_URL and direct to URL_SUBMIT
+        $(URL_INPUT).keyup(function(event){
+            if(event.keyCode == 13){
+                event.preventDefault();
+                $(URL_SUBMIT).click();
+            }
+        });
+
+    }
+
+    // Show github link
+    function showGithub(path) {
+        var element = $(GITHUB_URL);
+        element.attr('href', path);
+        element.show();
+    }
+
+    // Show share link
+    function showShareURL(data) {
+        var element = $(SHARE_URL)
+        var baseargs = "?user=" + data['user'] + "&repo=" + data['repo'] + "&name=" + data['name'];
+        if (data['path'] == '') {
+            element.attr('href', baseargs)
+        }
+        else {
+            element.attr('href', baseargs +  "&path=" + data['path'])
+        }
+        element.show()
+    }
+
+    // Execute the EDIT button
+    function runEdit() {
+        $(RUN_EDIT).val($(GITHUB_URL).attr('href'))
+        $(RUN_EDIT_FORM).submit();
+    }
+    
+    // Create editor
+    function startEditor() {
+        editor = ace.edit("editor");
+        editor.setTheme("ace/theme/eclipse");
+        editor.setShowPrintMargin(true);
+        editor.setDisplayIndentGuides(true);
+        editor.getSession().setMode("ace/mode/python");
+        editor.$blockScrolling = Infinity;
+    }
+
+    // Get editor content
+    function getEditor() {
+        if (editor) {
+            return editor.getValue()
+        }
+    }
+    
+    // Set editor content
+    function setEditor(text) {
+        if (editor) {
+            editor.setValue(text);
+        }
+    }
+    
+    // Clear editor selection
+    function clearEditorSelection() {
+        if (editor) {
+            editor.selection.clearSelection();
+        }
+    }
+    
+    // Public API
+    return {
+        URL_INPUT:URL_INPUT,
+        init:Initialize,
+        showgithub:showGithub,
+        showshareurl:showShareURL,
+        runedit:runEdit,
+        starteditor:startEditor,
+        geteditor:getEditor,
+        seteditor:setEditor,
+        clearselect:clearEditorSelection
+    }
+    
+}();
+/* END bsUI */
+
+
+/*
+ * bsGithubUtil
+ * 
+ * Github Utilities
+ */
+var bsGithubUtil = function(){
+    
+    // create a Github file path
+    function createGithubPath(data) {
+        var path = data['path'];
+        if (path.length > 0 && path.substr(path.length-1) != "/") {
+            path += "/";
+        }
+        path += data['name'];
+        return path
+    }
+    
+    // create a Github URL text for speciic file
+    function createGithubURL(data) {
+        var url = "https://github.com/" + data['user'] + "/" + data['repo'] 
+        url += "/blob/master/" + createGithubPath(data);
+        return url
+    }
+    
+    // parse Github URL text
+    function parseGithubURL(url_input) {
+        var data = null;
+        // attempt a single file match
+        // example: https://github.com/tiggerntatie/brython-student-test/blob/master/hello.py
+        // example: https://github.com/tiggerntatie/hhs-cp-site/blob/master/hhscp/static/exemplars/c02hello.py
+        // example subtree: https://github.com/tiggerntatie/hhs-cp-site/tree/master/hhscp/static/exemplars
+        var gittreematch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+)\/tree\/master\/(.+)/);
+        var gitfilematch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/master\/([^/]+)/);
+        var gittreefilematch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/master\/(.+)\/([^/]+)/);
+        var gitrepomatch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+).*/);
+        if (gitrepomatch) {
+            data = {'user':gitrepomatch[1], 'repo':gitrepomatch[2], 'path':'', 'name':''};
+            if (gittreematch) {
+                data['path'] = gittreematch[3];
+            }
+            if (gittreefilematch) {
+                data['path'] = gittreefilematch[3];
+                data['name'] = gittreefilematch[4];
+            }
+            else if (gitfilematch) {
+                data['name'] = gitfilematch[3];
+            }
+        }
+        return data;
+    }
+
+    // parse the url_input and return structure with user, repo, path, name
+    function parseGithub(UI) {
+        return parseGithubURL($(UI.URL_INPUT).val())
+    }
+
+
+    
+    return {
+        parse:parseGithub,
+        parseurl:parseGithubURL,
+        createurl:createGithubURL
+    }
+    
+}();
+/* END bsGithubUtil */
+
+
+/*
+ * bsController
+ * 
+ * Miscellaneous actions and network transactions
+ */
+var bsController = function(){
+
+    var maincontent = ''
+    var mainscript = null;
+    const __MAIN__ = "__main__";
+
+    // Execute the brython interpreter
+    function runBrython(console, argdict) {
+        console.clear();
+        brython(argdict);
+    }
+    
+    function removeMainScript() {
+        if (mainscript) {
+            document.head.removeChild(mainscript);
+        }
+    }
+    
+    function initMainScript() {
+        removeMainScript()
+        mainscript = document.createElement('script');
+        mainscript.type = "text/python";
+        mainscript.async = false;
+        mainscript.id = __MAIN__;
+    }
+    
+    // Set main python script as inline
+    function setMainValue(txt) {
+        initMainScript()
+        mainscript.innerHTML = txt;
+        document.head.appendChild(mainscript);
+    }
+
+    // load script from github, embed in html and execute
+    // data dictionary input includes user, repo, name and path (fragment)
+    function runGithub(Console, UI, data) {
+        var result = loadGithubtoScript(UI,data);
+        if (result) {
+            setMainValue(maincontent);
+            if (mainscript) {
+                runBrython(Console, {debug:1, ipy_id:[__MAIN__]});
             }
         }
     }
-    var methods = ['log', 'warn', 'error']
-    for (var i = 0; i < methods.length; i++)
-        intercept(methods[i])
-}
-
-
-// take over the console and sendit to OUR console!
-takeOverConsole();
-
-// take over the prompt dialog so we can display prompt text in the console
-window.prompt = function(text, defvalue) {
-    // flush any pending console writes
-    if (consoletimer) {
-        window.clearTimeout(consoletimer);
-        consoleTimeout(); // flush the queue
-    }
-    consolequeue.push(text);  // put prompt 
-    consoleTimeout(); // onto console
-    var returnedValue = OLDPROMPT(text, defvalue);
-    consolequeue.push(returnedValue);  // and the response...
-    consolequeue.push('\n');
-    consoleTimeout();
-    return returnedValue;
-}
-
-function runBrython(argdict) {
-    document.getElementById('console').innerHTML = "";
-    brython(argdict);
-}
-
-function setMainScript(src) {
-    if (mainscript) {
-        document.head.removeChild(mainscript);
-    }
-    mainscript = document.createElement('script');
-    mainscript.src = src;
-    mainscript.type = "text/python";
-    mainscript.async = false;
-    mainscript.id = __MAIN__;
-    document.head.appendChild(mainscript);
-}
-
-function setMainValue(txt) {
-    if (mainscript) {
-        document.head.removeChild(mainscript);
-    }
-    mainscript = document.createElement('script');
-    mainscript.innerHTML = txt;
-    mainscript.type = "text/python";
-    mainscript.id = __MAIN__;
-    document.head.appendChild(mainscript);
-}
-
-$("#url_input").keyup(function(event){
-    if(event.keyCode == 13){
-        event.preventDefault();
-        $("#url_submit").click();
-    }
-});
-
-// Show github link
-function showGithub(path) {
-    var element = document.getElementById("github_url");
-    element.href = path;
-    element.style.visibility = "visible";
-}
-
-// Show share link
-function showShareURL(data) {
-    var element = document.getElementById("share_url");
-    element.href = "?user=" + data['user'] + "&repo=" + data['repo'] + "&name=" + data['name'];
-    if (data['path'] != '') {
-        element.href +=  "&path=" + data['path'];
-    }
-    element.style.visibility = "visible";
-}
-
-// Execute the EDIT button
-function runEdit(path) {
-    var element = document.getElementById("github_url");
-    var editelement = document.getElementById("run_edit");
-    editelement.value = element.href;
-    $('#run_edit_form').submit();
-}
-
-// create a Github file path
-function createGithubPath(data) {
-    var path = data['path'];
-    if (path.length > 0 && path.substr(path.length-1) != "/") {
-        path += "/";
-    }
-    path += data['name'];
-    return path
-}
-
-// create a Github URL text for speciic file
-function createGithubURL(data) {
-    var url = "https://github.com/" + data['user'] + "/" + data['repo'] 
-    url += "/blob/master/" + createGithubPath(data);
-    return url
-}
-
-// parse Github URL text
-function parseGithubURL(url_input) {
-    var data = null;
-    // attempt a single file match
-    // example: https://github.com/tiggerntatie/brython-student-test/blob/master/hello.py
-    // example: https://github.com/tiggerntatie/hhs-cp-site/blob/master/hhscp/static/exemplars/c02hello.py
-    // example subtree: https://github.com/tiggerntatie/hhs-cp-site/tree/master/hhscp/static/exemplars
-    var gittreematch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+)\/tree\/master\/(.+)/);
-    var gitfilematch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/master\/([^/]+)/);
-    var gittreefilematch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/master\/(.+)\/([^/]+)/);
-    var gitrepomatch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+).*/);
-    if (gitrepomatch) {
-        data = {'user':gitrepomatch[1], 'repo':gitrepomatch[2], 'path':'', 'name':''};
-        if (gittreematch) {
-            data['path'] = gittreematch[3];
-        }
-        if (gittreefilematch) {
-            data['path'] = gittreefilematch[3];
-            data['name'] = gittreefilematch[4];
-        }
-        else if (gitfilematch) {
-            data['name'] = gitfilematch[3];
-        }
-    }
-    return data;
-}
-
-// parse the url_input and return structure with user, repo, path, name
-function parseGithub() {
-    return parseGithubURL(document.getElementById('url_input').value);
-}
-
-// read main github script name and content
-// return file name
-function loadGithubtoScript(data) {
-    if (data) {
+    
+    // update server with new editor content (all the time!)
+    function sendEditorChange(UI) {
+        var data = {'editcontent':UI.geteditor(), 
+            'url_input':$(UI.URL_INPUT).val()};
         var xhr = new XMLHttpRequest();
-        xhr.open('PUT', 'api/v1/load', false);  // synchronous
+        xhr.open('PUT', 'api/v1/update', false);  // synchronous
         xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
         // send the collected data as JSON
         xhr.send(JSON.stringify(data));
         var result = JSON.parse(xhr.responseText);
-        if (xhr.status == 200 && result['success'] && result['name']) {
-            maincontent = result['content'];
-            showGithub(result['path']);
-            return result;
+    }
+
+    // re-execute current mainscript
+    function runCurrent(Console) {
+        if (mainscript) {
+                runBrython(Console, {debug:1, ipy_id:[__MAIN__]});
+        }
+    }
+    
+    // execute contents of editor and update server with new content
+    function runEditor(UI, Console) {
+        sendEditorChange(UI);
+        setMainValue(UI.geteditor());
+        runCurrent(Console)
+    }
+    
+    // send request to login to github
+    function loginGithub(UI) {
+        sendEditorChange(UI)
+        $('#run_auth_request').submit();
+    }
+
+    // send request to logout of github
+    // only FORGETS out github authorization - does not log out of github, per se
+    function logoutGithub() {
+        $('#run_auth_forget').submit();
+    }
+
+    // send request to commit/save to github
+    function commitGithub(GH, UI) {
+        var d = new Date()
+        var ds = d.toLocaleDateString()
+        var ts = d.toLocaleTimeString()
+        var data = GH.parse(UI);
+        data['editcontent'] = UI.geteditor();
+        data['commitmsg'] = "Updated from Brython Server: "+ds+" "+ts;
+        var xhr = new XMLHttpRequest();
+        xhr.open('PUT', 'api/v1/commit', false);  // synchronous
+        xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+        // send the collected data as JSON
+        xhr.send(JSON.stringify(data));
+        var result = JSON.parse(xhr.responseText);
+    }
+
+    // read main github script name and content
+    // return file name
+    function loadGithubtoScript(UI, data) {
+        if (data) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('PUT', 'api/v1/load', false);  // synchronous
+            xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+            // send the collected data as JSON
+            xhr.send(JSON.stringify(data));
+            var result = JSON.parse(xhr.responseText);
+            if (xhr.status == 200 && result['success'] && result['name']) {
+                maincontent = result['content'];
+                UI.showgithub(result['path']);
+                return result;
+            }
+            else {
+                return false;
+            }
         }
         else {
             return false;
         }
     }
-    else {
-        return false;
-    }
-}
 
-// load script from github, embed in html and execute
-// data dictionary input includes user, repo, name and path (fragment)
-function runGithub(data) {
-    var result = loadGithubtoScript(data);
-    if (result) {
-        setMainValue(maincontent);
-        if (mainscript) {
-            runBrython({debug:1, ipy_id:[__MAIN__]});
+    // load main github script name, insert content in editor
+    function loadGithub(GH, UI) {
+        var data = GH.parse(UI);
+        var result = loadGithubtoScript(UI, data);
+        if (result) {
+            // now that we have a full URL for the file, parse again
+            data = GH.parseurl(result['path']);
+            $(UI.URL_INPUT).val(GH.createurl(data))
+            UI.showshareurl(data);
+            UI.seteditor(maincontent);
+            UI.clearselect();
+            sendEditorChange(UI);
         }
     }
-}
 
-// re-execute current mainscript
-function runCurrent() {
-    if (mainscript) {
-            runBrython({debug:1, ipy_id:[__MAIN__]});
+
+    return {
+        rungithub:runGithub,
+        run:runCurrent,
+        login:loginGithub,
+        logout:logoutGithub,
+        commit:commitGithub,
+        load:loadGithub,
+        runeditor:runEditor,
     }
-}
+}()
+/* END bsController */
 
-// load main github script name, insert content in editor
-function loadGithub() {
-    var data = parseGithub();
-    var result = loadGithubtoScript(data);
-    if (result) {
-        // now that we have a full URL for the file, parse again
-        data = parseGithubURL(result['path']);
-        document.getElementById('url_input').value = createGithubURL(data);
-        showShareURL(data);
-        editor.setValue(maincontent);
-        editor.selection.clearSelection();
-        sendEditorChange();
-    }
-}
-
-// execute contents of editor and update server with new content
-function runEditor() {
-    sendEditorChange();
-    setMainValue(editor.getValue());
-    if (mainscript) {
-        runBrython({debug:1, ipy_id:[__MAIN__]});
-    }
-}
-
-
-// update server with new editor content (all the time!)
-function sendEditorChange() {
-    var data = {'editcontent':editor.getValue(), 
-        'url_input':document.getElementById('url_input').value};
-    var xhr = new XMLHttpRequest();
-    xhr.open('PUT', 'api/v1/update', false);  // synchronous
-    xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-    // send the collected data as JSON
-    xhr.send(JSON.stringify(data));
-    var result = JSON.parse(xhr.responseText);
-}
-
-// send request to login to github
-function loginGithub() {
-    sendEditorChange()
-    $('#run_auth_request').submit();
-}
-
-// send request to logout of github
-// only FORGETS out github authorization - does not log out of github, per se
-function logoutGithub() {
-    $('#run_auth_forget').submit();
-}
-
-// send request to commit/save to github
-function commitGithub() {
-    var d = new Date()
-    var ds = d.toLocaleDateString()
-    var ts = d.toLocaleTimeString()
-    var data = parseGithub();
-    data['editcontent'] = editor.getValue();
-    data['commitmsg'] = "Updated from Brython Server: "+ds+" "+ts;
-    var xhr = new XMLHttpRequest();
-    xhr.open('PUT', 'api/v1/commit', false);  // synchronous
-    xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-    // send the collected data as JSON
-    xhr.send(JSON.stringify(data));
-    var result = JSON.parse(xhr.responseText);
-}
+// Execute from here
+bsConsole.init();

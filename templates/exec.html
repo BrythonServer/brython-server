@@ -5,8 +5,10 @@
 <div class="full-width-container">
     <div class="row" id="nav-row">
         <div class="twelve columns">
-            <button  class="button" onclick="runCurrent()">Run</button>
-            <button class="button" onclick="runEdit()">Edit</button>
+            <button  class="button" 
+                onclick="bsController.run(bsConsole)">Run</button>
+            <button class="button" 
+                onclick="bsUI.runedit()">Edit</button>
             <a class="button" target="_blank" id="github_url" href="http://github.com">@Github</a>
         </div>
     </div>
@@ -29,6 +31,6 @@
 {{ super() }}
 <script type="text/javascript">
     var data = {'user':'{{ user }}', 'repo':'{{ repo }}', 'path':'{{ path }}', 'name':'{{ name }}' };
-    window.onload = runGithub(data);
+    window.onload = bsController.rungithub(bsConsole, bsUI, data);
 </script>
 {% endblock %}

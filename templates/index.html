@@ -8,15 +8,20 @@
             <input class="u-full-width" type="url" placeholder="https://github.com/<user>/<repo>" id="url_input" value="{{ edit }}">
         </div>
         <div class="two-thirds column">
-            <button  class="button" id="url_submit" onclick="loadGithub()">Load</button>
-            <button  class="button" onclick="runEditor()">&gt;</button>
+            <button  class="button" id="url_submit" 
+                onclick="bsController.load(bsGithubUtil, bsUI)">Load</button>
+            <button  class="button" 
+                onclick="bsController.runeditor(bsUI, bsConsole)">&gt;</button>
             <a class="button" target="_blank" id="github_url" href="http://github.com">@Github</a>
             <a class="button" target="_blank" id="share_url" href="#">Share</a>
 {% if github %}
-            <button class="button" onclick="commitGithub()">Commit</button>
-            <button class="button" onclick="logoutGithub()">Logout</button>
+            <button class="button" 
+                onclick="bsController.commit(bsGithubUtil, bsUI)">Commit</button>
+            <button class="button" 
+                onclick="bsController.logout()">Logout</button>
 {% else %}
-            <button class="button" onclick="loginGithub()">Login</button>
+            <button class="button" 
+                onclick="bsController.login(bsUI)">Login</button>
 {% endif %}
         </div>
     </div>
@@ -58,15 +63,10 @@
 {% block foot %}
 {{ super() }}
 <script type="text/javascript">
-    var editor = ace.edit("editor");
-    editor.setTheme("ace/theme/eclipse");
-    editor.setShowPrintMargin(true);
-    editor.setDisplayIndentGuides(true);
-    editor.getSession().setMode("ace/mode/python");
-    editor.$blockScrolling = Infinity;
+    bsUI.starteditor()
     // editor.on("change", sendEditorChange());
 {% if edit != '' and editcontent == '' %}
-    window.onload(loadGithub());    
+    window.onload = bsController.load(bsGithubUtil, bsUI);    
 {% endif %}
 
 </script>
