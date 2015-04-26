@@ -141,7 +141,7 @@ Test the server locally by running:
 ####Configure for Automatic Startup
 
 Create a startup script in `/etc/init`. For example: `/etc/init/brython-server.conf` with
-with the following contents:
+the following contents:
 
     description "brython-server"
     start on (filesystem)
