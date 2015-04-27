@@ -425,3 +425,4 @@ var bsController = function(){
 
 // Execute from here
 bsConsole.init();
+bsUI.init();
