@@ -95,7 +95,7 @@ def githubretrievetoken(code):
 
 def githubforgetauth():
     """Forget the current Github authorization."""
-    session[SESSION_ACCESSTOKEN] = ""
+    session.pop(SESSION_ACCESSTOKEN, None)
 
 
 def githubrequest(user, repo, path, method='GET'):
