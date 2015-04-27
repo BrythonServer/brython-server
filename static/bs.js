@@ -122,7 +122,17 @@ var bsUI = function(){
                 $(URL_SUBMIT).click();
             }
         });
-
+        // loading image
+        $( "#loading").hide();
+        $("#navigation").show();
+        $( document ).ajaxStart(function() {
+            $( "#loading" ).show();
+            $("#navigation").hide();
+        });
+        $( document ).ajaxComplete(function() {
+            $( "#loading" ).hide();
+            $("#navigation").show();
+        });
     }
 
     // Show github link
@@ -308,25 +318,31 @@ var bsController = function(){
     // load script from github, embed in html and execute
     // data dictionary input includes user, repo, name and path (fragment)
     function runGithub(Console, UI, data) {
-        var result = loadGithubtoScript(UI,data);
-        if (result) {
+        loadGithubtoScript(UI, data, function(result){
             setMainValue(maincontent);
             if (mainscript) {
                 runBrython(Console, {debug:1, ipy_id:[__MAIN__]});
             }
-        }
+        });
     }
     
     // update server with new editor content (all the time!)
     function sendEditorChange(UI) {
         var data = {'editcontent':UI.geteditor(), 
             'url_input':$(UI.URL_INPUT).val()};
-        var xhr = new XMLHttpRequest();
-        xhr.open('PUT', 'api/v1/update', false);  // synchronous
-        xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-        // send the collected data as JSON
-        xhr.send(JSON.stringify(data));
-        var result = JSON.parse(xhr.responseText);
+        $.ajax({
+            url        : 'api/v1/update',
+            contentType: 'application/json; charset=UTF-8', 
+            dataType   : 'json',
+            data       : JSON.stringify(data),
+            type       : 'PUT',
+            complete   : function() {
+            },
+            success    : function(data){
+            },
+            error      : function(){
+            }
+        });            
     }
 
     // re-execute current mainscript
@@ -363,51 +379,58 @@ var bsController = function(){
         var data = GH.parse(UI);
         data['editcontent'] = UI.geteditor();
         data['commitmsg'] = "Updated from Brython Server: "+ds+" "+ts;
-        var xhr = new XMLHttpRequest();
-        xhr.open('PUT', 'api/v1/commit', false);  // synchronous
-        xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-        // send the collected data as JSON
-        xhr.send(JSON.stringify(data));
-        var result = JSON.parse(xhr.responseText);
+        $.ajax({
+            url        : 'api/v1/commit',
+            contentType: 'application/json; charset=UTF-8', 
+            dataType   : 'json',
+            data       : JSON.stringify(data),
+            type       : 'PUT',
+            complete   : function() {
+            },
+            success    : function(data){
+            },
+            error      : function(){
+            }
+        });            
     }
 
     // read main github script name and content
     // return file name
-    function loadGithubtoScript(UI, data) {
+    function loadGithubtoScript(UI, data, callback) {
         if (data) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('PUT', 'api/v1/load', false);  // synchronous
-            xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-            // send the collected data as JSON
-            xhr.send(JSON.stringify(data));
-            var result = JSON.parse(xhr.responseText);
-            if (xhr.status == 200 && result['success'] && result['name']) {
-                maincontent = result['content'];
-                UI.showgithub(result['path']);
-                return result;
-            }
-            else {
-                return false;
-            }
-        }
-        else {
-            return false;
+            $.ajax({
+                url        : 'api/v1/load',
+                contentType: 'application/json; charset=UTF-8', 
+                dataType   : 'json',
+                data       : JSON.stringify(data),
+                type       : 'PUT',
+                complete   : function() {
+                },
+                success    : function(data){
+                    maincontent = data['content'];
+                    UI.showgithub(data['path']);
+                    callback(data);
+                },
+                error      : function(){
+                }
+            
+            });        
         }
     }
 
     // load main github script name, insert content in editor
     function loadGithub(GH, UI) {
         var data = GH.parse(UI);
-        var result = loadGithubtoScript(UI, data);
-        if (result) {
-            // now that we have a full URL for the file, parse again
-            data = GH.parseurl(result['path']);
-            $(UI.URL_INPUT).val(GH.createurl(data))
-            UI.showshareurl(data);
-            UI.seteditor(maincontent);
-            UI.clearselect();
-            sendEditorChange(UI);
-        }
+        loadGithubtoScript(UI, data,
+            function(result){
+                data = GH.parseurl(result['path']);
+                $(UI.URL_INPUT).val(GH.createurl(data))
+                UI.showshareurl(data);
+                UI.seteditor(maincontent);
+                UI.clearselect();
+                sendEditorChange(UI);
+            });
+        
     }
 
 

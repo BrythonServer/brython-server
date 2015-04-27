@@ -8,9 +8,10 @@
             <input class="u-full-width" type="url" placeholder="https://github.com/<user>/<repo>" id="url_input" value="{{ edit }}">
         </div>
         <div class="two-thirds column">
+            <span id="navigation">
             <button  class="button" id="url_submit" 
                 onclick="bsController.load(bsGithubUtil, bsUI)">Load</button>
-            <button  class="button" 
+            <button  id="button" 
                 onclick="bsController.runeditor(bsUI, bsConsole)">&gt;</button>
             <a class="button" target="_blank" id="github_url" href="http://github.com">@Github</a>
             <a class="button" target="_blank" id="share_url" href="#">Share</a>
@@ -23,6 +24,8 @@
             <button class="button" 
                 onclick="bsController.login(bsUI)">Login</button>
 {% endif %}
+            </span>
+            <span class="button" id="loading">WORKING</span>
         </div>
     </div>
     

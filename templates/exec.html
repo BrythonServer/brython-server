@@ -5,11 +5,14 @@
 <div class="full-width-container">
     <div class="row" id="nav-row">
         <div class="twelve columns">
-            <button  class="button" 
-                onclick="bsController.run(bsConsole)">Run</button>
-            <button class="button" 
-                onclick="bsUI.runedit()">Edit</button>
-            <a class="button" target="_blank" id="github_url" href="http://github.com">@Github</a>
+            <span id="navigation">
+                <button  class="button" 
+                    onclick="bsController.run(bsConsole)">Run</button>
+                <button class="button" 
+                    onclick="bsUI.runedit()">Edit</button>
+                <a class="button" target="_blank" id="github_url" href="http://github.com">@Github</a>
+            </span>
+            <span class="button" id="loading">WORKING</span>
         </div>
     </div>
     

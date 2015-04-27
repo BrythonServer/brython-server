@@ -43,6 +43,10 @@ body {
     padding-bottom:10px;
 }
 
+#loading {
+    color:red;
+}
+
 #footer-row {
     padding:10px;
     text-align:right;
