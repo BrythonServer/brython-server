@@ -254,6 +254,10 @@ def cachecontent(content):
     content -- the editor content text
     """
     session[SESSION_EDITCONTENT] = content
+
+def cachefilekey(context):
+    """Return a Redis key that is versioned and unique per installation."""
+    return CACHE_VERSION + github_client_id() + json.dumps(context)
     
 def cachefile(context, contents, sha, ETag):
     """Cache specific file content, with metadata.
@@ -264,7 +268,7 @@ def cachefile(context, contents, sha, ETag):
     sha -- sha string
     """
     r = redis.Redis()
-    r.set(json.dumps(context), json.dumps(Cachedata(contents, sha, ETag)), ex=CACHE_TIMEOUT_S)
+    r.set(cachefilekey(context), json.dumps(Cachedata(contents, sha, ETag)), ex=CACHE_TIMEOUT_S)
 
 
 def cachedfileexists(context):
@@ -275,7 +279,7 @@ def cachedfileexists(context):
     Return: True if cached copy exists, False otherwise.
     """
     r = redis.Redis()
-    return r.exists(json.dumps(context))
+    return r.exists(cachefilekey(context))
 
 def cachedfile(context):
     """Retrieve specific cached file content.
@@ -288,7 +292,7 @@ def cachedfile(context):
     sha -- the file sha
     """
     r = redis.Redis()
-    raw = json.loads(r.get(json.dumps(context)).decode("utf-8"))
+    raw = json.loads(r.get(cachefilekey(context)).decode("utf-8"))
     data = Cachedata(raw[0], raw[1], raw[2])
     return data.contents, data.sha, data.etag
 

@@ -18,7 +18,7 @@ SESSION_GITHUBREPO = 'githubrepo'
 SESSION_GITHUBPATH = 'githubpath'
 
 CACHE_TIMEOUT_S = 60*60*24  # One Day (how much to keep RAM usage under control?)
-
+CACHE_VERSION = '1'
 Context = namedtuple('Context', ['user', 'repo', 'path'])
 Cachedata = namedtuple('Cachedata', ['contents','sha','etag'])
 
