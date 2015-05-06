@@ -1,7 +1,7 @@
 """Brython-Server utility functions for Github and session/cache management
 
 """
-import os, urllib, json, base64, random, string
+import os, urllib, json, base64, random, string, redis
 from flask import session, url_for
 from definitions import *
 
@@ -115,6 +115,7 @@ def githubrequest(user, repo, path, method='GET'):
     token = session.get(SESSION_ACCESSTOKEN, os.environ.get(ENV_DEVTOKEN))
     gitrequest = urllib.request.Request(url, method=method)
     gitrequest.add_header('Authorization', 'token {0}'.format(token))
+    gitrequest.add_header('User-Agent', 'Brython-Server')
     return gitrequest, token
     
 
@@ -128,17 +129,67 @@ def githubretrievefile(user, repo, path):
 
     Return tuple:
     content -- the content of the specific file
-    token -- the token being used in the request
+    sha -- the file sha (used for subsequent commits, if any)
     """
+    jsresponse = sha = None
+    requestcontext = Context(user, repo, path)
     gitrequest, token = githubrequest(user, repo, path)
-    response = urllib.request.urlopen(gitrequest)
-    jsresponse = json.loads(response.read().decode("utf-8"))
-    binreturn = base64.b64decode(jsresponse['content'].encode('utf-8'))
+    if cachedfileexists(requestcontext):
+        content, sha, etag = cachedfile(requestcontext)
+        gitrequest.add_header('If-None-Match', etag)
     try:
-        return binreturn.decode('utf-8'), token
+        response = urllib.request.urlopen(gitrequest)
+        jsresponse = json.loads(response.read().decode("utf-8"))
+        sha = jsresponse['sha']
+        etag = response.getheader('ETag')
+        print("Fresh content ... caching")
+        cachefile(requestcontext, jsresponse, sha, etag)
+    except (urllib.error.HTTPError) as err:
+        if err.msg == 'Not Modified':
+            print("Not changed ({0}) ... retrieving cache".format(path))
+            jsresponse, sha, etag = cachedfile(requestcontext)
+        else:
+            raise
+    encodedcontent = jsresponse['content'].encode('utf-8')
+    binreturn = base64.b64decode(encodedcontent)
+    try:
+        return binreturn.decode('utf-8'), sha
     except UnicodeDecodeError:
-        return binreturn, token
+        return binreturn, sha
 
+def githubgetmainfile(user, repo, path):
+    """Retrieve the 'main' Python file from a repo/directory. Function
+    attempts to make a sensible decision.
+    
+    Arguments:
+    user -- the Github user ID/name
+    repo -- the Github user's repository name
+    path -- specific directory path within the repo
+
+    Return: the name of the file
+    """
+    jsresponse = sha = None
+    requestcontext = Context(user, repo, path)
+    gitrequest, token = githubrequest(user, repo, path)
+    if cachedfileexists(requestcontext):
+        content, sha, etag = cachedfile(requestcontext)
+        gitrequest.add_header('If-None-Match', etag)
+    try:
+        mainfile = ''
+        response = urllib.request.urlopen(gitrequest)
+        jsresponse = json.loads(response.read().decode("utf-8"))
+        sha = ''
+        etag = response.getheader('ETag')
+        print("Fresh directory content ... caching")
+        cachefile(requestcontext, jsresponse, sha, etag)
+    except (urllib.error.HTTPError) as err:
+        if err.msg == 'Not Modified':
+            print("Directory not changed ... retrieving cache")
+            jsresponse, sha, etag = cachedfile(requestcontext)
+        else:
+            raise
+    names = [f['name'] for f in filter(lambda x: x['type'] == 'file', jsresponse)]
+    return selectmainfile(names)
 
 def githubpath(user, repo, path, name):
     """Build a valid URL to file on Github.
@@ -169,6 +220,21 @@ def githubloggedin():
     return True if github_token else False
 
 
+def selectmainfile(names):
+    """Determine 'main' python file from a list of candidates.
+    
+    Arguments:
+    names -- a list of candidate names
+    Return: the best candidate name
+    """
+    mainfile = ''
+    for foundname in names:
+        if (mainfile == '' and len(foundname) > 3 and foundname[-3:] == '.py' or
+            # Foud a python file called main.py or __main__.py? Make IT the one!
+            foundname in ["main.py", "__main__.py"]):
+            mainfile = foundname
+    return mainfile
+
 def cachedurl():
     """Return cached Github URL from web UI."""
     return session.get(SESSION_URLINPUT,'')
@@ -189,32 +255,41 @@ def cachecontent(content):
     """
     session[SESSION_EDITCONTENT] = content
     
-def cachefile(path, content):
-    """Cache specific file content.
+def cachefile(context, contents, sha, ETag):
+    """Cache specific file content, with metadata.
     
     Arguments:
-    path -- the file path and name
-    content -- the file content text
+    context -- Context object with user, repo, path
+    contents -- Raw file content (binary or text)
+    sha -- sha string
     """
-    session[SESSION_FILECACHE][path] = content
+    r = redis.Redis()
+    r.set(json.dumps(context), json.dumps(Cachedata(contents, sha, ETag)), ex=CACHE_TIMEOUT_S)
 
 
-def cachedfile(path):
+def cachedfileexists(context):
+    """Determine if a cached copy of file exists.
+    
+    Arguments:
+    context -- Context object with user, repo, path
+    Return: True if cached copy exists, False otherwise.
+    """
+    r = redis.Redis()
+    return r.exists(json.dumps(context))
+
+def cachedfile(context):
     """Retrieve specific cached file content.
     
     Arguments:
     path -- the file path and name
     
-    Returns the file content text.
+    Return: 
+    content -- the file content text
+    sha -- the file sha
     """
-    if SESSION_FILECACHE not in session or path not in session[SESSION_FILECACHE]:
-        raise FileNotFoundError()
-    else:
-        return session[SESSION_FILECACHE][path]
-
-
-def clearfilecache():
-    """Clear/Initialize the file cache for this session."""
-    session[SESSION_FILECACHE] = {}
+    r = redis.Redis()
+    raw = json.loads(r.get(json.dumps(context)).decode("utf-8"))
+    data = Cachedata(raw[0], raw[1], raw[2])
+    return data.contents, data.sha, data.etag
 
 

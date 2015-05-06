@@ -91,7 +91,8 @@ def file(filename):
     """Return cached file for the current Github repo.
     """
     try:
-        content = cachedfile(filename)
+        cx = session[SESSION_GITHUBCONTEXT]
+        content, sha = githubretrievefile(cx.user, cx.repo, cx.path + '/' + filename)
         if type(content) is bytes:
             return Response(content, mimetype='application/octet-stream')        
         else:
@@ -184,47 +185,29 @@ def v1_load():
     repo = content.get('repo')
     path = content.get('path','')
     name = content.get('name','')
-    mainfile = ""
+    mainfile = name
     mainsha = ""
-    clearfilecache()
-    urllib.request.urlcleanup()
-    gitrequest, token = githubrequest(user, repo, path)
+    
     try:
-        maincontent = ""
-        response = urllib.request.urlopen(gitrequest)
-        jsresponse = json.loads(response.read().decode("utf-8"))
-        if 'size' in jsresponse:        # if response is a single file
-            jsresponse = [jsresponse]   # make a list of it
-        for f in jsresponse:
-            if f['type'] == 'file':
-                ismain = False
-                foundname = f['name']
-                # First python file found? Make it THE ONE!
-                if (mainfile == "" and len(foundname) > 3 and foundname[-3:] == '.py' or
-                    # Foud a python file called main.py or __main__.py? Make IT the one!
-                    foundname in ["main.py", "__main__.py"] or
-                # Found a python file that the user actually wanted? Make IT THE ONE!
-                    foundname == name):
-                    mainfile = foundname
-                    mainsha = f['sha']
-                    ismain = True
-                fileurl = f['download_url']
-                # Read each file in the directory, regardless...
-                temp, token = githubretrievefile(user, repo, f['path'])
-                cachefile(foundname, temp)
-                if ismain:
-                    maincontent = temp
-        # All files read, save primary name and sha
-        session[SESSION_MAINFILE] = mainfile
-        session[SESSION_MAINSHA] = mainsha
-        # All files read, return 
-        return json.dumps({'success':True, 
-                    'name':mainfile, 
-                    'path':githubpath(user,repo,path,mainfile),
-                    'content':maincontent}), 200, {'ContentType':'application/json'}
-    except urllib.error.HTTPError as err:
-        print("Github error: " + err.msg + ", token was ", token, ", path was ", user, repo, path)
+        if mainfile == '':
+            mainfile = githubgetmainfile(user, repo, path)
+        if mainfile != '':
+            maincontent, mainsha = githubretrievefile(user, repo, path + '/' + mainfile)
+            # All files read, save primary name and sha
+            session[SESSION_MAINFILE] = mainfile
+            session[SESSION_MAINSHA] = mainsha
+            session[SESSION_GITHUBCONTEXT] = Context(user, repo, path)
+            # All files read, return 
+            return json.dumps({'success':True, 
+                        'name':mainfile, 
+                        'path':githubpath(user,repo,path,mainfile),
+                        'content':maincontent}), 200, {'ContentType':'application/json'}
+        else:
+            raise FileNotFoundError
+    except (urllib.error.HTTPError, FileNotFoundError) as err:
+        print("Github error: " + err.msg + ", path was ", user, repo, path)
         return json.dumps({'success':False, 'message':err.msg}), 200, {'ContentType':'application/json'} 
+
 
 
 
