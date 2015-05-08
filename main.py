@@ -38,6 +38,7 @@ def root():
     redirect -- to / or github
     """
     github_loggedin = githubloggedin()   
+    sitename = os.environ.get(ENV_SITENAME, 'Brython Server')
     if request.method == 'GET':
         if 'user' in request.args:
             user = request.args.get('user')
@@ -48,7 +49,8 @@ def root():
                 user=user, 
                 repo=repo, 
                 name=name, 
-                path=path)
+                path=path,
+                site=sitename)
         elif 'code' in request.args and 'state' in request.args:
             # Github authorization response - check if valid
             if checkgithubstate(request.args.get('state')):
@@ -58,7 +60,8 @@ def root():
             return render_template('index.html', 
                 edit=cachedurl(), 
                 editcontent = cachedcontent(),
-                github = github_loggedin)
+                github = github_loggedin,
+                site = sitename)
     elif request.method == 'POST':
         if RUN_EDIT in request.form:
             # user is requesting to open a new page with editor

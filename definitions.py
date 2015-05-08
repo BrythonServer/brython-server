@@ -6,6 +6,7 @@ ENV_GITHUBCLIENTID = 'githubclientid'
 ENV_GITHUBSECRET = 'githubsecret'
 ENV_DEVTOKEN = 'githubtoken'
 ENV_FLASKSECRET = 'flasksecret'
+ENV_SITENAME = 'sitename'
 
 SESSION_GITHUBSTATE = 'githubstate'
 SESSION_ACCESSTOKEN = 'accesstoken'
