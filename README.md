@@ -3,7 +3,7 @@
 **Brython-Server** is a Flask-based web application focused on providing a simple
 Python 3 development environment where source files are hosted on Github.
 
-You can try a [development version of Brython-Server](http://hhscp.org/brython-server/)
+You can try a [development version of Brython-Server](http://runpython.com)
 to get a feel for how it works.
 
 ## Brief Instructions
