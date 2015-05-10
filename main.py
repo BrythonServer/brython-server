@@ -13,7 +13,7 @@ app.wsgi_app = ReverseProxied(app.wsgi_app)
 app.session_interface = RedisSessionInterface()
 
 app.secret_key = os.environ.get(ENV_FLASKSECRET,'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT')
-app.debug = True
+app.debug = os.environ.get(ENV_DEBUG, False)
 
 
 @app.route('/', methods=['POST', 'GET'])

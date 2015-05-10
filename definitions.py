@@ -7,6 +7,7 @@ ENV_GITHUBSECRET = 'githubsecret'
 ENV_DEVTOKEN = 'githubtoken'
 ENV_FLASKSECRET = 'flasksecret'
 ENV_SITENAME = 'sitename'
+ENV_DEBUG = 'debug'
 
 SESSION_GITHUBSTATE = 'githubstate'
 SESSION_ACCESSTOKEN = 'accesstoken'
