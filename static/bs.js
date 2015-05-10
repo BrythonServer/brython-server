@@ -228,14 +228,20 @@ var bsGithubUtil = function(){
     
     // create a Github URL text for speciic file
     function createGithubURL(data) {
-        var url = "https://github.com/" + data['user'] + "/" + data['repo'] 
-        url += "/blob/master/" + createGithubPath(data);
+        var url = 'not found...';
+        if (data['user'] != '' && data['repo'] != '') {
+            url = "https://github.com/" + data['user'] + "/" + data['repo'] 
+            url += "/blob/master/" + createGithubPath(data);
+        }
         return url
     }
     
     // parse Github URL text
     function parseGithubURL(url_input) {
-        var data = null;
+        var data = {'user':'', 'repo':'', 'path':'', 'name':''};
+        if (url_input == null){
+            return data;
+        }
         // attempt a single file match
         // example: https://github.com/tiggerntatie/brython-student-test/blob/master/hello.py
         // example: https://github.com/tiggerntatie/hhs-cp-site/blob/master/hhscp/static/exemplars/c02hello.py
