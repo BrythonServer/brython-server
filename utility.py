@@ -235,26 +235,6 @@ def selectmainfile(names):
             mainfile = foundname
     return mainfile
 
-def cachedurl():
-    """Return cached Github URL from web UI."""
-    return session.get(SESSION_URLINPUT,'')
-
-def cachedcontent():
-    """Return cached editor content for web UI."""
-    return session.get(SESSION_EDITCONTENT,'print("Hello, world.")')
-
-def cacheurl(url):
-    """Cache the current Github URL from web UI."""
-    session[SESSION_URLINPUT] = url
-
-def cachecontent(content):
-    """Cache the current editor content from the web UI.
-    
-    Arguments:
-    content -- the editor content text
-    """
-    session[SESSION_EDITCONTENT] = content
-
 def cachefilekey(context):
     """Return a Redis key that is versioned and unique per installation."""
     return CACHE_VERSION + github_client_id() + json.dumps(context)

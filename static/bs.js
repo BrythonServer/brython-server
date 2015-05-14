@@ -169,6 +169,11 @@ var bsUI = function(){
         editor.setDisplayIndentGuides(true);
         editor.getSession().setMode("ace/mode/python");
         editor.$blockScrolling = Infinity;
+        var textarea = $('textarea[name="editor"]').hide();
+        editor.getSession().setValue(textarea.val());
+        editor.getSession().on('change', function(){
+          textarea.val(editor.getSession().getValue());
+        });
     }
 
     // Get editor content
@@ -332,25 +337,6 @@ var bsController = function(){
         });
     }
     
-    // update server with new editor content (all the time!)
-    function sendEditorChange(UI) {
-        var data = {'editcontent':UI.geteditor(), 
-            'url_input':$(UI.URL_INPUT).val()};
-        $.ajax({
-            url        : 'api/v1/update',
-            contentType: 'application/json; charset=UTF-8', 
-            dataType   : 'json',
-            data       : JSON.stringify(data),
-            type       : 'PUT',
-            complete   : function() {
-            },
-            success    : function(data){
-            },
-            error      : function(){
-            }
-        });            
-    }
-
     // re-execute current mainscript
     function runCurrent(Console) {
         if (mainscript) {
@@ -360,14 +346,12 @@ var bsController = function(){
     
     // execute contents of editor and update server with new content
     function runEditor(UI, Console) {
-        sendEditorChange(UI);
         setMainValue(UI.geteditor());
         runCurrent(Console)
     }
     
     // send request to login to github
     function loginGithub(UI) {
-        sendEditorChange(UI)
         $('#run_auth_request').submit();
     }
 
@@ -434,7 +418,6 @@ var bsController = function(){
                 UI.showshareurl(data);
                 UI.seteditor(maincontent);
                 UI.clearselect();
-                sendEditorChange(UI);
             });
         
     }

@@ -11,8 +11,6 @@ ENV_DEBUG = 'debug'
 
 SESSION_GITHUBSTATE = 'githubstate'
 SESSION_ACCESSTOKEN = 'accesstoken'
-SESSION_URLINPUT = 'urlinput'
-SESSION_EDITCONTENT = 'editcontent'
 SESSION_MAINFILE = 'mainfile'
 SESSION_MAINSHA = 'mainsha'
 SESSION_GITHUBCONTEXT = 'githubcontext'

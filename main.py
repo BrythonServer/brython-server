@@ -58,8 +58,6 @@ def root():
             return redirect(url_for('root'))
         else:
             return render_template('index.html', 
-                edit=cachedurl(), 
-                editcontent = cachedcontent(),
                 github = github_loggedin,
                 site = sitename)
     elif request.method == 'POST':
@@ -106,22 +104,6 @@ def file(filename):
 
 
 ## API routes
-
-@app.route('/api/v1/update', methods=['PUT'])
-def v1_update():
-    """Inform server of edits/updates to the web page editor content and url.
-    
-    JSON arguments:
-    editcontent -- current content of web page editor.
-    
-    JSON return:
-    success -- True/False
-    """
-    content = request.json
-    cachecontent(content.get('editcontent',''))
-    cacheurl(content.get('url_input',''))
-    return json.dumps({'success':True}, 200, {'ContentType':'application/json'})
-
 
 @app.route('/api/v1/commit', methods=['PUT'])
 def v1_commit():
