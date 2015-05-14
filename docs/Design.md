@@ -43,7 +43,6 @@ client side, using JSON as the encoding method.
 `method`  | Description   | Allowed Methods | Data Input (JSON)  | Data Output (JSON)
 ---       | ---           | ---             | ---         | --- 
 `load`    | Load and cache file(s) from the named Github repository. Identify single main file, return its name and content. | POST | `user`, `repo`, `path` {optional path fragment}, `name` {optional main file name} | `name` {main file name}, `path` {main file path}, `content` {main file content}, `success` {true/false}
-`update`  | Notify server of changes to the main file being edited in the browser. Prevents user losing work if they accidentally close the tab. | POST  | `editcontent` {current editor content}, `url_input` {current github pasted URL} | `success` {true/false} 
 `commit`  | Commit main file changes made by the user to the originating Github file. | PUT   | `user`, `repo`, `path` {path fragment}, `name` {main file name}, `editcontent` {current editor content}, `commitmsg` {message to use for Github commit} | `success` {true/false} 
 
 ### Server Github Integration
@@ -72,7 +71,7 @@ The Brython-Server client side system consists of a single Javascript include, w
 Brython-Server web page.
 
 The principal responsibility of the client side code is to provide communication with the Brython-Server
-server side API (`load`, `update` and `commit`), described earlier. In addition, there is code for dynamically 
+server side API (`load` and `commit`), described earlier. In addition, there is code for dynamically 
 enabling the different buttons and links that the user is able to access, depending on their current login state
 and whether they have loaded any code from Github. Finally, there are routines that "hijack" the browser's 
 alert and prompt functions in Javascript, re-routing text to a console textarea on the browser page.
