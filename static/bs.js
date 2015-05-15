@@ -170,7 +170,9 @@ var bsUI = function(){
         editor.getSession().setMode("ace/mode/python");
         editor.$blockScrolling = Infinity;
         var textarea = $('textarea[name="editor"]').hide();
-        editor.getSession().setValue(textarea.val());
+        if (textarea.val().length != 0) {
+            editor.getSession().setValue(textarea.val());
+        }
         editor.getSession().on('change', function(){
           textarea.val(editor.getSession().getValue());
         });

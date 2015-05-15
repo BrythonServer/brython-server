@@ -59,7 +59,9 @@ def root():
         else:
             return render_template('index.html', 
                 github = github_loggedin,
-                site = sitename)
+                site = sitename,
+                edit = '',
+                editcontent = INIT_CONTENT)
     elif request.method == 'POST':
         if RUN_EDIT in request.form:
             # user is requesting to open a new page with editor

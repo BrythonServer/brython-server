@@ -29,3 +29,5 @@ GITHUB_COMMIT = 'github_commit'
 
 URL_GITHUBAUTHORIZE = 'https://github.com/login/oauth/authorize'
 URL_GITHUBRETRIEVETOKEN = 'https://github.com/login/oauth/access_token'
+
+INIT_CONTENT = 'print("Hello, world.")'

@@ -5,7 +5,7 @@
 <div class="full-width-container">
     <div class="row" id="nav-row">
         <div class="one-third column">
-            <input class="u-full-width" type="url" placeholder="https://github.com/<user>/<repo>" id="url_input">
+            <input class="u-full-width" type="url" placeholder="https://github.com/<user>/<repo>" id="url_input" value="{{ edit }}">
         </div>
         <div class="two-thirds column">
             <span id="navigation">
@@ -33,7 +33,7 @@
     <div class="row" id="body-row">
         <div class="seven columns" id="editor-column">
             <textarea name="editor"></textarea>
-            <div id="editor"></div>
+            <div id="editor">{{ editcontent }}</div>
         </div>
         <div class="five columns" id="output-column">
         <textarea readonly cols="80" id="console"></textarea>
