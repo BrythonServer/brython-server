@@ -15,7 +15,6 @@ app.session_interface = RedisSessionInterface()
 app.secret_key = os.environ.get(ENV_FLASKSECRET,'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT')
 app.debug = os.environ.get(ENV_DEBUG, False)
 
-
 @app.route('/', methods=['POST', 'GET'])
 def root():
     """Root server URL.
@@ -100,7 +99,8 @@ def file(filename):
             return Response(content, mimetype='application/octet-stream')        
         else:
             return Response(content)
-    except FileNotFoundError:
+    except (FileNotFoundError, KeyError) as err:
+        print(err)
         abort(404)
         
 
@@ -185,6 +185,7 @@ def v1_load():
             # All files read, save primary name and sha
             session[SESSION_MAINFILE] = mainfile
             session[SESSION_MAINSHA] = mainsha
+            session['test'] = 'yelp'
             session[SESSION_GITHUBCONTEXT] = Context(user, repo, path)
             # All files read, return 
             return json.dumps({'success':True, 
