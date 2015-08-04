@@ -381,7 +381,8 @@ var bsController = function(){
             },
             success    : function(data){
             },
-            error      : function(){
+            error      : function(data){
+                alert(data.message)
             }
         });            
     }
