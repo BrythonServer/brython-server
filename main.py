@@ -99,7 +99,7 @@ def file(filename):
             return Response(content, mimetype='application/octet-stream')        
         else:
             return Response(content)
-    except (FileNotFoundError, KeyError) as err:
+    except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
         print(err)
         abort(404)
         
@@ -123,7 +123,6 @@ def v1_commit():
     success -- True/False
     """
     content = request.json
-    content = request.json
     user = content.get('user')
     repo = content.get('repo')
     path = content.get('path','')
@@ -137,9 +136,13 @@ def v1_commit():
     gitrequest, token = githubrequest(user, repo, path, 'PUT')
     gitrequest.add_header('Content-Type', 'application/json; charset=utf-8')
     gitrequest.add_header('Accept', 'application/json')
-    parameters = {'message':msg,
-        'content':base64.b64encode(editcontent.encode('utf-8')).decode('utf-8'),
-        'sha':session[SESSION_MAINSHA]}
+    try:
+        parameters = {'message':msg,
+            'content':base64.b64encode(editcontent.encode('utf-8')).decode('utf-8'),
+            'sha':session[SESSION_MAINSHA]}
+    except:
+        print("Session expired.")
+        return json.dumps({'success':False, 'message':'Session expired - reload to continue'}), 200, {'ContentType':'application/json'}
     data = json.dumps(parameters).encode('utf-8')
     gitrequest.add_header('Content-Length', len(data))
     try:
