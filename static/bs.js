@@ -164,11 +164,11 @@ var bsUI = function(){
     // Create editor
     function startEditor() {
         editor = ace.edit("editor");
-        editor.setTheme("ace/theme/eclipse");
+        //editor.setTheme("ace/theme/eclipse");
         editor.setShowPrintMargin(true);
         editor.setDisplayIndentGuides(true);
         editor.getSession().setMode("ace/mode/python");
-        editor.$blockScrolling = Infinity;
+        //editor.$blockScrolling = Infinity;
         var textarea = $('textarea[name="editor"]').hide();
         if (textarea.val().length != 0) {
             editor.getSession().setValue(textarea.val());
