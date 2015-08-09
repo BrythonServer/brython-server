@@ -334,6 +334,8 @@ var bsController = function(){
         loadGithubtoScript(UI, data, function(result){
             setMainValue(maincontent);
             if (mainscript) {
+                $( "#loading" ).hide();
+                $("#navigation").show();
                 runBrython(Console, {debug:1, ipy_id:[__MAIN__]});
             }
         });
