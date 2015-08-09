@@ -152,8 +152,9 @@ def v1_commit():
         print("Github commit OK")
         return json.dumps({'success':True}, 200, {'ContentType':'application/json'})
     except urllib.error.HTTPError as err:
-        print("Github commit error: " + err.msg + " " + str(err.code) + ", token was ", token, ", path was ", user, repo, path)
-        return json.dumps({'success':False, 'message':err.msg}), 200, {'ContentType':'application/json'} 
+        error = err.msg + " " + str(err.code)
+        print("Github commit error: " + error + ", token was ", token, ", path was ", user, repo, path)
+        return json.dumps({'success':False, 'message':error}), 404, {'ContentType':'application/json'} 
 
 
 @app.route('/api/v1/load', methods=['PUT'])
