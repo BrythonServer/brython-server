@@ -300,11 +300,21 @@ var bsController = function(){
     var maincontent = ''
     var mainscript = null;
     const __MAIN__ = "__main__";
+    var initialized = false
+    
+    // Initialize the brython interpreter
+    function initBrython() {
+        if (!initialized) {
+            brython(1);
+            initialized = true
+        }
+    }
 
     // Execute the brython interpreter
     function runBrython(console, argdict) {
         console.clear();
-        brython(argdict);
+        __EXECUTE__BRYTHON__();
+        //brython(argdict);
     }
     
     function removeMainScript() {
@@ -331,6 +341,7 @@ var bsController = function(){
     // load script from github, embed in html and execute
     // data dictionary input includes user, repo, name and path (fragment)
     function runGithub(Console, UI, data) {
+        initBrython();
         loadGithubtoScript(UI, data, function(result){
             setMainValue(maincontent);
             if (mainscript) {
@@ -436,6 +447,7 @@ var bsController = function(){
         commit:commitGithub,
         load:loadGithub,
         runeditor:runEditor,
+        init:initBrython
     }
 }()
 /* END bsController */

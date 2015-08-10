@@ -12,6 +12,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/3.0.5/pixi.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/buzz/1.1.10/buzz.min.js"></script>
     <script type="text/javascript" src="https://cdn.rawgit.com/brython-dev/brython/3.2.0/www/src/brython.js"></script>
+<script type="text/python">
+from browser import document, window
+import traceback
+def __EXECUTE__BRYTHON__():
+    try:
+        content = document['__main__'].innerHTML
+        exec(content)
+    except:
+        traceback.print_exc()
+
+window.__EXECUTE__BRYTHON__ = __EXECUTE__BRYTHON__
+</script>
 {% endblock %}
 {% block body %}
 {% endblock %}

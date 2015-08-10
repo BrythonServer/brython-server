@@ -68,7 +68,8 @@
 {% block foot %}
 {{ super() }}
 <script type="text/javascript">
-    bsUI.starteditor()
+    bsUI.starteditor();
+    bsController.init()
     // editor.on("change", sendEditorChange());
 {% if edit != '' and editcontent == '' %}
     window.onload = bsController.load(bsGithubUtil, bsUI);    
