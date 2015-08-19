@@ -46,7 +46,7 @@
             <a href="https://github.com/tiggerntatie/brython-server">
             Brython-Server</a> and 
             <a href="http://www.brython.info/">Brython</a>.
-            
+            <a href= "{{ url_for('brythonconsole') }}">{{ consolesite }}</a>
         </div>
     </div>
 
@@ -68,8 +68,10 @@
 {% block foot %}
 {{ super() }}
 <script type="text/javascript">
+    bsConsole.init();
+    bsUI.init();    
     bsUI.starteditor();
-    bsController.init()
+    bsController.init();
     // editor.on("change", sendEditorChange());
 {% if edit != '' and editcontent == '' %}
     window.onload = bsController.load(bsGithubUtil, bsUI);    

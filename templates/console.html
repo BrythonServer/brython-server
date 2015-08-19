@@ -2,29 +2,27 @@
 
 {% block body %}
 
+<script id="consolesrc" type="text/python" src="https://cdn.rawgit.com/brython-dev/brython/3.2.0/www/tests/console.py"></script>
+
 <div class="full-width-container">
     <div class="row" id="nav-row">
         <div class="twelve columns">
             <span id="navigation">
-                <button  class="button" 
-                    onclick="bsController.run(bsConsole)">Run</button>
-                <button class="button" 
-                    onclick="bsUI.runedit()">Edit</button>
-                <a class="button" target="_blank" id="github_url" href="http://github.com">@Github</a>
             </span>
-            <span class="button" id="loading">WORKING</span>
         </div>
     </div>
     
     
     <div class="row" id="body-row">
-        <div class="twelve columns" id="output-column">
-        <textarea readonly cols="80" id="console"></textarea>
-    	</div>
+        <div class="twelve columns" id="editor-column">
+        <textarea cols="80" id="code"></textarea>
+        <div id=content></div>
+        </div>
     </div>
     <div class="row">
         <div class="twelve columns" id="footer-row">
-            <a href = "{{ url_for('root') }}">{{ site }}</a> runs on 
+            <a href = "{{ url_for('brythonconsole') }}">{{ consolesite }}</a> runs on 
+            <a href= "{{ url_for('root') }}"> {{ site }}</a>, 
             <a href="https://github.com/tiggerntatie/brython-server">
             Brython-Server</a> and 
             <a href="http://www.brython.info/">Brython</a>.
@@ -43,9 +41,7 @@
 {% block foot %}
 {{ super() }}
 <script type="text/javascript">
-    bsConsole.init();
-    bsUI.init();
-    var data = {'user':'{{ user }}', 'repo':'{{ repo }}', 'path':'{{ path }}', 'name':'{{ name }}' };
-    window.onload = bsController.rungithub(bsConsole, bsUI, data);
+    window.onload = brython({debug:1, ipy_id:['consolesrc']});
 </script>
 {% endblock %}
+

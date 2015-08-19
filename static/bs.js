@@ -451,7 +451,3 @@ var bsController = function(){
     }
 }()
 /* END bsController */
-
-// Execute from here
-bsConsole.init();
-bsUI.init();

@@ -59,6 +59,7 @@ def root():
             return render_template('index.html', 
                 github = github_loggedin,
                 site = sitename,
+                consolesite = sitename + " Console",
                 edit = '',
                 editcontent = INIT_CONTENT)
     elif request.method == 'POST':
@@ -87,6 +88,15 @@ def favicon():
     """
     return app.send_static_file('favicon.ico') 
 
+
+@app.route('/brythonconsole')
+def brythonconsole():
+    """Return template for python/brython console.
+    """
+    sitename = os.environ.get(ENV_SITENAME, 'Brython Server')
+    return render_template('console.html', 
+        site=sitename,
+        consolesite = sitename + " Console")
 
 @app.route('/<path:filename>')
 def file(filename):
