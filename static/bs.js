@@ -347,7 +347,7 @@ var bsController = function(){
             if (mainscript) {
                 $( "#loading" ).hide();
                 $("#navigation").show();
-                runBrython(Console, {debug:1, ipy_id:[__MAIN__]});
+                runBrython(Console, {debug:0, ipy_id:[__MAIN__]});
             }
         });
     }
@@ -355,7 +355,7 @@ var bsController = function(){
     // re-execute current mainscript
     function runCurrent(Console) {
         if (mainscript) {
-                runBrython(Console, {debug:1, ipy_id:[__MAIN__]});
+                runBrython(Console, {debug:0, ipy_id:[__MAIN__]});
         }
     }
     
