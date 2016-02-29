@@ -18,7 +18,7 @@ var bsConsole = function(){
     // periodically update the console control
     function Timeout() {
         var textarea = $(CONSOLEID)
-        textarea.append(consolequeue.join(""))
+        textarea.val(textarea.val() + consolequeue.join(""))  // append to textarea
         textarea.scrollTop(textarea[0].scrollHeight);
         consolequeue = [];
         consoletimer = null;
@@ -77,7 +77,7 @@ var bsConsole = function(){
 
     // clear the console output
     function clearConsole() {
-        $(CONSOLEID).html('');
+        $(CONSOLEID).val('');
     }
 
     // public API
