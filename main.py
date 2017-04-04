@@ -152,7 +152,7 @@ def v1_commit():
             'sha':session[SESSION_MAINSHA]}
     except:
         print("Session expired.")
-        return json.dumps({'success':False, 'message':'Session expired - reload to continue'}), 200, {'ContentType':'application/json'}
+        return json.dumps({'success':False, 'message':'Session expired - reload to continue'}), 440, {'ContentType':'application/json'}
     data = json.dumps(parameters).encode('utf-8')
     gitrequest.add_header('Content-Length', len(data))
     try:
@@ -210,7 +210,7 @@ def v1_load():
             raise FileNotFoundError
     except (urllib.error.HTTPError, FileNotFoundError) as err:
         print("Github error: " + err.msg + ", path was ", user, repo, path)
-        return json.dumps({'success':False, 'message':err.msg}), 200, {'ContentType':'application/json'} 
+        return json.dumps({'success':False, 'message':err.msg}), 404, {'ContentType':'application/json'} 
 
 
 

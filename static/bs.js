@@ -417,7 +417,8 @@ var bsController = function(){
                     UI.showgithub(data['path']);
                     callback(data);
                 },
-                error      : function(){
+                error      : function(err){
+                    alert(err.responseJSON.message);
                 }
             
             });        
