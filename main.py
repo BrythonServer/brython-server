@@ -15,6 +15,32 @@ app.session_interface = RedisSessionInterface()
 app.secret_key = os.environ.get(ENV_FLASKSECRET,'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT')
 app.debug = os.environ.get(ENV_DEBUG, False)
 
+@app.url_defaults
+def hashed_static_file(endpoint, values):
+    """
+    Override behavior of 'url_for' to modify static URLs in a way that 
+    will prevent using cached versions when the static file changes.
+    For example, changes to bs.js are not loaded as long as a cache
+    exists.
+    
+    Adapted from: https://gist.github.com/Ostrovski/f16779933ceee3a9d181
+    """
+    if 'static' == endpoint or endpoint.endswith('.static'):
+        filename = values.get('filename')
+        if filename:
+            blueprint = request.blueprint
+            if '.' in endpoint:  # blueprint
+                blueprint = endpoint.rsplit('.', 1)[0]
+
+            static_folder = app.static_folder
+           # use blueprint, but dont set `static_folder` option
+            if blueprint and app.blueprints[blueprint].static_folder:
+                static_folder = app.blueprints[blueprint].static_folder
+
+            fp = os.path.join(static_folder, filename)
+            if os.path.exists(fp):
+                values['_'] = int(os.stat(fp).st_mtime)
+
 @app.route('/', methods=['POST', 'GET'])
 def root():
     """Root server URL.
