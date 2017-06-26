@@ -78,7 +78,7 @@ alert and prompt functions in Javascript, re-routing text to a console textarea 
 
 The main web page has two flavors, determined by the html templates index.html and a exec.html, both of which are rendered from the root URL (`/`) of the server, depending on how it was used.
 
-####`index.html`
+#### index.html
 
 This template is used when visiting the server root, and presents the visitor with a Python code editing pane on the
 left hand side, drive by the Ace Javascript editor. The Python execution console is shown in a smaller right-hand pane.
@@ -88,7 +88,7 @@ is pressed the `brython` function is executed, naming the editor ID as an argume
 Once a file or project has been loaded from Github, this page will also show a 'SHARE' button which will, when
 pressed, open a new tab/window using the `exec.html` template.
 
-####`exec.html`
+#### exec.html
 
 This template is used when visiting the server root with arguments in the URL to indicate a specific
 Github user, repository and file path. In this instance, the Python execution console consumes a full width pane
@@ -98,22 +98,22 @@ copied and pasted as a hyperlink on another page or in an e-mail (i.e. "shared")
 In this instance a button is available which allows the user to edit the main file using the `index.html` template by 
 opening a new window/tab.
 
-###Deployment
+### Deployment
 
 Following are steps for deploying Brython-Server to a Linux host:
 
-####Prerequisites
+#### Prerequisites
 
 1. Use the system package manager to install Python 3. 
 2. Follow these instructions to install [Redis](http://redis.io/topics/quickstart).
 
-####Clone Brython-Server
+#### Clone Brython-Server
 
 Create a local copy of the Brython-Server sources:
 
     git clone https://github.com/tiggerntatie/brython-server.git
 
-####Create Virtualenv
+#### Create Virtualenv
 
 Create a virtual environment for the server:
 
@@ -137,7 +137,7 @@ Test the server locally by running:
     python main.py
 
 
-####Configure for Automatic Startup
+#### Configure for Automatic Startup
 
 Create a startup script in `/etc/init`. For example: `/etc/init/brython-server.conf` with
 the following contents:
@@ -173,7 +173,7 @@ With this file in place, you can start the server with:
 
     sudo start brython-server
 
-####Use with NGINX
+#### Use with NGINX
 
 The gunicorn server can be the sole web server for this application, or you can use it with NGINX
 via proxy. Configure your NGINX server thus:
