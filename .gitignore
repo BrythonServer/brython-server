@@ -31,6 +31,7 @@ var/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+pip-selfcheck.json
 
 # Unit test / coverage reports
 htmlcov/
@@ -58,3 +59,9 @@ dump.rdb
 
 # Cloud 9
 .c9/*
+
+# virtualenv
+bin/
+include/
+local/
+share/
