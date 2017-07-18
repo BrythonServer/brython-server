@@ -1,4 +1,6 @@
-"""Brython-Server main module with Flask route points.
+"""
+Brython-Server main module with Flask route points.
+Author: E Dennison
 """
 import os
 import urllib.request, json, urllib.parse, base64
@@ -75,7 +77,8 @@ def root():
                 repo=repo, 
                 name=name, 
                 path=path,
-                site=sitename)
+                site=sitename,
+                brythonversion=BRYTHON_VERSION)
         elif 'code' in request.args and 'state' in request.args:
             # Github authorization response - check if valid
             if checkgithubstate(request.args.get('state')):
@@ -87,14 +90,16 @@ def root():
                 site = sitename,
                 consolesite = sitename + " Console",
                 edit = '',
-                editcontent = INIT_CONTENT)
+                editcontent = INIT_CONTENT,
+                brythonversion = BRYTHON_VERSION)
     elif request.method == 'POST':
         if RUN_EDIT in request.form:
             # user is requesting to open a new page with editor
             return render_template('index.html', 
                 edit=request.form[RUN_EDIT], 
                 editcontent = '',
-                github = github_loggedin)
+                github = github_loggedin,
+                brythonversion = BRYTHON_VERSION)
         elif AUTH_REQUEST in request.form:
             # user is requesting authorization from github
             return redirect(githubauthurl())
@@ -122,23 +127,29 @@ def brythonconsole():
     sitename = os.environ.get(ENV_SITENAME, 'Brython Server')
     return render_template('console.html', 
         site=sitename,
-        consolesite = sitename + " Console")
+        consolesite = sitename + " Console",
+        brythonversion = BRYTHON_VERSION)
 
 @app.route('/<path:filename>')
 def file(filename):
-    """Return cached file for the current Github repo.
+    """Return (possibly cached) file for the current Github repo.
+    Will look for match in BrythonServer/ggame repository as well!
     """
     try:
         cx = session[SESSION_GITHUBCONTEXT]
         content, sha = githubretrievefile(cx.user, cx.repo, cx.path + '/' + filename)
-        if type(content) is bytes:
-            return Response(content, mimetype='application/octet-stream')        
-        else:
-            return Response(content)
     except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
-        print(err)
-        abort(404)
-        
+        try:
+            content, sha = githubretrievefile(GGAME_USER, GGAME_REPOSITORY, filename)
+        except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
+            print(err)
+            abort(404)
+            return
+            
+    if type(content) is bytes:
+        return Response(content, mimetype='application/octet-stream')        
+    else:
+        return Response(content)
 
 
 ## API routes
@@ -169,26 +180,36 @@ def v1_commit():
         path += "/" + name
     else:
         path += name
-    gitrequest, token = githubrequest(user, repo, path, 'PUT')
-    gitrequest.add_header('Content-Type', 'application/json; charset=utf-8')
-    gitrequest.add_header('Accept', 'application/json')
     try:
-        parameters = {'message':msg,
-            'content':base64.b64encode(editcontent.encode('utf-8')).decode('utf-8'),
-            'sha':session[SESSION_MAINSHA]}
+        metadata = session.get(SESSION_METADATA, '')  # previously loaded a gist?
+        if metadata == '':  # default - ordinary repository
+            gitrequest, token = githubrequest(user, repo, path, 'PUT')
+            parameters = {'message':msg,
+                'content':base64.b64encode(editcontent.encode('utf-8')).decode('utf-8'),
+                'sha':session[SESSION_MAINSHA]}
+        else:   # this is a gist file name
+            gitrequest, token = gistrequest(name, 'PATCH')
+            parameters = {'files':
+                {metadata:
+                    {'content':editcontent}
+                }
+            }
     except:
         print("Session expired.")
         return json.dumps({'success':False, 'message':'Session expired - reload to continue'}), 440, {'ContentType':'application/json'}
     data = json.dumps(parameters).encode('utf-8')
+    gitrequest.add_header('Content-Type', 'application/json; charset=utf-8')
+    gitrequest.add_header('Accept', 'application/json')
     gitrequest.add_header('Content-Length', len(data))
     try:
         response = urllib.request.urlopen(gitrequest, data)
         jsresponse = json.loads(response.read().decode("utf-8"))
-        session[SESSION_MAINSHA] = jsresponse['content']['sha']
-        print("Github commit OK")
+        session[SESSION_MAINSHA] = jsresponse.get('content',{}).get('sha','')
         return json.dumps({'success':True}, 200, {'ContentType':'application/json'})
     except urllib.error.HTTPError as err:
         error = err.msg + " " + str(err.code)
+        print(dir(err))
+        print(err.headers)
         print("Github commit error: " + error + ", token was ", token, ", path was ", user, repo, path)
         return json.dumps({'success':False, 'message':error}), 404, {'ContentType':'application/json'} 
 
@@ -198,10 +219,10 @@ def v1_load():
     """Load source code and resources from Github
 
     JSON arguments:
-    user -- Github user name
-    repo -- Github user's repo name
+    user -- Github user name (blank for gist)
+    repo -- Github user's repo name (blank for gist)
     path -- optional path (fragment) to a specific file
-    name -- optional specific file name
+    name -- optional specific file name or gist ID
     
     JSON return:
     success -- True/False
@@ -210,30 +231,31 @@ def v1_load():
     content -- content of main file
     """
     content = request.json
-    user = content.get('user')
-    repo = content.get('repo')
+    user = content.get('user','')
+    repo = content.get('repo','')
     path = content.get('path','')
     name = content.get('name','')
     mainfile = name
     mainsha = ""
-    
     try:
-        if mainfile == '':
+        if mainfile == '': 
             mainfile = githubgetmainfile(user, repo, path)
-        if mainfile != '':
-            maincontent, mainsha = githubretrievefile(user, repo, path + '/' + mainfile)
+        else:
+            if user != '' and repo != '': # user, repo, path and mainfile
+                maincontent, mainsha = githubretrievefile(user, repo, path + '/' + mainfile)
+            elif user == '' or repo == '': # missing user or repo -> must be gist?
+                maincontent, mainsha = githubretrievegist(mainfile)
+            else:
+                raise FileNotFoundError
             # All files read, save primary name and sha
             session[SESSION_MAINFILE] = mainfile
             session[SESSION_MAINSHA] = mainsha
-            session['test'] = 'yelp'
             session[SESSION_GITHUBCONTEXT] = Context(user, repo, path)
             # All files read, return 
             return json.dumps({'success':True, 
                         'name':mainfile, 
                         'path':githubpath(user,repo,path,mainfile),
                         'content':maincontent}), 200, {'ContentType':'application/json'}
-        else:
-            raise FileNotFoundError
     except (urllib.error.HTTPError, FileNotFoundError) as err:
         print("Github error: " + err.msg + ", path was ", user, repo, path)
         return json.dumps({'success':False, 'message':err.msg}), 404, {'ContentType':'application/json'} 

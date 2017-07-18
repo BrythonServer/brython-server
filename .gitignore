@@ -65,3 +65,6 @@ bin/
 include/
 local/
 share/
+
+# brython
+brython.js

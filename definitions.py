@@ -1,5 +1,9 @@
-"""Brython-Server string constant definitions.
 """
+Brython-Server string constant definitions.
+Author: E Dennison
+"""
+BRYTHON_VERSION = '3.3.2'
+
 from collections import namedtuple
 
 ENV_GITHUBCLIENTID = 'githubclientid'
@@ -16,6 +20,7 @@ SESSION_MAINSHA = 'mainsha'
 SESSION_GITHUBCONTEXT = 'githubcontext'
 SESSION_GITHUBREPO = 'githubrepo'
 SESSION_GITHUBPATH = 'githubpath'
+SESSION_METADATA = 'metadata'
 
 CACHE_TIMEOUT_S = 60*60*24  # One Day (how much to keep RAM usage under control?)
 CACHE_VERSION = '1'
@@ -31,3 +36,6 @@ URL_GITHUBAUTHORIZE = 'https://github.com/login/oauth/authorize'
 URL_GITHUBRETRIEVETOKEN = 'https://github.com/login/oauth/access_token'
 
 INIT_CONTENT = 'print("Hello, world.")'
+
+GGAME_USER = 'BrythonServer'
+GGAME_REPOSITORY = 'ggame'

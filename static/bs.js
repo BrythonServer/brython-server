@@ -1,5 +1,6 @@
 /*
  * Brython-server default javascript
+ * Author: E Dennison
  */
  
  
@@ -104,6 +105,9 @@ var bsUI = function(){
     const URL_INPUT = '#url_input'
     const RUN_EDIT = '#run_edit'
     const RUN_EDIT_FORM = '#run_edit_form'
+    const TEXT_COLUMNS = ["col-md-8","col-md-4","col-md-0"];
+    const CONSOLE_COLUMNS = ["col-md-0","col-md-12","col-md-0"];
+    const GRAPHICS_COLUMNS = ["col-md-0","col-md-3","col-md-9"];
     
     var editor = null;
     
@@ -134,6 +138,56 @@ var bsUI = function(){
             $("#navigation").show();
         });
     }
+    
+    
+
+    function setConsoleMode() {
+        $("#editor-column").attr("class", CONSOLE_COLUMNS[0]);
+        $("#output-column").attr("class", CONSOLE_COLUMNS[1]);
+        $("#graphics-column").attr("class", CONSOLE_COLUMNS[2]);
+        $("#graphics-column").hide();
+        $("#editor-column").hide();
+        $("#haltbutton").prop('disabled', true);
+        onunload();
+    }
+    
+
+    function setEditMode() {
+        $("#editor-column").attr("class", TEXT_COLUMNS[0]);
+        $("#output-column").attr("class", TEXT_COLUMNS[1]);
+        $("#graphics-column").attr("class", TEXT_COLUMNS[2]);
+        $("#graphics-column").hide();
+        $("#editor-column").show();
+        $("#haltbutton").prop('disabled', true);
+        onunload();
+    }
+    
+    function setGraphicsMode() {
+        $("#editor-column").attr("class", GRAPHICS_COLUMNS[0]);
+        $("#output-column").attr("class", GRAPHICS_COLUMNS[1]);
+        $("#graphics-column").attr("class", GRAPHICS_COLUMNS[2]);
+        $("#ggame-canvas").height($("#graphics-column").clientHeight);
+        $("#ggame-canvas").width($("#graphics-column").clientWidth);
+        $("#haltbutton").prop('disabled', false);
+        $("#editor-column").hide();
+        $("#graphics-column").show();
+    }
+    
+    function setExecMode() {
+        $("#editor-column").attr("class", GRAPHICS_COLUMNS[0]);
+        $("#output-column").attr("class", GRAPHICS_COLUMNS[1]);
+        $("#graphics-column").attr("class", GRAPHICS_COLUMNS[2]);
+        $("#ggame-canvas").height($("#graphics-column").clientHeight);
+        $("#ggame-canvas").width($("#graphics-column").clientWidth);
+        $("#graphics-column").show();
+        $("#editor-column").attr("class", CONSOLE_COLUMNS[0]);
+        $("#output-column").attr("class", CONSOLE_COLUMNS[1]);
+        $("#graphics-column").attr("class", CONSOLE_COLUMNS[2]);
+        $("#graphics-column").hide();
+        $("#editor-column").hide();
+
+    }
+
 
     // Show github link
     function showGithub(path) {
@@ -145,12 +199,16 @@ var bsUI = function(){
     // Show share link
     function showShareURL(data) {
         var element = $(SHARE_URL)
-        var baseargs = "?user=" + data['user'] + "&repo=" + data['repo'] + "&name=" + data['name'];
-        if (data['path'] == '') {
-            element.attr('href', baseargs)
-        }
-        else {
-            element.attr('href', baseargs +  "&path=" + data['path'])
+        if (data['user'] == '' && data['repo'] == '') {
+            element.attr('href', "?gist=" + data['name']);
+        } else {
+            var baseargs = "?user=" + data['user'] + "&repo=" + data['repo'] + "&name=" + data['name'];
+            if (data['path'] == '') {
+                element.attr('href', baseargs)
+            }
+            else {
+                element.attr('href', baseargs +  "&path=" + data['path'])
+            }
         }
         element.show()
     }
@@ -163,13 +221,13 @@ var bsUI = function(){
     
     // Create editor
     function startEditor() {
-        editor = ace.edit("editor");
+        editor = ace.edit("editorace");
         //editor.setTheme("ace/theme/eclipse");
         editor.setShowPrintMargin(true);
         editor.setDisplayIndentGuides(true);
         editor.getSession().setMode("ace/mode/python");
         editor.$blockScrolling = Infinity;
-        var textarea = $('textarea[name="editor"]').hide();
+        var textarea = $('textarea[name="editorcache"]').hide();
         if (textarea.val().length != 0) {
             editor.getSession().setValue(textarea.val());
         }
@@ -209,7 +267,11 @@ var bsUI = function(){
         starteditor:startEditor,
         geteditor:getEditor,
         seteditor:setEditor,
-        clearselect:clearEditorSelection
+        clearselect:clearEditorSelection,
+        editmode:setEditMode,
+        graphicsmode:setGraphicsMode,
+        consolemode:setConsoleMode,
+        executemode:setExecMode
     }
     
 }();
@@ -233,12 +295,14 @@ var bsGithubUtil = function(){
         return path
     }
     
-    // create a Github URL text for speciic file
+    // create a Github URL text for specific file
     function createGithubURL(data) {
         var url = 'not found...';
         if (data['user'] != '' && data['repo'] != '') {
             url = "https://github.com/" + data['user'] + "/" + data['repo'] 
             url += "/blob/master/" + createGithubPath(data);
+        } else if (data['name'] != '') {
+            url = "https://gist.github.com/" + data['name'];
         }
         return url
     }
@@ -257,7 +321,13 @@ var bsGithubUtil = function(){
         var gitfilematch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/master\/([^/]+)/);
         var gittreefilematch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/master\/(.+)\/([^/]+)/);
         var gitrepomatch = url_input.match(/.*github\.com\/([^/]+)\/([^/]+).*/);
-        if (gitrepomatch) {
+        var gisturlmatch = url_input.match(/.*gist\.github\.com(\/[^/]+)?\/([0-9,a-f]+)/);
+        var gistmatch = url_input.match(/^[0-9,a-f]+$/);
+        if (gisturlmatch || gistmatch) {
+            var gist = gisturlmatch ? gisturlmatch[2] : gistmatch[0];
+            data = {'user':'', 'repo':'', 'path':'', 'name':gist};
+        }
+        else if (gitrepomatch) {
             data = {'user':gitrepomatch[1], 'repo':gitrepomatch[2], 'path':'', 'name':''};
             if (gittreematch) {
                 data['path'] = gittreematch[3];

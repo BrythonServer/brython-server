@@ -2,55 +2,69 @@
 
 {% block body %}
 
-<div class="full-width-container">
     <div class="row" id="nav-row">
-        <div class="one-third column">
-            <input class="u-full-width" type="url" placeholder="https://github.com/<user>/<repo>" id="url_input" value="{{ edit }}">
+        <div class="col-md-4">
+            <input class="form-control"  type="url" placeholder="https://github.com/<user>/<repo> or <gist ID>" id="url_input" value="{{ edit }}">
         </div>
-        <div class="two-thirds column">
+        <div class="col-md-8">
             <span id="navigation">
-            <button  class="button" id="url_submit" 
-                onclick="bsController.load(bsGithubUtil, bsUI)">Load</button>
-            <button  id="button" 
-                onclick="bsController.runeditor(bsUI, bsConsole)">&gt;</button>
-            <a class="button" target="_blank" id="github_url" href="http://github.com">@Github</a>
-            <a class="button" target="_blank" id="share_url" href="#">Share</a>
+            <button class="btn btn-default btn-sm" type="button" id="url_submit" 
+                onclick="bsController.load(bsGithubUtil, bsUI)">
+                <span class="octicon octicon-cloud-download" title="Load from Github"></span> load</button>
+            <button class="btn btn-default btn-sm"  type="button" 
+                onclick="bsController.runeditor(bsUI, bsConsole)">
+                <span class="octicon octicon-zap" title="Execute program"></span> GO!</button>
+            <button class="btn btn-default btn-sm"  type="button" id="haltbutton" disabled
+                onclick="bsUI.editmode()">
+                <span class="octicon octicon-x" title="Halt program"></span> STOP</button>
+            <a class="btn btn-default btn-sm" role="button" target="_blank" id="github_url" href="http://github.com">
+                <span class="octicon octicon-mark-github" title="View source on Github"></span></a>
+            <a class="btn btn-default btn-sm" role="button" target="_blank" id="share_url" href="#">
+                <span class="octicon octicon-link" title="Link to this program"></span></a>
 {% if github %}
-            <button class="button" 
-                onclick="bsController.commit(bsGithubUtil, bsUI)">Commit</button>
-            <button class="button" 
-                onclick="bsController.logout()">Logout</button>
+            <button type="button" class="btn btn-default btn-sm" 
+                onclick="bsController.commit(bsGithubUtil, bsUI)">
+                <span class="octicon octicon-cloud-upload" title="Commit to Github"></span> commit</button>
+            <button type="button" class="btn btn-default btn-sm" 
+                onclick="bsController.logout()">
+                <span class="octicon octicon-sign-out" title="Log out of Github"></span> logout</button>
 {% else %}
-            <button class="button" 
-                onclick="bsController.login(bsUI)">Login</button>
+            <button type="button" class="btn btn-default btn-sm" 
+                onclick="bsController.login(bsUI)">
+                <span class="octicon octicon-sign-in" title="Log in to Github"></span> login
+            </button>
 {% endif %}
             </span>
-            <span class="button" id="loading">WORKING</span>
-        </div>
-    </div>
-    
-    
-    <div class="row" id="body-row">
-        <div class="seven columns" id="editor-column">
-            <textarea name="editor"></textarea>
-            <div id="editor">{{ editcontent }}</div>
-        </div>
-        <div class="five columns" id="output-column">
-        <textarea readonly cols="80" id="console"></textarea>
-    	</div>
-    </div>
-    
-    <div class="row">
-        <div class="twelve columns" id="footer-row">
-            <a href = "{{ url_for('root') }}">{{ site }}</a> runs on 
-            <a href="https://github.com/tiggerntatie/brython-server">
-            Brython-Server</a> and 
-            <a href="http://www.brython.info/">Brython</a>.
-            <a href= "{{ url_for('brythonconsole') }}">{{ consolesite }}</a>
+            <span class="btn btn-warning btn-sm" role="button" id="loading">WORKING</span>
         </div>
     </div>
 
-</div>
+
+
+
+    <div class="row" id="body-row">
+        <div class="col-md-8" id="editor-column">
+                <textarea name="editorcache" hidden></textarea>
+                <div id="editorace" class="form-control" >{{ editcontent }}</div>
+        </div>
+        <div class="col-md-4" id="output-column">
+                <textarea readonly class="form-control" id="console"></textarea>
+    	</div>
+        <div class="col-md-0" id="graphics-column" hidden>
+            <canvas id="ggame-canvas" class="img-responsive"></canvas>
+    	</div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-12" id="footer-row">
+            <a href = "{{ url_for('root') }}">{{ site }}</a> runs on the
+            <a href="https://github.com/tiggerntatie/brython-server">
+            Brython-Server</a> and 
+            <a href="http://www.brython.info/">Brython</a> projects.
+            <a href= "{{ url_for('brythonconsole') }}">{{ consolesite }}</a>
+        </div>
+    </div>
 
 
 <form id="run_auth_request" action="" method="post">
@@ -68,15 +82,17 @@
 {% block foot %}
 {{ super() }}
 <script type="text/javascript">
-    bsConsole.init();
-    bsUI.init();    
-    bsUI.starteditor();
-    bsController.init();
-    // editor.on("change", sendEditorChange());
+    window.onload = function() {
+        bsConsole.init();
+        bsUI.init();    
+        bsUI.starteditor();
+        bsController.init();
 {% if edit != '' and editcontent == '' %}
-    window.onload = bsController.load(bsGithubUtil, bsUI);    
+        bsController.load(bsGithubUtil, bsUI);    
+        bsUI.editmode();
 {% endif %}
+    }
+x</script>
 
-</script>
 
 {% endblock %}

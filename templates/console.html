@@ -2,35 +2,41 @@
 
 {% block body %}
 
-<script id="__main__" type="text/python3" src="https://cdn.rawgit.com/brython-dev/brython/3.2.5/www/tests/console.py"></script>
+<script id="__main__" type="text/python3" src="https://cdn.rawgit.com/brython-dev/brython/{{brythonversion}}/www/tests/console.py"></script>
 
-<div class="full-width-container">
-    <div class="row" id="nav-row">
-        <div class="twelve columns">
-            <span id="navigation">
-            </span>
-        </div>
+<div class="row" id="nav-row">
+    <div class="col-md-12" >
+        <span id="navigation">
+        <button class="btn btn-default btn-sm"  type="button" id="haltbutton" disabled
+            onclick="bsUI.consolemode()">
+            <span class="octicon octicon-x" title="End graphics mode"></span> Close Graphics Window</button>
+        </span>
     </div>
-    
-    
-    <div class="row" id="body-row">
-        <div class="twelve columns" id="editor-column">
-        <textarea cols="80" id="code"></textarea>
-        <div id=content></div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="twelve columns" id="footer-row">
-            <a href = "{{ url_for('brythonconsole') }}">{{ consolesite }}</a> runs on 
-            <a href= "{{ url_for('root') }}"> {{ site }}</a>, 
-            <a href="https://github.com/tiggerntatie/brython-server">
-            Brython-Server</a> and 
-            <a href="http://www.brython.info/">Brython</a>.
-            
-        </div>
-    </div>
-
 </div>
+
+<div class="row" id="body-row">
+    <div class="col-md-0" id="editor-column">
+    </div>
+    <div class="col-md-12" id="output-column">
+        <textarea class="form-control" id="code"></textarea>
+	</div>
+    <div class="col-md-0" id="graphics-column" hidden>
+        <canvas id="ggame-canvas" class="img-responsive"></canvas>
+	</div>
+</div>
+
+
+<div class="row">
+    <div class="col-md-12" id="footer-row">
+        <a href = "{{ url_for('brythonconsole') }}">{{ consolesite }}</a> runs on 
+        <a href= "{{ url_for('root') }}"> {{ site }}</a>, the 
+        <a href="https://github.com/tiggerntatie/brython-server">
+        Brython-Server</a> and 
+        <a href="http://www.brython.info/">Brython</a> projects.
+    </div>
+</div>
+
+
 
 <form id="run_edit_form" action="" method="post" target="_blank">
   <input id="run_edit" name="run_edit" type="hidden" value="">
@@ -41,7 +47,12 @@
 {% block foot %}
 {{ super() }}
 <script type="text/javascript">
-    window.onload = brython();
+    window.onload = function() {
+       brython();
+       // unpleasant hack to make everything work properly...
+       bsUI.graphicsmode();
+       bsUI.consolemode();
+    }
 </script>
 {% endblock %}
 

@@ -1,7 +1,9 @@
-"""Brython-Server utility functions for Github and session/cache management
-
 """
-import os, urllib, json, base64, random, string, redis
+Brython-Server utility functions for Github and session/cache management
+Author: E Dennison
+"""
+
+import os, urllib, json, base64, random, string, redis, urllib.parse
 from flask import session, url_for
 from definitions import *
 
@@ -42,14 +44,6 @@ def getredirecturl():
     return url
     
 
-def githubcontentsurl(user, repo, path):
-    """Construct a "content" URL for the Github API
-    
-    Return the URL
-    """
-    url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
-    return url
-
 
 # Public functions    
     
@@ -69,7 +63,7 @@ def githubauthurl():
     url = URL_GITHUBAUTHORIZE + "?"
     url += "client_id="+github_client_id()
     url += "&redirect_uri="+getredirecturl()
-    url += "&scope=repo&state="+newgithubstate()
+    url += "&scope=repo gist&state="+newgithubstate()
     print(url)
     return url
 
@@ -97,6 +91,76 @@ def githubforgetauth():
     """Forget the current Github authorization."""
     session.pop(SESSION_ACCESSTOKEN, None)
 
+def finishrequestsetup(url, method):
+    """Complete preparations for initiating a request to Github
+    
+    Arguments:
+    url -- the github url for the request.
+    method -- http mehthod (e.g. GET, etc.)
+    
+    Return tuple:
+    gitrequest - the request object from urllib.request.Request
+    token - the token being used in the request
+    """
+    token = session.get(SESSION_ACCESSTOKEN, os.environ.get(ENV_DEVTOKEN))
+    gitrequest = urllib.request.Request(url, method=method)
+    gitrequest.add_header('Authorization', 'token {0}'.format(token))
+    gitrequest.add_header('User-Agent', 'Brython-Server')
+    return gitrequest, token
+
+def finishrequest(requestcontext, gitrequest, token, retrievalmethod, metamethod=None):
+    """Boilerplate for finishing the API request to Github
+    
+    Arguments:
+    requestcontext -- unique data identifying a github resource
+    gitrequest -- request object
+    token -- session token
+    retrievalmethod -- function for extracting file contents from response
+    metamethod -- optional function for extracting metadata from response
+    
+    Return tuple:
+    binreturn - the resource data
+    sha - the resource SHA
+    """
+    jsresponse = sha = None
+    if cachedfileexists(requestcontext):  
+        content, sha, etag = cachedfile(requestcontext)
+        gitrequest.add_header('If-None-Match', etag)
+    try:
+        response = urllib.request.urlopen(gitrequest)
+        jsresponse = json.loads(response.read().decode("utf-8"))
+        sha = jsresponse.get('sha','')
+        etag = response.getheader('ETag')
+        cachefile(requestcontext, jsresponse, sha, etag)
+    except (urllib.error.HTTPError) as err:
+        if err.code == 304:  # Not Modified
+            print("Not changed... retrieving cache")
+            jsresponse, sha, etag = cachedfile(requestcontext)
+        else:
+            raise
+    binreturn = retrievalmethod(jsresponse)
+    session[SESSION_METADATA] = metamethod(jsresponse) if metamethod else ''
+    
+    try:
+        return binreturn.decode('utf-8'), sha
+    except UnicodeDecodeError:
+        return binreturn, sha
+
+    
+def gistrequest(gistid, method='GET'):
+    """Initiate a request to the Github gist API.
+    
+    Arguments:
+    gistid -- the hex identifier for the file
+    method -- http mehthod (e.g. GET, etc.)  (Default is 'GET')
+    
+    Return tuple:
+    gitrequest - the request object from urllib.request.Request
+    token - the token being used in the request
+    """
+    url = "https://api.github.com/gists/{0}".format(gistid)
+    return finishrequestsetup(url, method)
+    
 
 def githubrequest(user, repo, path, method='GET'):
     """Initiate a request to the Github content API.
@@ -111,13 +175,26 @@ def githubrequest(user, repo, path, method='GET'):
     gitrequest - the request object from urllib.request.Request
     token - the token being used in the request
     """
-    url = githubcontentsurl(user, repo, path)
-    token = session.get(SESSION_ACCESSTOKEN, os.environ.get(ENV_DEVTOKEN))
-    gitrequest = urllib.request.Request(url, method=method)
-    gitrequest.add_header('Authorization', 'token {0}'.format(token))
-    gitrequest.add_header('User-Agent', 'Brython-Server')
-    return gitrequest, token
+    url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
+    return finishrequestsetup(url, method)
+
+def githubretrievegist(gistid):
+    """Retrieve a gist from Github via API.
     
+    Arguments:
+    gistid -- hex string identifying a gist
+
+    Return tuple:
+    content -- the content of the specific file
+    sha -- the file sha (used for subsequent commits, if any)
+    """
+    requestcontext = Context('', '', gistid)
+    gitrequest, token = gistrequest(gistid)
+    return finishrequest(requestcontext, 
+        gitrequest, 
+        token, 
+        lambda x: x['files'][list(x['files'].keys())[0]]['content'].encode('utf-8'), # content
+        lambda x: list(x['files'].keys())[0])  # file name
 
 def githubretrievefile(user, repo, path):
     """Retrieve a specific file from Github via API.
@@ -131,31 +208,13 @@ def githubretrievefile(user, repo, path):
     content -- the content of the specific file
     sha -- the file sha (used for subsequent commits, if any)
     """
-    jsresponse = sha = None
     requestcontext = Context(user, repo, path)
     gitrequest, token = githubrequest(user, repo, path)
-    if cachedfileexists(requestcontext):
-        content, sha, etag = cachedfile(requestcontext)
-        gitrequest.add_header('If-None-Match', etag)
-    try:
-        response = urllib.request.urlopen(gitrequest)
-        jsresponse = json.loads(response.read().decode("utf-8"))
-        sha = jsresponse['sha']
-        etag = response.getheader('ETag')
-        print("Fresh content ... caching")
-        cachefile(requestcontext, jsresponse, sha, etag)
-    except (urllib.error.HTTPError) as err:
-        if err.msg == 'Not Modified':
-            print("Not changed ({0}) ... retrieving cache".format(path))
-            jsresponse, sha, etag = cachedfile(requestcontext)
-        else:
-            raise
-    encodedcontent = jsresponse['content'].encode('utf-8')
-    binreturn = base64.b64decode(encodedcontent)
-    try:
-        return binreturn.decode('utf-8'), sha
-    except UnicodeDecodeError:
-        return binreturn, sha
+    return finishrequest(requestcontext, 
+        gitrequest, 
+        token, 
+        lambda x: base64.b64decode(x['content'].encode('utf-8')))
+
 
 def githubgetmainfile(user, repo, path):
     """Retrieve the 'main' Python file from a repo/directory. Function
@@ -200,11 +259,14 @@ def githubpath(user, repo, path, name):
     user -- the Github user ID/name
     repo -- the Github user's repository name
     path -- specific path to file within the repo
-    name -- specific file name
+    name -- specific file name or gist id
     
-    Returns URL to Github file.
+    Returns URL to Github file or gist.
     """
-    retval = "https://github.com/{0}/{1}/blob/master/".format(user,repo)
+    if user != '' and repo != '':
+        retval = "https://github.com/{0}/{1}/blob/master/".format(user,repo)
+    else:
+        retval = "https://gist.github.com/"
     if path:
         retval += path
         if name not in path:
