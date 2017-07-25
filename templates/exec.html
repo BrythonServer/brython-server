@@ -31,7 +31,10 @@
 
 
 <div class="row">
-    <div class="col-md-12" id="footer-row">
+    <div class="col-md-6" id="ad-row">
+        {{advertisement|safe}}
+    </div>
+    <div class="col-md-6 id="footer-row">
             <a href = "{{ url_for('root') }}">{{ site }}</a> runs on 
             <a href="https://github.com/tiggerntatie/brython-server">
             Brython-Server</a> and 

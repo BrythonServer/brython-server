@@ -16,6 +16,7 @@ app.session_interface = RedisSessionInterface()
 
 app.secret_key = os.environ.get(ENV_FLASKSECRET,'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT')
 app.debug = os.environ.get(ENV_DEBUG, False)
+app.advertisement = os.environ.get(ENV_ADVERTISEMENT, '')
 
 @app.url_defaults
 def hashed_static_file(endpoint, values):
@@ -91,7 +92,8 @@ def root():
                 consolesite = sitename + " Console",
                 edit = '',
                 editcontent = INIT_CONTENT,
-                brythonversion = BRYTHON_VERSION)
+                brythonversion = BRYTHON_VERSION,
+                advertisement = app.advertisement)
     elif request.method == 'POST':
         if RUN_EDIT in request.form:
             # user is requesting to open a new page with editor
@@ -99,7 +101,8 @@ def root():
                 edit=request.form[RUN_EDIT], 
                 editcontent = '',
                 github = github_loggedin,
-                brythonversion = BRYTHON_VERSION)
+                brythonversion = BRYTHON_VERSION,
+                advertisement = app.advertisement)
         elif AUTH_REQUEST in request.form:
             # user is requesting authorization from github
             return redirect(githubauthurl())
@@ -128,7 +131,8 @@ def brythonconsole():
     return render_template('console.html', 
         site=sitename,
         consolesite = sitename + " Console",
-        brythonversion = BRYTHON_VERSION)
+        brythonversion = BRYTHON_VERSION,
+        advertisement = app.advertisement)
 
 @app.route('/<path:filename>')
 def file(filename):
