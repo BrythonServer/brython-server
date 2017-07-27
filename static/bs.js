@@ -11,10 +11,12 @@
  */
 var bsConsole = function(){
     var consolequeue = [];
+    var consolecontext = [];
     var consoletimer = null;
     const CONSOLETIMEOUT = 10;
     const CONSOLEID = "#console";
     const OLDPROMPT = window.prompt;
+    const CONSOLECONTEXTSIZE = 10;
     
     // periodically update the console control
     function Timeout() {
@@ -28,16 +30,22 @@ var bsConsole = function(){
     function Initialize() {
         // take over the prompt dialog so we can display prompt text in the console
         window.prompt = function(text, defvalue) {
+            // copy pending console writes
+            consolecontext = consolecontext.concat(consolequeue);
             // flush any pending console writes
             if (consoletimer) {
                 window.clearTimeout(consoletimer);
                 Timeout(); // flush the queue
             }
             consolequeue.push(text);  // put prompt 
+            // copy pending console writes
+            consolecontext = consolecontext.concat(consolequeue).slice(-CONSOLECONTEXTSIZE);
             Timeout(); // onto console
-            var returnedValue = OLDPROMPT(text, defvalue);
+            var returnedValue = OLDPROMPT(consolecontext.join(""), defvalue);
             consolequeue.push(returnedValue);  // and the response...
             consolequeue.push('\n');
+            // copy pending console writes
+            consolecontext = consolecontext.concat(consolequeue);
             Timeout();
             return returnedValue;
         }
@@ -79,6 +87,7 @@ var bsConsole = function(){
     // clear the console output
     function clearConsole() {
         $(CONSOLEID).val('');
+        consolecontext = [];
     }
 
     // public API
@@ -159,6 +168,7 @@ var bsUI = function(){
         $("#graphics-column").hide();
         $("#editor-column").show();
         $("#haltbutton").prop('disabled', true);
+        $("#gobutton").prop('disabled', false);
         onunload();
     }
     
@@ -169,6 +179,7 @@ var bsUI = function(){
         $("#ggame-canvas").height($("#graphics-column").clientHeight);
         $("#ggame-canvas").width($("#graphics-column").clientWidth);
         $("#haltbutton").prop('disabled', false);
+        $("#gobutton").prop('disabled', true);
         $("#editor-column").hide();
         $("#graphics-column").show();
     }

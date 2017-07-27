@@ -11,8 +11,7 @@
             <button class="btn btn-default btn-sm" type="button" id="url_submit" 
                 onclick="bsController.load(bsGithubUtil, bsUI)">
                 <span class="octicon octicon-cloud-download" title="Load from Github"></span> load</button>
-            <button class="btn btn-default btn-sm"  type="button" 
-                onclick="bsController.runeditor(bsUI, bsConsole)">
+            <button class="btn btn-default btn-sm"  type="button" id="gobutton">
                 <span class="octicon octicon-zap" title="Execute program"></span> GO!</button>
             <button class="btn btn-default btn-sm"  type="button" id="haltbutton" disabled
                 onclick="bsUI.editmode()">
@@ -94,6 +93,10 @@
         bsController.load(bsGithubUtil, bsUI);    
         bsUI.editmode();
 {% endif %}
+        $( "#gobutton" ).click(function( event ) {
+          event.stopPropagation();
+          bsController.runeditor(bsUI, bsConsole);
+        });
     }
 x</script>
 
