@@ -157,7 +157,9 @@ var bsUI = function(){
         $("#graphics-column").hide();
         $("#editor-column").hide();
         $("#haltbutton").prop('disabled', true);
-        onunload();
+        if (typeof onunload == 'function') { 
+            onunload(); 
+        }
     }
     
 
@@ -169,7 +171,9 @@ var bsUI = function(){
         $("#editor-column").show();
         $("#haltbutton").prop('disabled', true);
         $("#gobutton").prop('disabled', false);
-        onunload();
+        if (typeof onunload == 'function') { 
+            onunload(); 
+        }
     }
     
     function setGraphicsMode() {

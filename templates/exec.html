@@ -5,9 +5,8 @@
 <div class="row" id="nav-row">
     <div class="col-md-12">
         <span id="navigation">
-        <button class="btn btn-default btn-sm"  type="button" 
-            onclick="bsController.run(bsConsole)">
-            <span class="octicon octicon-zap" title="Execute"></span> GO!</button>
+        <button class="btn btn-default btn-sm"  type="button" id="haltgobutton">
+            <span class="octicon octicon-zap" title="Execute"></span> RESTART!</button>
         <button class="btn btn-default btn-sm"  type="button" 
             onclick="bsUI.runedit()">
             <span class="octicon octicon-pencil" title="Open in editor"></span> EDIT</button>
@@ -43,7 +42,7 @@
 </div>
 
 
-<form id="run_edit_form" action="" method="post" target="_blank">
+<form id="run_edit_form" action="" method="post">
   <input id="run_edit" name="run_edit" type="hidden" value="">
 </form>
 
@@ -59,5 +58,13 @@
         bsUI.executemode();
         bsController.rungithub(bsConsole, bsUI, data);
     }
+    $( "#haltgobutton" ).click(function( event ) {
+        event.stopPropagation();
+        $("#haltgobutton").blur();
+        if (typeof onunload == 'function') { 
+            onunload(); 
+        }
+        bsController.run(bsConsole);
+    });
 </script>
 {% endblock %}

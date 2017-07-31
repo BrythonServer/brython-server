@@ -68,10 +68,10 @@ def root():
     github_loggedin = githubloggedin()   
     sitename = os.environ.get(ENV_SITENAME, 'Brython Server')
     if request.method == 'GET':
-        if 'user' in request.args:
-            user = request.args.get('user')
-            repo = request.args.get('repo')
-            name = request.args.get('name')
+        if 'user' in request.args or 'gist' in request.args:
+            user = request.args.get('user','')
+            repo = request.args.get('repo','')
+            name = request.args.get('name',request.args.get('gist',''))
             path = request.args.get('path','')
             return render_template('exec.html', 
                 user=user, 
@@ -99,6 +99,8 @@ def root():
             # user is requesting to open a new page with editor
             return render_template('index.html', 
                 edit=request.form[RUN_EDIT], 
+                site = sitename,
+                consolesite = sitename + " Console",
                 editcontent = '',
                 github = github_loggedin,
                 brythonversion = BRYTHON_VERSION,
