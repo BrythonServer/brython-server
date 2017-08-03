@@ -10,43 +10,29 @@
  * Console Proxy routes alert and prompt calls to our own handler.
  */
 var bsConsole = function(){
-    var consolequeue = [];
-    var consolecontext = [];
-    var consoletimer = null;
+    //var consolequeue = [];
+    var consolecontext = "";
     const CONSOLETIMEOUT = 10;
     const CONSOLEID = "#console";
     const OLDPROMPT = window.prompt;
-    const CONSOLECONTEXTSIZE = 10;
+    const CONSOLECONTEXTSIZE = 24;  // size of a typical old school CRT (VT100)
     
-    // periodically update the console control
-    function Timeout() {
+    // handle console printing
+    function PrintConsole(text) {
         var textarea = $(CONSOLEID)
-        textarea.val(textarea.val() + consolequeue.join(""))  // append to textarea
+        textarea.val(textarea.val() + text);
         textarea.scrollTop(textarea[0].scrollHeight);
-        consolequeue = [];
-        consoletimer = null;
-    }    
+        consolecontext += text;
+    }
 
     function Initialize() {
         // take over the prompt dialog so we can display prompt text in the console
         window.prompt = function(text, defvalue) {
-            // copy pending console writes
-            consolecontext = consolecontext.concat(consolequeue);
-            // flush any pending console writes
-            if (consoletimer) {
-                window.clearTimeout(consoletimer);
-                Timeout(); // flush the queue
-            }
-            consolequeue.push(text);  // put prompt 
-            // copy pending console writes
-            consolecontext = consolecontext.concat(consolequeue).slice(-CONSOLECONTEXTSIZE);
-            Timeout(); // onto console
-            var returnedValue = OLDPROMPT(consolecontext.join(""), defvalue);
-            consolequeue.push(returnedValue);  // and the response...
-            consolequeue.push('\n');
-            // copy pending console writes
-            consolecontext = consolecontext.concat(consolequeue);
-            Timeout();
+            PrintConsole(text);  // put prompt 
+            truncatedcontext = consolecontext.split('\n').slice(-CONSOLECONTEXTSIZE).join('\n');
+            var returnedValue = OLDPROMPT(truncatedcontext, defvalue);
+            consolecontext = truncatedcontext;
+            PrintConsole(returnedValue + "\n");
             return returnedValue;
         }
         // now seize the output
@@ -62,11 +48,8 @@ var bsConsole = function(){
             var original = console[method]
             console[method] = function(){
                 for (i = 0; i < arguments.length; i++) {
-                    if (arguments[i].indexOf("Error 404 means that Python module") != 0) {
-                        if (!consoletimer) {
-                            consoletimer = window.setTimeout(Timeout, CONSOLETIMEOUT);
-                        }
-                        consolequeue.push(arguments[i]);
+                    if (arguments[i].indexOf("Error 404 means that Python module") == -1) {
+                        PrintConsole(arguments[i]);
                     }
                 }            
                 if (original.apply){
@@ -87,12 +70,11 @@ var bsConsole = function(){
     // clear the console output
     function clearConsole() {
         $(CONSOLEID).val('');
-        consolecontext = [];
+        consolecontext = "";
     }
 
     // public API
     return{
-        timeout:Timeout,
         init:Initialize,
         clear:clearConsole
     }
@@ -399,7 +381,6 @@ var bsController = function(){
     function runBrython(console, argdict) {
         console.clear();
         __EXECUTE__BRYTHON__();
-        //brython(argdict);
     }
     
     function removeMainScript() {
