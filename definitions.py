@@ -2,7 +2,6 @@
 Brython-Server string constant definitions.
 Author: E Dennison
 """
-BRYTHON_VERSION = '3.3.2'
 
 from collections import namedtuple
 
