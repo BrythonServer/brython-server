@@ -78,8 +78,7 @@ def root():
                 repo=repo, 
                 name=name, 
                 path=path,
-                site=sitename,
-                brythonversion=BRYTHON_VERSION)
+                site=sitename)
         elif 'code' in request.args and 'state' in request.args:
             # Github authorization response - check if valid
             if checkgithubstate(request.args.get('state')):
@@ -92,7 +91,6 @@ def root():
                 consolesite = sitename + " Console",
                 edit = '',
                 editcontent = INIT_CONTENT,
-                brythonversion = BRYTHON_VERSION,
                 advertisement = app.advertisement)
     elif request.method == 'POST':
         if RUN_EDIT in request.form:
@@ -103,7 +101,6 @@ def root():
                 consolesite = sitename + " Console",
                 editcontent = '',
                 github = github_loggedin,
-                brythonversion = BRYTHON_VERSION,
                 advertisement = app.advertisement)
         elif AUTH_REQUEST in request.form:
             # user is requesting authorization from github
@@ -133,7 +130,6 @@ def brythonconsole():
     return render_template('console.html', 
         site=sitename,
         consolesite = sitename + " Console",
-        brythonversion = BRYTHON_VERSION,
         advertisement = app.advertisement)
 
 @app.route('/<path:filename>')
