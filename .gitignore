@@ -68,3 +68,5 @@ share/
 
 # brython
 brython.js
+static/brython*
+

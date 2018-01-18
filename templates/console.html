@@ -2,7 +2,7 @@
 
 {% block body %}
 
-<script id="__main__" type="text/python3" src="https://cdn.rawgit.com/brython-dev/brython/{{brythonversion}}/www/tests/console.py"></script>
+<script id="__main__" type="text/python3" src="{{url_for('static', filename='brython/www/tests/console.py') }}"></script>
 
 <div class="row" id="nav-row">
     <div class="col-md-12" >
