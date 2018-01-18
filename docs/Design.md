@@ -136,6 +136,15 @@ Test the server locally by running:
 
     python main.py
 
+### Install Brython
+
+Navigate to the `static` subfolder and clone the Brython project:
+
+    git clone https://github.com/brython-dev/brython.git
+    
+Then check out the version that you wish to use (for example: version 3.3.2):
+
+    git checkout tags/3.3.2 
 
 #### Configure for Automatic Startup
 
