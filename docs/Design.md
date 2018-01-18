@@ -136,7 +136,7 @@ Test the server locally by running:
 
     python main.py
 
-### Install Brython
+#### Install Brython
 
 Navigate to the `static` subfolder and clone the Brython project:
 
