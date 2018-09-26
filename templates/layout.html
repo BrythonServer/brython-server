@@ -24,7 +24,41 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bssite.css') }}" media="screen" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/3.0.5/pixi.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/buzz/1.1.10/buzz.min.js"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/brython.js') }}"></script>
+<!--    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/brython.js') }}"></script> -->
+
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/brython_builtins.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/version_info.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py2js.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_object.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_type.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_utils.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_sort.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_builtin_functions.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_exceptions.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_range_slice.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_bytes.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_set.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/js_objects.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/stdlib_paths.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_import.js') }}"></script>
+    
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/unicode.min.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_string.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_int.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_long_int.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_float.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_complex.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_dict.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_list.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_generator.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_dom.js') }}"></script>
+    
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/builtin_modules.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/py_import_hooks.js') }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/async.js') }}"></script>
+    
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/brython_stdlib.js') }}"></script>
+
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script type="text/python">
