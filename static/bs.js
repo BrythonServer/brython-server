@@ -48,7 +48,8 @@ var bsConsole = function(){
             var original = console[method]
             console[method] = function(){
                 for (i = 0; i < arguments.length; i++) {
-                    if (arguments[i].indexOf("Error 404 means that Python module") == -1) {
+                    if (arguments[i].indexOf("Error 404 means that Python module") == -1 &&
+                        arguments[i].indexOf("using indexedDB for stdlib modules cache") == -1) {
                         PrintConsole(arguments[i]);
                     }
                 }            

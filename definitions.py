@@ -38,4 +38,5 @@ URL_GITHUBRETRIEVETOKEN = 'https://github.com/login/oauth/access_token'
 INIT_CONTENT = 'print("Hello, world.")'
 
 GGAME_USER = 'BrythonServer'
+GGAME_DEV_USER = 'tiggerntatie'   # for development only
 GGAME_REPOSITORY = 'ggame'
