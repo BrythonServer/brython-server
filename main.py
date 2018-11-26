@@ -137,6 +137,7 @@ def file(filename):
     """Return (possibly cached) file for the current Github repo.
     Will look for match in BrythonServer/ggame repository as well!
     """
+    filename = urllib.request.pathname2url(filename)
     try:
         cx = session[SESSION_GITHUBCONTEXT]
         content, sha = githubretrievefile(cx.user, cx.repo, cx.path + '/' + filename)
