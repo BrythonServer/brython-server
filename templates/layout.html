@@ -61,15 +61,12 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<script type="text/python">
+<script type="text/python3">
 from browser import document, window
-import traceback
+
 def __EXECUTE__BRYTHON__():
-    try:
-        content = document['__main__'].innerHTML
-        exec(content, {"__name__":"__main__"})
-    except:
-        traceback.print_exc()
+    content = document['__main__'].innerHTML
+    exec(content, {"__name__":"__main__"})
 
 window.__EXECUTE__BRYTHON__ = __EXECUTE__BRYTHON__
 </script>
