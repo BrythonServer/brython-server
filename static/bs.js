@@ -55,7 +55,8 @@ var bsConsole = function() {
             var original = console[method];
             console[method] = function() {
                 for (i = 0; i < arguments.length; i++) {
-                    if (arguments[i].indexOf("Error 404 means that Python module") == -1 &&
+                    if (typeof arguments[i] == "string" && 
+                        arguments[i].indexOf("Error 404 means that Python module") == -1 &&
                         arguments[i].indexOf("using indexedDB for stdlib modules cache") == -1) {
                         PrintConsole(arguments[i]);
                     }
@@ -162,9 +163,12 @@ var bsUI = function() {
         $("#editor-column").show();
         $("#haltbutton").prop('disabled', true);
         $("#gobutton").prop('disabled', false);
-        if (typeof onunload == 'function') {
-            onunload();
+        if (typeof window.ggame_quit == 'function') {
+            window.ggame_quit();
         }
+        //if (typeof onunload == 'function') {
+        //    onunload();
+        //}
     }
 
     function setGraphicsMode() {
