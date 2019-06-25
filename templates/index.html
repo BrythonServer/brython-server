@@ -101,6 +101,7 @@
 {% endif %}
         $( "#gobutton" ).click(function( event ) {
           event.stopPropagation();
+          bsUI.turtlemode();
           bsController.runeditor(bsUI, bsConsole);
         });
     }

@@ -4,7 +4,6 @@
  */
 
 /*eslint-env jquery*/
-/*global onunload*/
 /*global ace*/
 /*global brython*/
 /*global __EXECUTE__BRYTHON__*/
@@ -106,11 +105,15 @@ var bsUI = function() {
     const URL_INPUT = '#url_input';
     const RUN_EDIT = '#run_edit';
     const RUN_EDIT_FORM = '#run_edit_form';
+    const GRAPHICS_COL_NAME = '#graphics-column'; // graphics-column
+    const CANVAS_NAME = '#ggame-canvas'; // ggame-canvas
+    const TURTLE_CANVAS_NAME = "#turtle-canvas";
     const TEXT_COLUMNS = ["col-md-8", "col-md-4", "col-md-0"];
     const CONSOLE_COLUMNS = ["col-md-0", "col-md-12", "col-md-0"];
-    const GRAPHICS_COLUMNS = ["col-md-0", "col-md-3", "col-md-9"];
+    const GRAPHICS_COLUMNS = ["col-md-0", "col-md-4", "col-md-8"];
 
     var editor = null;
+    var ingraphics = false;
 
     function Initialize() {
         // Github link is not visible by default
@@ -145,12 +148,12 @@ var bsUI = function() {
     function setConsoleMode() {
         $("#editor-column").attr("class", CONSOLE_COLUMNS[0]);
         $("#output-column").attr("class", CONSOLE_COLUMNS[1]);
-        $("#graphics-column").attr("class", CONSOLE_COLUMNS[2]);
-        $("#graphics-column").hide();
+        $(GRAPHICS_COL_NAME).attr("class", CONSOLE_COLUMNS[2]);
+        $(GRAPHICS_COL_NAME).hide();
         $("#editor-column").hide();
         $("#haltbutton").prop('disabled', true);
-        if (typeof onunload == 'function') {
-            onunload();
+        if (ingraphics && (typeof window.ggame_quit == 'function')) {
+            window.ggame_quit();
         }
     }
 
@@ -158,42 +161,56 @@ var bsUI = function() {
     function setEditMode() {
         $("#editor-column").attr("class", TEXT_COLUMNS[0]);
         $("#output-column").attr("class", TEXT_COLUMNS[1]);
-        $("#graphics-column").attr("class", TEXT_COLUMNS[2]);
-        $("#graphics-column").hide();
+        $(GRAPHICS_COL_NAME).attr("class", TEXT_COLUMNS[2]);
+        $(GRAPHICS_COL_NAME).hide();
+        $(TURTLE_CANVAS_NAME).empty();
         $("#editor-column").show();
         $("#haltbutton").prop('disabled', true);
         $("#gobutton").prop('disabled', false);
-        if (typeof window.ggame_quit == 'function') {
+        if (ingraphics && (typeof window.ggame_quit == 'function')) {
             window.ggame_quit();
         }
-        //if (typeof onunload == 'function') {
-        //    onunload();
-        //}
+        ingraphics = false;
+    }
+
+    function setTurtleMode() {
+        $("#editor-column").attr("class", GRAPHICS_COLUMNS[0]);
+        $("#output-column").attr("class", GRAPHICS_COLUMNS[1]);
+        $(GRAPHICS_COL_NAME).attr("class", GRAPHICS_COLUMNS[2]);
+        $(CANVAS_NAME).hide();
+        $(TURTLE_CANVAS_NAME).remove();
+        $("#haltbutton").prop('disabled', false);
+        $("#gobutton").prop('disabled', true);
+        $("#editor-column").hide();
+        $(GRAPHICS_COL_NAME).show();
     }
 
     function setGraphicsMode() {
         $("#editor-column").attr("class", GRAPHICS_COLUMNS[0]);
         $("#output-column").attr("class", GRAPHICS_COLUMNS[1]);
-        $("#graphics-column").attr("class", GRAPHICS_COLUMNS[2]);
-        $("#ggame-canvas").height($("#graphics-column").clientHeight);
-        $("#ggame-canvas").width($("#graphics-column").clientWidth);
+        $(GRAPHICS_COL_NAME).attr("class", GRAPHICS_COLUMNS[2]);
+        $(CANVAS_NAME).show();
+        $(TURTLE_CANVAS_NAME).remove();
+        $(CANVAS_NAME).height($(GRAPHICS_COL_NAME).clientHeight);
+        $(CANVAS_NAME).width($(GRAPHICS_COL_NAME).clientWidth);
         $("#haltbutton").prop('disabled', false);
         $("#gobutton").prop('disabled', true);
         $("#editor-column").hide();
-        $("#graphics-column").show();
+        $(GRAPHICS_COL_NAME).show();
+        ingraphics = true;
     }
 
     function setExecMode() {
         $("#editor-column").attr("class", GRAPHICS_COLUMNS[0]);
         $("#output-column").attr("class", GRAPHICS_COLUMNS[1]);
-        $("#graphics-column").attr("class", GRAPHICS_COLUMNS[2]);
-        $("#ggame-canvas").height($("#graphics-column").clientHeight);
-        $("#ggame-canvas").width($("#graphics-column").clientWidth);
-        $("#graphics-column").show();
+        $(GRAPHICS_COL_NAME).attr("class", GRAPHICS_COLUMNS[2]);
+        $(CANVAS_NAME).height($(GRAPHICS_COL_NAME).clientHeight);
+        $(CANVAS_NAME).width($(GRAPHICS_COL_NAME).clientWidth);
+        $(GRAPHICS_COL_NAME).show();
         $("#editor-column").attr("class", CONSOLE_COLUMNS[0]);
         $("#output-column").attr("class", CONSOLE_COLUMNS[1]);
-        $("#graphics-column").attr("class", CONSOLE_COLUMNS[2]);
-        $("#graphics-column").hide();
+        $(GRAPHICS_COL_NAME).attr("class", CONSOLE_COLUMNS[2]);
+        $(GRAPHICS_COL_NAME).hide();
         $("#editor-column").hide();
 
     }
@@ -280,9 +297,10 @@ var bsUI = function() {
         seteditor: setEditor,
         clearselect: clearEditorSelection,
         editmode: setEditMode,
+        turtlemode: setTurtleMode,
         graphicsmode: setGraphicsMode,
         consolemode: setConsoleMode,
-        executemode: setExecMode
+        executemode: setTurtleMode  //setExecMode
     };
 
 }();

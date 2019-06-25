@@ -3,6 +3,7 @@ Brython-Server main module with Flask route points.
 Author: E Dennison
 """
 import os
+import os.path
 import urllib.request, json, urllib.parse, base64
 from flask import Flask, render_template, session, request, redirect, url_for, abort, Response
 from reverseproxied import ReverseProxied
@@ -17,32 +18,37 @@ app.session_interface = RedisSessionInterface()
 app.secret_key = os.environ.get(ENV_FLASKSECRET,'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT')
 app.debug = os.environ.get(ENV_DEBUG, False)
 app.advertisement = os.environ.get(ENV_ADVERTISEMENT, '')
+app.brython_version = os.environ.get(ENV_BRYTHON_VERSION, BRYTHON_VERSION)
 
-@app.url_defaults
-def hashed_static_file(endpoint, values):
-    """
-    Override behavior of 'url_for' to modify static URLs in a way that 
-    will prevent using cached versions when the static file changes.
-    For example, changes to bs.js are not loaded as long as a cache
-    exists.
-    
-    Adapted from: https://gist.github.com/Ostrovski/f16779933ceee3a9d181
-    """
-    if 'static' == endpoint or endpoint.endswith('.static'):
-        filename = values.get('filename')
-        if filename:
-            blueprint = request.blueprint
-            if '.' in endpoint:  # blueprint
-                blueprint = endpoint.rsplit('.', 1)[0]
+# Select the correct Brython version
+os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), BRYTHON_FOLDER))
+os.system('git checkout ' + app.brython_version)
 
-            static_folder = app.static_folder
-           # use blueprint, but dont set `static_folder` option
-            if blueprint and app.blueprints[blueprint].static_folder:
-                static_folder = app.blueprints[blueprint].static_folder
-
-            fp = os.path.join(static_folder, filename)
-            if os.path.exists(fp):
-                values['_'] = int(os.stat(fp).st_mtime)
+#@app.url_defaults
+#def hashed_static_file(endpoint, values):
+#    """
+#    Override behavior of 'url_for' to modify static URLs in a way that 
+#    will prevent using cached versions when the static file changes.
+#    For example, changes to bs.js are not loaded as long as a cache
+#    exists.
+#    
+#    Adapted from: https://gist.github.com/Ostrovski/f16779933ceee3a9d181
+#    """
+#    if 'static' == endpoint or endpoint.endswith('.static'):
+#        filename = values.get('filename')
+#        if filename:
+#            blueprint = request.blueprint
+#            if '.' in endpoint:  # blueprint
+#                blueprint = endpoint.rsplit('.', 1)[0]
+#
+#            static_folder = app.static_folder
+#           # use blueprint, but dont set `static_folder` option
+#            if blueprint and app.blueprints[blueprint].static_folder:
+#                static_folder = app.blueprints[blueprint].static_folder
+#
+#            fp = os.path.join(static_folder, filename)
+#            if os.path.exists(fp):
+#                values['_'] = int(os.stat(fp).st_mtime)
 
 @app.route('/', methods=['POST', 'GET'])
 def root():
@@ -67,6 +73,20 @@ def root():
     """
     github_loggedin = githubloggedin()   
     sitename = os.environ.get(ENV_SITENAME, 'Brython Server')
+
+    # Determine current ggame versions
+    try:
+        content, sha = githubretrievefile(GGAME_USER, GGAME_REPOSITORY, '/ggame/__version__.py')
+        globals = {}
+        locals = {}
+        exec(content, globals, locals)
+        app.ggamebuzzversion = locals.get(GGAME_BUZZ_VERSION_NAME, GGAME_BUZZ_VERSION_DEFAULT)
+        app.ggamepixiversion = locals.get(GGAME_PIXI_VERSION_NAME, GGAME_PIXI_VERSION_DEFAULT)
+    except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
+        print("Warning: ggame __version__.py not found")
+        app.ggamebuzzversion = GGAME_BUZZ_VERSION_DEFAULT
+        app.ggamepixiversion = GGAME_PIXI_VERSION_DEFAULT
+       
     if request.method == 'GET':
         if 'user' in request.args or 'gist' in request.args:
             user = request.args.get('user','')
@@ -78,7 +98,10 @@ def root():
                 repo=repo, 
                 name=name, 
                 path=path,
-                site=sitename)
+                site=sitename,
+                brythonversion = app.brython_version,
+                buzzversion = app.ggamebuzzversion,
+                pixiversion = app.ggamepixiversion)
         elif 'code' in request.args and 'state' in request.args:
             # Github authorization response - check if valid
             if checkgithubstate(request.args.get('state')):
@@ -91,7 +114,10 @@ def root():
                 consolesite = sitename + " Console",
                 edit = '',
                 editcontent = INIT_CONTENT,
-                advertisement = app.advertisement)
+                advertisement = app.advertisement,
+                brythonversion = app.brython_version,
+                buzzversion = app.ggamebuzzversion,
+                pixiversion = app.ggamepixiversion)
     elif request.method == 'POST':
         if RUN_EDIT in request.form:
             # user is requesting to open a new page with editor
@@ -101,7 +127,10 @@ def root():
                 consolesite = sitename + " Console",
                 editcontent = '',
                 github = github_loggedin,
-                advertisement = app.advertisement)
+                advertisement = app.advertisement,
+                brythonversion = app.brython_version,
+                buzzversion = app.ggamebuzzversion,
+                pixiversion = app.ggamepixiversion)
         elif AUTH_REQUEST in request.form:
             # user is requesting authorization from github
             return redirect(githubauthurl())
@@ -131,6 +160,15 @@ def brythonconsole():
         site=sitename,
         consolesite = sitename + " Console",
         advertisement = app.advertisement)
+
+@app.route('/'+IMPORTNAME+'/<filename>')
+def brythonimport(filename):
+    """Return static import file
+    
+    Add custom importable modules under the static/IMPORTNAME folder.
+    """
+    return app.send_static_file(os.path.join(IMPORTNAME, filename))
+    
 
 @app.route('/<path:filename>')
 def file(filename):
