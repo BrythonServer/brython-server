@@ -67,6 +67,6 @@ local/
 share/
 
 # brython
-brython.js
-static/brython*
+brythonserver/static/brython
+brythonserver/static/brython/*
 

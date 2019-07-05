@@ -23,39 +23,8 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bssite.css') }}" media="screen" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/{{ pixiversion }}/pixi.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/buzz/{{ buzzversion }}/buzz.min.js"></script>
-    {% for i in [
-        'brython_builtins',
-        'version_info',
-        'py2js',
-        'loaders',
-        'py_object',
-        'py_type',
-        'py_utils',
-        'py_sort',
-        'py_builtin_functions',
-        'py_exceptions',
-        'py_range_slice',
-        'py_bytes',
-        'py_set',
-        'js_objects',
-        'stdlib_paths',
-        'py_import',
-        'unicode.min',
-        'py_string',
-        'py_int',
-        'py_long_int',
-        'py_float',
-        'py_complex',
-        'py_dict',
-        'py_list',
-        'py_generator',
-        'py_dom',
-        'builtin_modules',
-        'py_import_hooks',
-        'async',
-        'brython_stdlib'] %}
-    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/' + i + '.js') }}?_{{ brythonversion }}"></script>
-    {% endfor %}
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/brython.js')}}?_{{ brythonversion }}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='brython/www/src/brython_stdlib.js')}}?_{{ brythonversion }}"></script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -75,7 +44,7 @@ window.__EXECUTE__BRYTHON__ = __EXECUTE__BRYTHON__
 {% endblock %}
 </div>
 {% block foot %}
-    <script type="text/javascript" src="{{ url_for('static', filename='bs.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='bs.js') }}?ver={{ bsversion }}"></script>
 {% endblock %}
 </body>
 </html>

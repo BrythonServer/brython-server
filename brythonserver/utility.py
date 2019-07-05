@@ -4,6 +4,7 @@ Author: E Dennison
 """
 
 import os, urllib, json, base64, random, string, redis, urllib.parse
+import re
 from flask import session, url_for
 from definitions import *
 
@@ -196,24 +197,35 @@ def githubretrievegist(gistid):
         lambda x: x['files'][list(x['files'].keys())[0]]['content'].encode('utf-8'), # content
         lambda x: list(x['files'].keys())[0])  # file name
 
-def githubretrievefile(user, repo, path):
+def githubretrievefile(user, repo, path, usecachedfirst = False):
     """Retrieve a specific file from Github via API.
     
     Arguments:
     user -- the Github user ID/name
     repo -- the Github user's repository name
     path -- specific path to file within the repo
+    usecachedfirst -- (boolean) if cache exists, skip Github
 
     Return tuple:
     content -- the content of the specific file
     sha -- the file sha (used for subsequent commits, if any)
     """
+    retrievalmethod = lambda x: base64.b64decode(x['content'].encode('utf-8'))
+    
     requestcontext = Context(user, repo, path)
-    gitrequest, token = githubrequest(user, repo, path)
-    return finishrequest(requestcontext, 
-        gitrequest, 
-        token, 
-        lambda x: base64.b64decode(x['content'].encode('utf-8')))
+    if usecachedfirst and cachedfileexists(requestcontext):  
+        jsresponse, sha, etag = cachedfile(requestcontext)
+        binreturn = retrievalmethod(jsresponse)
+        try:
+            return binreturn.decode('utf-8'), sha
+        except UnicodeDecodeError:
+            return binreturn, sha
+    else:
+        gitrequest, token = githubrequest(user, repo, path)
+        return finishrequest(requestcontext, 
+            gitrequest, 
+            token, 
+            retrievalmethod)
 
 
 def githubgetmainfile(user, repo, path):
@@ -338,4 +350,37 @@ def cachedfile(context):
     data = Cachedata(raw[0], raw[1], raw[2])
     return data.contents, data.sha, data.etag
 
+def getversion(content, versionname, defaultversion):
+    """Extract a specific version string from file content.
+    
+    Arguments:
+    content -- (string) text contents of a version file (i.e. ggame __version__.py)
+    versionname -- (string) the version variable name to search for
+    defaultversion  -- (string) the version string to return if versionname isn't foundthe
+    
+    Return:
+    the (string) version that was found
+    """
+    for line in content.split('\n'):
+        m = re.match(versionname + ' = "(.+)"',line)
+        if m:
+            return m[1]
+    return defaultversion    
+
+def getjslibversions(app):
+    if not (app.ggamebuzzversion and app.ggamepixiversion):
+        try:
+            content, sha = githubretrievefile(GGAME_USER, GGAME_REPOSITORY, '/ggame/__version__.py')
+            app.ggamebuzzversion = getversion(
+                content, 
+                GGAME_BUZZ_VERSION_NAME, 
+                GGAME_BUZZ_VERSION_DEFAULT)
+            app.ggamepixiversion = getversion(
+                content, 
+                GGAME_PIXI_VERSION_NAME, 
+                GGAME_PIXI_VERSION_DEFAULT)
+        except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
+            print("Warning: ggame __version__.py not found")
+            app.ggamebuzzversion = GGAME_BUZZ_VERSION_DEFAULT
+            app.ggamepixiversion = GGAME_PIXI_VERSION_DEFAULT
 

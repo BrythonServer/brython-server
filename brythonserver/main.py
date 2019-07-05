@@ -5,11 +5,15 @@ Author: E Dennison
 import os
 import os.path
 import urllib.request, json, urllib.parse, base64
+import redis
+from random import randint
 from flask import Flask, render_template, session, request, redirect, url_for, abort, Response
 from reverseproxied import ReverseProxied
 from redissessions import RedisSessionInterface
 from definitions import *
 from utility import *
+from __version__ import VERSION
+
 
 application = app = Flask(__name__, static_url_path='/__static')
 app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -20,35 +24,17 @@ app.debug = os.environ.get(ENV_DEBUG, False)
 app.advertisement = os.environ.get(ENV_ADVERTISEMENT, '')
 app.brython_version = os.environ.get(ENV_BRYTHON_VERSION, BRYTHON_VERSION)
 
-# Select the correct Brython version
-os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), BRYTHON_FOLDER))
-os.system('git checkout ' + app.brython_version)
+app.ggamebuzzversion = None
+app.ggamepixiversion = None
 
-#@app.url_defaults
-#def hashed_static_file(endpoint, values):
-#    """
-#    Override behavior of 'url_for' to modify static URLs in a way that 
-#    will prevent using cached versions when the static file changes.
-#    For example, changes to bs.js are not loaded as long as a cache
-#    exists.
-#    
-#    Adapted from: https://gist.github.com/Ostrovski/f16779933ceee3a9d181
-#    """
-#    if 'static' == endpoint or endpoint.endswith('.static'):
-#        filename = values.get('filename')
-#        if filename:
-#            blueprint = request.blueprint
-#            if '.' in endpoint:  # blueprint
-#                blueprint = endpoint.rsplit('.', 1)[0]
-#
-#            static_folder = app.static_folder
-#           # use blueprint, but dont set `static_folder` option
-#            if blueprint and app.blueprints[blueprint].static_folder:
-#                static_folder = app.blueprints[blueprint].static_folder
-#
-#            fp = os.path.join(static_folder, filename)
-#            if os.path.exists(fp):
-#                values['_'] = int(os.stat(fp).st_mtime)
+
+# Install Brython
+os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), BRYTHON_FOLDER))
+os.system('python -m brython --update')
+
+# Flush the redis database
+redis.Redis().flushdb()
+
 
 @app.route('/', methods=['POST', 'GET'])
 def root():
@@ -74,18 +60,7 @@ def root():
     github_loggedin = githubloggedin()   
     sitename = os.environ.get(ENV_SITENAME, 'Brython Server')
 
-    # Determine current ggame versions
-    try:
-        content, sha = githubretrievefile(GGAME_USER, GGAME_REPOSITORY, '/ggame/__version__.py')
-        globals = {}
-        locals = {}
-        exec(content, globals, locals)
-        app.ggamebuzzversion = locals.get(GGAME_BUZZ_VERSION_NAME, GGAME_BUZZ_VERSION_DEFAULT)
-        app.ggamepixiversion = locals.get(GGAME_PIXI_VERSION_NAME, GGAME_PIXI_VERSION_DEFAULT)
-    except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
-        print("Warning: ggame __version__.py not found")
-        app.ggamebuzzversion = GGAME_BUZZ_VERSION_DEFAULT
-        app.ggamepixiversion = GGAME_PIXI_VERSION_DEFAULT
+    getjslibversions(app)
        
     if request.method == 'GET':
         if 'user' in request.args or 'gist' in request.args:
@@ -101,7 +76,8 @@ def root():
                 site=sitename,
                 brythonversion = app.brython_version,
                 buzzversion = app.ggamebuzzversion,
-                pixiversion = app.ggamepixiversion)
+                pixiversion = app.ggamepixiversion,
+                bsversion = VERSION)
         elif 'code' in request.args and 'state' in request.args:
             # Github authorization response - check if valid
             if checkgithubstate(request.args.get('state')):
@@ -117,7 +93,8 @@ def root():
                 advertisement = app.advertisement,
                 brythonversion = app.brython_version,
                 buzzversion = app.ggamebuzzversion,
-                pixiversion = app.ggamepixiversion)
+                pixiversion = app.ggamepixiversion,
+                bsversion = VERSION)
     elif request.method == 'POST':
         if RUN_EDIT in request.form:
             # user is requesting to open a new page with editor
@@ -130,7 +107,8 @@ def root():
                 advertisement = app.advertisement,
                 brythonversion = app.brython_version,
                 buzzversion = app.ggamebuzzversion,
-                pixiversion = app.ggamepixiversion)
+                pixiversion = app.ggamepixiversion,
+                bsversion = VERSION)
         elif AUTH_REQUEST in request.form:
             # user is requesting authorization from github
             return redirect(githubauthurl())
@@ -181,12 +159,11 @@ def file(filename):
         content, sha = githubretrievefile(cx.user, cx.repo, cx.path + '/' + filename)
     except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
         try:
-            content, sha = githubretrievefile(GGAME_USER, GGAME_REPOSITORY, filename)
+            content, sha = githubretrievefile(GGAME_USER, GGAME_REPOSITORY, filename, True)
         except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
             print(err)
             abort(404)
             return
-            
     if type(content) is bytes:
         return Response(content, mimetype='application/octet-stream')        
     else:
@@ -306,4 +283,5 @@ def v1_load():
 
 if __name__ == "__main__":
     GGAME_USER = GGAME_DEV_USER
+    VERSION = str(randint(0,100000))
     app.run(host=os.getenv("IP", "0.0.0.0"),port=int(os.getenv("PORT", 8080)))
