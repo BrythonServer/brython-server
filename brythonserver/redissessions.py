@@ -12,6 +12,7 @@ from flask.sessions import SessionInterface, SessionMixin
 
 
 class RedisSession(CallbackDict, SessionMixin):
+    """Class RedisSession"""
     def __init__(self, initial=None, sid=None, new=False):
         def on_update(self):
             self.modified = True
@@ -23,6 +24,7 @@ class RedisSession(CallbackDict, SessionMixin):
 
 
 class RedisSessionInterface(SessionInterface):
+    """Class RedisSessionInterface"""
     serializer = pickle
     session_class = RedisSession
 
@@ -32,10 +34,14 @@ class RedisSessionInterface(SessionInterface):
         self.redis = redis
         self.prefix = prefix
 
-    def generate_sid(self):
+    @classmethod
+    def generate_sid(cls):
+        """method: generate_sid"""
         return str(uuid4())
 
-    def get_redis_expiration_time(self, app, session):
+    @classmethod
+    def get_redis_expiration_time(cls, app, session):
+        """method: get_redis_expiration_time"""
         if session.permanent:
             return app.permanent_session_lifetime
         return timedelta(days=1)
