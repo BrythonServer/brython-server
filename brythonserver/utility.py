@@ -8,14 +8,15 @@ import re
 from flask import session, url_for
 from definitions import *
 
+
 def github_client_id():
     """Retrieve the Github Client ID."""
-    return os.environ.get(ENV_GITHUBCLIENTID,'')
-    
-    
+    return os.environ.get(ENV_GITHUBCLIENTID, "")
+
+
 def github_client_secret():
     """Retriev the Github Client Secret."""
-    return os.environ.get(ENV_GITHUBSECRET,'')
+    return os.environ.get(ENV_GITHUBSECRET, "")
 
 
 def newgithubstate():
@@ -26,10 +27,13 @@ def newgithubstate():
     
     Return the state string
     """
-    state = session.get(SESSION_GITHUBSTATE, '')
+    state = session.get(SESSION_GITHUBSTATE, "")
     if SESSION_GITHUBSTATE not in session:
         N = 20
-        state = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(N))
+        state = "".join(
+            random.SystemRandom().choice(string.ascii_uppercase + string.digits)
+            for _ in range(N)
+        )
         session[SESSION_GITHUBSTATE] = state
     return state
 
@@ -39,21 +43,21 @@ def getredirecturl():
     
     Return the redirect URL
     """
-    url = url_for('root', _external=True)
+    url = url_for("root", _external=True)
     if url.endswith(":80"):
         url = url[:-3]
     return url
-    
 
 
-# Public functions    
-    
+# Public functions
+
+
 def checkgithubstate(state):
     """Verify correct Github STATE has been returned.cachecontent
     
     Return True if matching, False otherwise
     """
-    return state == session.get(SESSION_GITHUBSTATE, '')
+    return state == session.get(SESSION_GITHUBSTATE, "")
 
 
 def githubauthurl():
@@ -62,9 +66,9 @@ def githubauthurl():
     Return the URL
     """
     url = URL_GITHUBAUTHORIZE + "?"
-    url += "client_id="+github_client_id()
-    url += "&redirect_uri="+getredirecturl()
-    url += "&scope=repo gist&state="+newgithubstate()
+    url += "client_id=" + github_client_id()
+    url += "&redirect_uri=" + getredirecturl()
+    url += "&scope=repo gist&state=" + newgithubstate()
     print(url)
     return url
 
@@ -75,22 +79,25 @@ def githubretrievetoken(code):
     Returns nothing
     """
     gitrequest = urllib.request.Request(URL_GITHUBRETRIEVETOKEN)
-    gitrequest.add_header('Accept', 'application/json')
-    parameters = {'client_id':github_client_id(),
-        'client_secret':github_client_secret(),
-        'code':code,
-        'redirect_uri':getredirecturl()}
+    gitrequest.add_header("Accept", "application/json")
+    parameters = {
+        "client_id": github_client_id(),
+        "client_secret": github_client_secret(),
+        "code": code,
+        "redirect_uri": getredirecturl(),
+    }
     data = urllib.parse.urlencode(parameters)
-    data = data.encode('utf-8')
+    data = data.encode("utf-8")
     response = urllib.request.urlopen(gitrequest, data)
     jsresponse = json.loads(response.read().decode("utf-8"))
-    if 'access_token' in jsresponse:
-        session[SESSION_ACCESSTOKEN] = jsresponse.get('access_token')
-    
+    if "access_token" in jsresponse:
+        session[SESSION_ACCESSTOKEN] = jsresponse.get("access_token")
+
 
 def githubforgetauth():
     """Forget the current Github authorization."""
     session.pop(SESSION_ACCESSTOKEN, None)
+
 
 def finishrequestsetup(url, method):
     """Complete preparations for initiating a request to Github
@@ -105,9 +112,10 @@ def finishrequestsetup(url, method):
     """
     token = session.get(SESSION_ACCESSTOKEN, os.environ.get(ENV_DEVTOKEN))
     gitrequest = urllib.request.Request(url, method=method)
-    gitrequest.add_header('Authorization', 'token {0}'.format(token))
-    gitrequest.add_header('User-Agent', 'Brython-Server')
+    gitrequest.add_header("Authorization", "token {0}".format(token))
+    gitrequest.add_header("User-Agent", "Brython-Server")
     return gitrequest, token
+
 
 def finishrequest(requestcontext, gitrequest, token, retrievalmethod, metamethod=None):
     """Boilerplate for finishing the API request to Github
@@ -124,14 +132,14 @@ def finishrequest(requestcontext, gitrequest, token, retrievalmethod, metamethod
     sha - the resource SHA
     """
     jsresponse = sha = None
-    if cachedfileexists(requestcontext):  
+    if cachedfileexists(requestcontext):
         content, sha, etag = cachedfile(requestcontext)
-        gitrequest.add_header('If-None-Match', etag)
+        gitrequest.add_header("If-None-Match", etag)
     try:
         response = urllib.request.urlopen(gitrequest)
         jsresponse = json.loads(response.read().decode("utf-8"))
-        sha = jsresponse.get('sha','')
-        etag = response.getheader('ETag')
+        sha = jsresponse.get("sha", "")
+        etag = response.getheader("ETag")
         cachefile(requestcontext, jsresponse, sha, etag)
     except (urllib.error.HTTPError) as err:
         if err.code == 304:  # Not Modified
@@ -140,15 +148,15 @@ def finishrequest(requestcontext, gitrequest, token, retrievalmethod, metamethod
         else:
             raise
     binreturn = retrievalmethod(jsresponse)
-    session[SESSION_METADATA] = metamethod(jsresponse) if metamethod else ''
-    
+    session[SESSION_METADATA] = metamethod(jsresponse) if metamethod else ""
+
     try:
-        return binreturn.decode('utf-8'), sha
+        return binreturn.decode("utf-8"), sha
     except UnicodeDecodeError:
         return binreturn, sha
 
-    
-def gistrequest(gistid, method='GET'):
+
+def gistrequest(gistid, method="GET"):
     """Initiate a request to the Github gist API.
     
     Arguments:
@@ -161,9 +169,9 @@ def gistrequest(gistid, method='GET'):
     """
     url = "https://api.github.com/gists/{0}".format(gistid)
     return finishrequestsetup(url, method)
-    
 
-def githubrequest(user, repo, path, method='GET'):
+
+def githubrequest(user, repo, path, method="GET"):
     """Initiate a request to the Github content API.
     
     Arguments:
@@ -179,6 +187,7 @@ def githubrequest(user, repo, path, method='GET'):
     url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
     return finishrequestsetup(url, method)
 
+
 def githubretrievegist(gistid):
     """Retrieve a gist from Github via API.
     
@@ -189,15 +198,20 @@ def githubretrievegist(gistid):
     content -- the content of the specific file
     sha -- the file sha (used for subsequent commits, if any)
     """
-    requestcontext = Context('', '', gistid)
+    requestcontext = Context("", "", gistid)
     gitrequest, token = gistrequest(gistid)
-    return finishrequest(requestcontext, 
-        gitrequest, 
-        token, 
-        lambda x: x['files'][list(x['files'].keys())[0]]['content'].encode('utf-8'), # content
-        lambda x: list(x['files'].keys())[0])  # file name
+    return finishrequest(
+        requestcontext,
+        gitrequest,
+        token,
+        lambda x: x["files"][list(x["files"].keys())[0]]["content"].encode(
+            "utf-8"
+        ),  # content
+        lambda x: list(x["files"].keys())[0],
+    )  # file name
 
-def githubretrievefile(user, repo, path, usecachedfirst = False):
+
+def githubretrievefile(user, repo, path, usecachedfirst=False):
     """Retrieve a specific file from Github via API.
     
     Arguments:
@@ -210,22 +224,19 @@ def githubretrievefile(user, repo, path, usecachedfirst = False):
     content -- the content of the specific file
     sha -- the file sha (used for subsequent commits, if any)
     """
-    retrievalmethod = lambda x: base64.b64decode(x['content'].encode('utf-8'))
-    
+    retrievalmethod = lambda x: base64.b64decode(x["content"].encode("utf-8"))
+
     requestcontext = Context(user, repo, path)
-    if usecachedfirst and cachedfileexists(requestcontext):  
+    if usecachedfirst and cachedfileexists(requestcontext):
         jsresponse, sha, etag = cachedfile(requestcontext)
         binreturn = retrievalmethod(jsresponse)
         try:
-            return binreturn.decode('utf-8'), sha
+            return binreturn.decode("utf-8"), sha
         except UnicodeDecodeError:
             return binreturn, sha
     else:
         gitrequest, token = githubrequest(user, repo, path)
-        return finishrequest(requestcontext, 
-            gitrequest, 
-            token, 
-            retrievalmethod)
+        return finishrequest(requestcontext, gitrequest, token, retrievalmethod)
 
 
 def githubgetmainfile(user, repo, path):
@@ -244,23 +255,24 @@ def githubgetmainfile(user, repo, path):
     gitrequest, token = githubrequest(user, repo, path)
     if cachedfileexists(requestcontext):
         content, sha, etag = cachedfile(requestcontext)
-        gitrequest.add_header('If-None-Match', etag)
+        gitrequest.add_header("If-None-Match", etag)
     try:
-        mainfile = ''
+        mainfile = ""
         response = urllib.request.urlopen(gitrequest)
         jsresponse = json.loads(response.read().decode("utf-8"))
-        sha = ''
-        etag = response.getheader('ETag')
+        sha = ""
+        etag = response.getheader("ETag")
         print("Fresh directory content ... caching")
         cachefile(requestcontext, jsresponse, sha, etag)
     except (urllib.error.HTTPError) as err:
-        if err.msg == 'Not Modified':
+        if err.msg == "Not Modified":
             print("Directory not changed ... retrieving cache")
             jsresponse, sha, etag = cachedfile(requestcontext)
         else:
             raise
-    names = [f['name'] for f in filter(lambda x: x['type'] == 'file', jsresponse)]
+    names = [f["name"] for f in filter(lambda x: x["type"] == "file", jsresponse)]
     return selectmainfile(names)
+
 
 def githubpath(user, repo, path, name):
     """Build a valid URL to file on Github.
@@ -275,14 +287,14 @@ def githubpath(user, repo, path, name):
     
     Returns URL to Github file or gist.
     """
-    if user != '' and repo != '':
-        retval = "https://github.com/{0}/{1}/blob/master/".format(user,repo)
+    if user != "" and repo != "":
+        retval = "https://github.com/{0}/{1}/blob/master/".format(user, repo)
     else:
         retval = "https://gist.github.com/"
     if path:
         retval += path
         if name not in path:
-            retval +=  "/" + name
+            retval += "/" + name
     else:
         retval += name
     return retval
@@ -301,18 +313,25 @@ def selectmainfile(names):
     names -- a list of candidate names
     Return: the best candidate name
     """
-    mainfile = ''
+    mainfile = ""
     for foundname in names:
-        if (mainfile == '' and len(foundname) > 3 and foundname[-3:] == '.py' or
+        if (
+            mainfile == ""
+            and len(foundname) > 3
+            and foundname[-3:] == ".py"
+            or
             # Foud a python file called main.py or __main__.py? Make IT the one!
-            foundname in ["main.py", "__main__.py"]):
+            foundname in ["main.py", "__main__.py"]
+        ):
             mainfile = foundname
     return mainfile
+
 
 def cachefilekey(context):
     """Return a Redis key that is versioned and unique per installation."""
     return CACHE_VERSION + github_client_id() + json.dumps(context)
-    
+
+
 def cachefile(context, contents, sha, ETag):
     """Cache specific file content, with metadata.
     
@@ -322,7 +341,11 @@ def cachefile(context, contents, sha, ETag):
     sha -- sha string
     """
     r = redis.Redis()
-    r.set(cachefilekey(context), json.dumps(Cachedata(contents, sha, ETag)), ex=CACHE_TIMEOUT_S)
+    r.set(
+        cachefilekey(context),
+        json.dumps(Cachedata(contents, sha, ETag)),
+        ex=CACHE_TIMEOUT_S,
+    )
 
 
 def cachedfileexists(context):
@@ -334,6 +357,7 @@ def cachedfileexists(context):
     """
     r = redis.Redis()
     return r.exists(cachefilekey(context))
+
 
 def cachedfile(context):
     """Retrieve specific cached file content.
@@ -350,6 +374,7 @@ def cachedfile(context):
     data = Cachedata(raw[0], raw[1], raw[2])
     return data.contents, data.sha, data.etag
 
+
 def getversion(content, versionname, defaultversion):
     """Extract a specific version string from file content.
     
@@ -361,26 +386,26 @@ def getversion(content, versionname, defaultversion):
     Return:
     the (string) version that was found
     """
-    for line in content.split('\n'):
-        m = re.match(versionname + ' = "(.+)"',line)
+    for line in content.split("\n"):
+        m = re.match(versionname + ' = "(.+)"', line)
         if m:
             return m[1]
-    return defaultversion    
+    return defaultversion
+
 
 def getjslibversions(app):
     if not (app.ggamebuzzversion and app.ggamepixiversion):
         try:
-            content, sha = githubretrievefile(GGAME_USER, GGAME_REPOSITORY, '/ggame/__version__.py')
+            content, sha = githubretrievefile(
+                GGAME_USER, GGAME_REPOSITORY, "/ggame/__version__.py"
+            )
             app.ggamebuzzversion = getversion(
-                content, 
-                GGAME_BUZZ_VERSION_NAME, 
-                GGAME_BUZZ_VERSION_DEFAULT)
+                content, GGAME_BUZZ_VERSION_NAME, GGAME_BUZZ_VERSION_DEFAULT
+            )
             app.ggamepixiversion = getversion(
-                content, 
-                GGAME_PIXI_VERSION_NAME, 
-                GGAME_PIXI_VERSION_DEFAULT)
+                content, GGAME_PIXI_VERSION_NAME, GGAME_PIXI_VERSION_DEFAULT
+            )
         except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
             print("Warning: ggame __version__.py not found")
             app.ggamebuzzversion = GGAME_BUZZ_VERSION_DEFAULT
             app.ggamepixiversion = GGAME_PIXI_VERSION_DEFAULT
-
