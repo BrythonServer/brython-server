@@ -13,6 +13,7 @@ from flask.sessions import SessionInterface, SessionMixin
 
 class RedisSession(CallbackDict, SessionMixin):
     """Class RedisSession"""
+
     def __init__(self, initial=None, sid=None, new=False):
         def on_update(self):
             self.modified = True
@@ -25,6 +26,7 @@ class RedisSession(CallbackDict, SessionMixin):
 
 class RedisSessionInterface(SessionInterface):
     """Class RedisSessionInterface"""
+
     serializer = pickle
     session_class = RedisSession
 

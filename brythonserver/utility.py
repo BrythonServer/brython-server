@@ -29,9 +29,14 @@ from .definitions import (
     GGAME_PIXI_VERSION_DEFAULT,
     CACHE_VERSION,
     CACHE_TIMEOUT_S,
+    BRYTHON_FOLDER,
+    BRYTHON_JS,
+    BRYTHON_MAGIC_VERSION,
+    BRYTHON_VERSION,
     Context,
-    Cachedata
+    Cachedata,
 )
+
 
 def github_client_id():
     """Retrieve the Github Client ID."""
@@ -409,7 +414,7 @@ def getversion(content, versionname, defaultversion):
     the (string) version that was found
     """
     for line in content.split("\n"):
-        m = re.match(versionname + ' = "(.+)"', line)
+        m = re.match(versionname + ' *= *"(.+)"', line)
         if m:
             return m[1]
     return defaultversion
@@ -439,3 +444,13 @@ def getjslibversions(app):
             print("Warning: ggame __version__.py not found")
             app.ggamebuzzversion = GGAME_BUZZ_VERSION_DEFAULT
             app.ggamepixiversion = GGAME_PIXI_VERSION_DEFAULT
+
+
+def getbrythonversion():
+    """Extract __BRYTHON__.__MAGIC__ value from brython.js"""
+    thispath = os.path.abspath(__file__)
+    thispath = os.path.dirname(thispath)
+    jspath = os.path.join(thispath, BRYTHON_FOLDER, BRYTHON_JS)
+    with open(jspath) as thefile:
+        content = thefile.read()
+        return getversion(content, BRYTHON_MAGIC_VERSION, BRYTHON_VERSION)

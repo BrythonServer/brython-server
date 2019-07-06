@@ -25,8 +25,6 @@ from .definitions import (
     ENV_FLASKSECRET,
     ENV_DEBUG,
     ENV_ADVERTISEMENT,
-    ENV_BRYTHON_VERSION,
-    BRYTHON_VERSION,
     BRYTHON_FOLDER,
     ENV_SITENAME,
     INIT_CONTENT,
@@ -37,10 +35,11 @@ from .definitions import (
     SESSION_GITHUBCONTEXT,
     SESSION_MAINSHA,
     SESSION_MAINFILE,
+    SESSION_METADATA,
     GGAME_REPOSITORY,
     GGAME_DEV_USER,
     GGAME_USER,
-    Context
+    Context,
 )
 from .utility import (
     githubloggedin,
@@ -52,7 +51,9 @@ from .utility import (
     githubforgetauth,
     githubgetmainfile,
     githubretrievegist,
-    githubpath
+    githubpath,
+    getbrythonversion,
+    githubrequest,
 )
 from .__version__ import VERSION
 
@@ -64,7 +65,7 @@ APP.session_interface = RedisSessionInterface()
 APP.secret_key = os.environ.get(ENV_FLASKSECRET, "A0Zr98j/3yX R~XHH!jmN]LWX/,?RT")
 APP.debug = os.environ.get(ENV_DEBUG, False)
 APP.advertisement = os.environ.get(ENV_ADVERTISEMENT, "")
-APP.brython_version = os.environ.get(ENV_BRYTHON_VERSION, BRYTHON_VERSION)
+APP.brython_version = getbrythonversion()
 
 APP.ggamebuzzversion = None
 APP.ggamepixiversion = None
@@ -193,6 +194,7 @@ def brythonconsole():
         site=sitename,
         consolesite=sitename + " Console",
         advertisement=APP.advertisement,
+        bsversion=VERSION,
     )
 
 
@@ -271,7 +273,7 @@ def v1_commit():
         else:  # this is a gist file name
             gitrequest, token = gistrequest(name, "PATCH")
             parameters = {"files": {metadata: {"content": editcontent}}}
-    #pylint: disable=bare-except
+    # pylint: disable=bare-except
     except:
         print("Session expired.")
         return (
@@ -289,11 +291,7 @@ def v1_commit():
         response = urllib.request.urlopen(gitrequest, data)
         jsresponse = json.loads(response.read().decode("utf-8"))
         session[SESSION_MAINSHA] = jsresponse.get("content", {}).get("sha", "")
-        return (
-            json.dumps({"success": True}),
-            200,
-            {"ContentType": "application/json"}
-        )
+        return (json.dumps({"success": True}), 200, {"ContentType": "application/json"})
     except urllib.error.HTTPError as err:
         error = err.msg + " " + str(err.code)
         print(dir(err))
@@ -367,16 +365,23 @@ def v1_load():
             )
     except (urllib.error.HTTPError, FileNotFoundError) as err:
         print("Github error: " + err.msg + ", path was ", user, repo, path)
+        return (
+            json.dumps({"success": False, "message": err.msg}),
+            404,
+            {"ContentType": "application/json"},
+        )
     return (
-        json.dumps({"success": False, "message": err.msg}),
+        json.dumps({"success": False, "message": "You should not see this error."}),
         404,
         {"ContentType": "application/json"},
     )
+
 
 if __name__ == "__main__":
     from random import randint
     from brythonserver.definitions import GGAME_USER, GGAME_DEV_USER
     from brythonserver.__version__ import VERSION
+
     GGAME_USER = GGAME_DEV_USER
     VERSION = str(randint(0, 100000))
     APP.run(host=os.getenv("IP", "0.0.0.0"), port=int(os.getenv("PORT", "8080")))
