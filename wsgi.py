@@ -12,7 +12,5 @@ if __name__ == "__main__":
     from random import randint
     import brythonserver.__version__ 
     brythonserver.__version__.VERSION = str(randint(0, 100000))
-    import brythonserver.definitions
-    brythonserver.definitions.GGAME_USER = brythonserver.definitions.GGAME_DEV_USER
     import brythonserver.main
     brythonserver.main.APP.run(host=os.getenv("IP", "0.0.0.0"), port=int(os.getenv("PORT", "8080")))

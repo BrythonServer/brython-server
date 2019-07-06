@@ -6,6 +6,7 @@ gunicorn==19.5.0
 itsdangerous==0.24
 redis==2.10.3
 brython==3.7.3
+ggame==1.0.10
 pylint==2.3.0
 black==18.9b0
 wheel==0.32.3

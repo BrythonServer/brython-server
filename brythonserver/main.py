@@ -8,7 +8,6 @@ import urllib.request
 import urllib.parse
 import json
 import base64
-import redis
 from flask import (
     Flask,
     render_template,
@@ -19,8 +18,12 @@ from flask import (
     abort,
     Response,
 )
+from flask_session import Session
+from flask_caching import Cache
+import ggame.__version__
+from ggame.__version__ import VERSION, BUZZ_VERSION, PIXI_VERSION
+from brython import implementation as BRYTHON_VERSION
 from .reverseproxied import ReverseProxied
-from .redissessions import RedisSessionInterface
 from .definitions import (
     ENV_FLASKSECRET,
     ENV_DEBUG,
@@ -36,14 +39,10 @@ from .definitions import (
     SESSION_MAINSHA,
     SESSION_MAINFILE,
     SESSION_METADATA,
-    GGAME_REPOSITORY,
-    GGAME_DEV_USER,
-    GGAME_USER,
     Context,
 )
 from .utility import (
     githubloggedin,
-    getjslibversions,
     checkgithubstate,
     githubretrievetoken,
     githubretrievefile,
@@ -52,7 +51,6 @@ from .utility import (
     githubgetmainfile,
     githubretrievegist,
     githubpath,
-    getbrythonversion,
     githubrequest,
 )
 from .__version__ import VERSION
@@ -60,23 +58,25 @@ from .__version__ import VERSION
 
 APP = Flask(__name__, static_url_path="/__static")
 APP.wsgi_app = ReverseProxied(APP.wsgi_app)
-APP.session_interface = RedisSessionInterface()
 
 APP.secret_key = os.environ.get(ENV_FLASKSECRET, "A0Zr98j/3yX R~XHH!jmN]LWX/,?RT")
 APP.debug = os.environ.get(ENV_DEBUG, False)
 APP.advertisement = os.environ.get(ENV_ADVERTISEMENT, "")
-APP.brython_version = getbrythonversion()
 
-APP.ggamebuzzversion = None
-APP.ggamepixiversion = None
+# Use memcached for session data
+APP.config["SESSION_TYPE"] = "memcached"
+Session(APP)
 
+# Use memcached for memoizing view functions
+APP.config["CACHE_TYPE"] = "memcached"
+CACHE = Cache(APP)
 
 # Install Brython
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), BRYTHON_FOLDER))
 os.system("python -m brython --update")
 
-# Flush the redis database
-redis.Redis().flushdb()
+# Locate the ggame directory
+GGAME_PATH = os.path.dirname(os.path.abspath(ggame.__version__.__file__))
 
 
 @APP.route("/", methods=["POST", "GET"])
@@ -103,8 +103,6 @@ def root():
     github_loggedin = githubloggedin()
     sitename = os.environ.get(ENV_SITENAME, "Brython Server")
 
-    getjslibversions(APP)
-
     returnedhtml = None
 
     if request.method == "GET":
@@ -120,9 +118,9 @@ def root():
                 name=name,
                 path=path,
                 site=sitename,
-                brythonversion=APP.brython_version,
-                buzzversion=APP.ggamebuzzversion,
-                pixiversion=APP.ggamepixiversion,
+                brythonversion=BRYTHON_VERSION,
+                buzzversion=BUZZ_VERSION,
+                pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
             )
         elif "code" in request.args and "state" in request.args:
@@ -139,9 +137,9 @@ def root():
                 edit="",
                 editcontent=INIT_CONTENT,
                 advertisement=APP.advertisement,
-                brythonversion=APP.brython_version,
-                buzzversion=APP.ggamebuzzversion,
-                pixiversion=APP.ggamepixiversion,
+                brythonversion=BRYTHON_VERSION,
+                buzzversion=BUZZ_VERSION,
+                pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
             )
     elif request.method == "POST":
@@ -155,9 +153,9 @@ def root():
                 editcontent="",
                 github=github_loggedin,
                 advertisement=APP.advertisement,
-                brythonversion=APP.brython_version,
-                buzzversion=APP.ggamebuzzversion,
-                pixiversion=APP.ggamepixiversion,
+                brythonversion=BRYTHON_VERSION,
+                buzzversion=BUZZ_VERSION,
+                pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
             )
         elif AUTH_REQUEST in request.form:
@@ -174,6 +172,7 @@ def root():
 
 
 @APP.route("/favicon.ico")
+@CACHE.cached(timeout=500)
 def favicon():
     """Return favicon.ico.
 
@@ -185,6 +184,7 @@ def favicon():
 
 
 @APP.route("/brythonconsole")
+@CACHE.cached(timeout=50)
 def brythonconsole():
     """Return template for python/brython console.
     """
@@ -199,6 +199,7 @@ def brythonconsole():
 
 
 @APP.route("/" + IMPORTNAME + "/<filename>")
+@CACHE.cached(timeout=50)
 def brythonimport(filename):
     """Return static import file
 
@@ -207,10 +208,26 @@ def brythonimport(filename):
     return APP.send_static_file(os.path.join(IMPORTNAME, filename))
 
 
+@APP.route("/ggame/<path:filename>")
+@CACHE.cached(timeout=50)
+def ggameimport(filename):
+    """Return content from the ggame file tree."""
+    try:
+        with open(os.path.join(GGAME_PATH, filename), "rb") as thefile:
+            content = thefile.read()
+        if isinstance(content, bytes):
+            return Response(content, mimetype="application/octet-stream")
+        return Response(content)
+    except (FileNotFoundError) as err:
+        print(err)
+        abort(404)
+    return "You should never see this!"
+
+
 @APP.route("/<path:filename>")
 def file(filename):
     """Return (possibly cached) file for the current Github repo.
-    Will look for match in BrythonServer/ggame repository as well!
+    Will look for png match in the local ggame installation as well!
     """
     filename = urllib.request.pathname2url(filename)
     try:
@@ -218,13 +235,12 @@ def file(filename):
         content, _sha = githubretrievefile(cx.user, cx.repo, cx.path + "/" + filename)
     except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
         try:
-            content, _sha = githubretrievefile(
-                GGAME_USER, GGAME_REPOSITORY, filename, True
-            )
-        except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
+            if not filename.endswith((".png", ".PNG")):
+                raise FileNotFoundError
+            return ggameimport(filename)
+        except (FileNotFoundError) as err:
             print(err)
             abort(404)
-            return "You should never see this!"
     if isinstance(content, bytes):
         return Response(content, mimetype="application/octet-stream")
     return Response(content)
@@ -375,13 +391,3 @@ def v1_load():
         404,
         {"ContentType": "application/json"},
     )
-
-
-if __name__ == "__main__":
-    from random import randint
-    from brythonserver.definitions import GGAME_USER, GGAME_DEV_USER
-    from brythonserver.__version__ import VERSION
-
-    GGAME_USER = GGAME_DEV_USER
-    VERSION = str(randint(0, 100000))
-    APP.run(host=os.getenv("IP", "0.0.0.0"), port=int(os.getenv("PORT", "8080")))

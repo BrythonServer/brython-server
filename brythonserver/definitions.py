@@ -38,16 +38,4 @@ URL_GITHUBRETRIEVETOKEN = "https://github.com/login/oauth/access_token"
 
 INIT_CONTENT = 'print("Hello, world.")'
 
-GGAME_USER = "BrythonServer"
-GGAME_DEV_USER = "tiggerntatie"  # for development only
-GGAME_REPOSITORY = "ggame"
-GGAME_VERSION_NAME = "VERSION"
-GGAME_BUZZ_VERSION_NAME = "BUZZ_VERSION"
-GGAME_PIXI_VERSION_NAME = "PIXI_VERSION"
-GGAME_BUZZ_VERSION_DEFAULT = "1.1.10"
-GGAME_PIXI_VERSION_DEFAULT = "3.0.11"
-
 BRYTHON_FOLDER = "static/brython"
-BRYTHON_JS = "brython.js"
-BRYTHON_MAGIC_VERSION = "__BRYTHON__.__MAGIC__"
-BRYTHON_VERSION = "3.7.3"

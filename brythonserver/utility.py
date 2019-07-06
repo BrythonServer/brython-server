@@ -9,7 +9,6 @@ import json
 import base64
 import random
 import string
-import re
 import redis
 from flask import session, url_for
 from .definitions import (
@@ -21,18 +20,8 @@ from .definitions import (
     URL_GITHUBRETRIEVETOKEN,
     SESSION_METADATA,
     SESSION_ACCESSTOKEN,
-    GGAME_USER,
-    GGAME_REPOSITORY,
-    GGAME_BUZZ_VERSION_NAME,
-    GGAME_PIXI_VERSION_NAME,
-    GGAME_BUZZ_VERSION_DEFAULT,
-    GGAME_PIXI_VERSION_DEFAULT,
     CACHE_VERSION,
     CACHE_TIMEOUT_S,
-    BRYTHON_FOLDER,
-    BRYTHON_JS,
-    BRYTHON_MAGIC_VERSION,
-    BRYTHON_VERSION,
     Context,
     Cachedata,
 )
@@ -400,57 +389,3 @@ def cachedfile(context):
     raw = json.loads(r.get(cachefilekey(context)).decode("utf-8"))
     data = Cachedata(raw[0], raw[1], raw[2])
     return data.contents, data.sha, data.etag
-
-
-def getversion(content, versionname, defaultversion):
-    """Extract a specific version string from file content.
-
-    Arguments:
-    content -- (string) text contents of a version file (i.e. ggame __version__.py)
-    versionname -- (string) the version variable name to search for
-    defaultversion  -- (string) the version string to return if versionname isn't found
-
-    Return:
-    the (string) version that was found
-    """
-    for line in content.split("\n"):
-        m = re.match(versionname + ' *= *"(.+)"', line)
-        if m:
-            return m[1]
-    return defaultversion
-
-
-def getjslibversions(app):
-    """Extract PIXI and BUZZ JS library versions from __version__.py
-
-    As a side-effect, this function will set app.ggamebuzzversion and
-    app.ggamepixiversion to the correct version strings for the current
-    version of ggame in use.
-
-    Returns nothing
-    """
-    if not (app.ggamebuzzversion and app.ggamepixiversion):
-        try:
-            content, _sha = githubretrievefile(
-                GGAME_USER, GGAME_REPOSITORY, "/ggame/__version__.py"
-            )
-            app.ggamebuzzversion = getversion(
-                content, GGAME_BUZZ_VERSION_NAME, GGAME_BUZZ_VERSION_DEFAULT
-            )
-            app.ggamepixiversion = getversion(
-                content, GGAME_PIXI_VERSION_NAME, GGAME_PIXI_VERSION_DEFAULT
-            )
-        except (FileNotFoundError, KeyError, urllib.error.HTTPError) as _err:
-            print("Warning: ggame __version__.py not found")
-            app.ggamebuzzversion = GGAME_BUZZ_VERSION_DEFAULT
-            app.ggamepixiversion = GGAME_PIXI_VERSION_DEFAULT
-
-
-def getbrythonversion():
-    """Extract __BRYTHON__.__MAGIC__ value from brython.js"""
-    thispath = os.path.abspath(__file__)
-    thispath = os.path.dirname(thispath)
-    jspath = os.path.join(thispath, BRYTHON_FOLDER, BRYTHON_JS)
-    with open(jspath) as thefile:
-        content = thefile.read()
-        return getversion(content, BRYTHON_MAGIC_VERSION, BRYTHON_VERSION)
