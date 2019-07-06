@@ -56,7 +56,7 @@ from .utility import (
 from .__version__ import VERSION
 
 
-APP = Flask(__name__, static_url_path="/__static")
+application = APP = Flask(__name__, static_url_path="/__static")
 APP.wsgi_app = ReverseProxied(APP.wsgi_app)
 
 APP.secret_key = os.environ.get(ENV_FLASKSECRET, "A0Zr98j/3yX R~XHH!jmN]LWX/,?RT")
