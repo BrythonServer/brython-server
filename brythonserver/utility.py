@@ -161,7 +161,6 @@ def finishrequest(requestcontext, gitrequest, retrievalmethod, metamethod=None):
         cachefile(requestcontext, jsresponse, sha, etag)
     except (urllib.error.HTTPError) as err:
         if err.code == 304:  # Not Modified
-            print("Not changed... retrieving cache")
             jsresponse, sha, etag = cachedfile(requestcontext)
         else:
             raise
@@ -282,7 +281,6 @@ def githubgetmainfile(user, repo, path):
         cachefile(requestcontext, jsresponse, sha, etag)
     except (urllib.error.HTTPError) as err:
         if err.msg == "Not Modified":
-            print("Directory not changed ... retrieving cache")
             jsresponse, sha, etag = cachedfile(requestcontext)
         else:
             raise
