@@ -8,6 +8,7 @@ import urllib.request
 import urllib.parse
 import json
 import base64
+import re
 from flask import (
     Flask,
     render_template,
@@ -22,13 +23,13 @@ from flask_session import Session
 from flask_caching import Cache
 import ggame.__version__
 from ggame.__version__ import VERSION, BUZZ_VERSION, PIXI_VERSION
-from brython import implementation as BRYTHON_VERSION
 from .reverseproxied import ReverseProxied
 from .definitions import (
     ENV_FLASKSECRET,
     ENV_DEBUG,
     ENV_ADVERTISEMENT,
     BRYTHON_FOLDER,
+    BRYTHON_JS,
     ENV_SITENAME,
     INIT_CONTENT,
     RUN_EDIT,
@@ -55,8 +56,7 @@ from .utility import (
 )
 from .__version__ import VERSION
 
-
-application = APP = Flask(__name__, static_url_path="/__static")
+APP = Flask(__name__, static_url_path="/__static")
 APP.wsgi_app = ReverseProxied(APP.wsgi_app)
 
 APP.secret_key = os.environ.get(ENV_FLASKSECRET, "A0Zr98j/3yX R~XHH!jmN]LWX/,?RT")
@@ -74,6 +74,12 @@ CACHE = Cache(APP)
 # Install Brython
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), BRYTHON_FOLDER))
 os.system("python -m brython --update")
+
+# Retrieve Brython Version
+with open(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), BRYTHON_FOLDER, BRYTHON_JS)
+) as bjs:
+    BRYTHON_VERSION = re.search('__BRYTHON__.__MAGIC__.*=.*"(.+)"', bjs.read()).group(1)
 
 # Locate the ggame directory
 GGAME_PATH = os.path.dirname(os.path.abspath(ggame.__version__.__file__))

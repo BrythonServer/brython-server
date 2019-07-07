@@ -3,7 +3,8 @@ Brython-Server debugging server
 Author: E Dennison
 
 Execute with proper environment variables set.
-Not for production use (instead, e.g.: gunicorn -b 127.0.0.1:8003 -w 4 brythonserver.main:app)
+Not for production use (instead, e.g.: gunicorn -b 0.0.0.0:3000 -w 4   brythonserver.main:APP)
+(or: gunicorn -b 127.0.0.1:8003  -w 4   brythonserver.main:APP)
 """
 
 

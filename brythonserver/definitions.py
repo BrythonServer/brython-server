@@ -39,3 +39,4 @@ URL_GITHUBRETRIEVETOKEN = "https://github.com/login/oauth/access_token"
 INIT_CONTENT = 'print("Hello, world.")'
 
 BRYTHON_FOLDER = "static/brython"
+BRYTHON_JS = "brython.js"
