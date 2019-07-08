@@ -39,7 +39,7 @@ In addition, you will need to install
 [memcached](https://memcached.org/downloads) and, for a production install, 
 [gunicorn](http://docs.gunicorn.org/en/stable/install.html).
 
-Brython-Server will use [Brython](https://github.com/brython-dev/brython) ask
+Brython-Server will use [Brython](https://github.com/brython-dev/brython) as
 its Python interpreter and and [Ggame](https://github.com/BrythonServer/ggame) 
 as its graphics engine. The correct versions of each will automatically be used
 when you install Brython-Server using pip.
