@@ -4,6 +4,7 @@ Author: E Dennison
 """
 
 from collections import namedtuple
+import pylibmc
 
 ENV_GITHUBCLIENTID = "githubclientid"
 ENV_GITHUBSECRET = "githubsecret"
@@ -22,7 +23,6 @@ SESSION_GITHUBREPO = "githubrepo"
 SESSION_GITHUBPATH = "githubpath"
 SESSION_METADATA = "metadata"
 
-CACHE_TIMEOUT_S = 60 * 60 * 24  # One Day (how much to keep RAM usage under control?)
 CACHE_VERSION = "1"
 Context = namedtuple("Context", ["user", "repo", "path"])
 Cachedata = namedtuple("Cachedata", ["contents", "sha", "etag"])
@@ -40,3 +40,7 @@ INIT_CONTENT = 'print("Hello, world.")'
 
 BRYTHON_FOLDER = "static/brython"
 BRYTHON_JS = "brython.js"
+
+CACHE_CLIENT = pylibmc.Client(
+    ["127.0.0.1"], binary=True, behaviors={"tcp_nodelay": True, "ketama": True}
+)

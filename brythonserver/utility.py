@@ -9,7 +9,6 @@ import json
 import base64
 import random
 import string
-import redis
 from flask import session, url_for
 from .definitions import (
     ENV_GITHUBCLIENTID,
@@ -21,9 +20,9 @@ from .definitions import (
     SESSION_METADATA,
     SESSION_ACCESSTOKEN,
     CACHE_VERSION,
-    CACHE_TIMEOUT_S,
     Context,
     Cachedata,
+    CACHE_CLIENT,
 )
 
 
@@ -160,9 +159,7 @@ def finishrequest(requestcontext, gitrequest, retrievalmethod, metamethod=None):
         etag = response.getheader("ETag")
         cachefile(requestcontext, jsresponse, sha, etag)
     except (urllib.error.HTTPError) as err:
-        if err.code == 304:  # Not Modified
-            jsresponse, sha, etag = cachedfile(requestcontext)
-        else:
+        if err.code != 304:  # Not Modified - use earlier jsresponse
             raise
     binreturn = retrievalmethod(jsresponse)
     session[SESSION_METADATA] = metamethod(jsresponse) if metamethod else ""
@@ -342,8 +339,8 @@ def selectmainfile(names):
 
 
 def cachefilekey(context):
-    """Return a Redis key that is versioned and unique per installation."""
-    return CACHE_VERSION + github_client_id() + json.dumps(context)
+    """Return a key that is versioned and unique per installation."""
+    return (CACHE_VERSION + github_client_id() + json.dumps(context)).replace(" ", "_")
 
 
 def cachefile(context, contents, sha, etag):
@@ -354,12 +351,7 @@ def cachefile(context, contents, sha, etag):
     contents -- Raw file content (binary or text)
     sha -- sha string
     """
-    r = redis.Redis()
-    r.set(
-        cachefilekey(context),
-        json.dumps(Cachedata(contents, sha, etag)),
-        ex=CACHE_TIMEOUT_S,
-    )
+    CACHE_CLIENT[cachefilekey(context)] = json.dumps(Cachedata(contents, sha, etag))
 
 
 def cachedfileexists(context):
@@ -369,21 +361,19 @@ def cachedfileexists(context):
     context -- Context object with user, repo, path
     Return: True if cached copy exists, False otherwise.
     """
-    r = redis.Redis()
-    return r.exists(cachefilekey(context))
+    return cachefilekey(context) in CACHE_CLIENT
 
 
 def cachedfile(context):
     """Retrieve specific cached file content.
 
     Arguments:
-    path -- the file path and name
+    context -- the combination of user + repo + path
 
     Return:
-    content -- the file content text
+    content -- the file content
     sha -- the file sha
     """
-    r = redis.Redis()
-    raw = json.loads(r.get(cachefilekey(context)).decode("utf-8"))
+    raw = json.loads(CACHE_CLIENT[cachefilekey(context)])
     data = Cachedata(raw[0], raw[1], raw[2])
     return data.contents, data.sha, data.etag
