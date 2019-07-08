@@ -22,6 +22,38 @@ button to retrieve the source from Github.
 You may make any changes you want to the source code and re-run it. If you would
 like to save your work back to Github, just press the **commit** button.
 
+### Turtle
+
+Brython-Server supports the Python turtle to the extent that it is supported by
+the underlying Brython interpreter. Its usage is simple, but slightly non-standard.
+For example:
+
+```python
+from brythonserver import turtle
+t = turtle.Turtle()
+t.forward(100)
+t.right(90)
+t.forward(100)
+turtle.done()
+```
+
+### Ggame
+
+Brython-Server includes built-in support for the Ggame graphics engine. For example,
+a trivial program from the 
+[Ggame documentation](https://ggame.readthedocs.io/en/latest/introduction.html):
+
+```python
+from ggame import App, ImageAsset, Sprite
+
+# Create a displayed object at 100,100 using an image asset
+Sprite(ImageAsset("bunny.png"), (100, 100))
+# Create the app, with a default stage
+APP = App()
+# Run the app
+APP.run()
+```
+
 ## Deployment
 
 The best way to install Brython-Server is with pip and virtualenv. Create and 

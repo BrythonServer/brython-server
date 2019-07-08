@@ -205,7 +205,6 @@ def brythonconsole():
 
 
 @APP.route("/" + IMPORTNAME + "/<filename>")
-@CACHE.cached(timeout=50)
 def brythonimport(filename):
     """Return static import file
 
