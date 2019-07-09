@@ -8,42 +8,45 @@
 
 {% block body %}
 
-    <div class="row" id="nav-row">
-        <div class="col-md-4">
-            <input class="form-control"  type="url" placeholder="https://github.com/<user>/<repo> or <gist ID>" id="url_input" value="{{ edit }}">
+{% if cookieconsent %}    
+        <div class="row" id="nav-row">
+            <div class="col-md-4">
+                <input class="form-control"  type="url" placeholder="https://github.com/<user>/<repo> or <gist ID>" id="url_input" value="{{ edit }}">
+            </div>
+            <div class="col-md-8">
+                <span id="navigation">
+                <button class="btn btn-default btn-sm" type="button" id="url_submit" 
+                    onclick="bsController.load(bsGithubUtil, bsUI)">
+                    <span class="octicon octicon-cloud-download" title="Load from Github"></span> load</button>
+                <button class="btn btn-default btn-sm"  type="button" id="gobutton">
+                    <span class="octicon octicon-zap" title="Execute program"></span> GO!</button>
+                <button class="btn btn-default btn-sm"  type="button" id="haltbutton" disabled
+                    onclick="bsUI.editmode()">
+                    <span class="octicon octicon-x" title="Halt program"></span> STOP</button>
+                <a class="btn btn-default btn-sm" role="button" target="_blank" id="github_url" href="http://github.com">
+                    <span class="octicon octicon-mark-github" title="View source on Github"></span></a>
+                <a class="btn btn-default btn-sm" role="button" target="_blank" id="share_url" href="#">
+                    <span class="octicon octicon-link" title="Link to this program"></span></a>
+    {% if github %}
+                <button type="button" class="btn btn-default btn-sm" 
+                    onclick="bsController.commit(bsGithubUtil, bsUI)">
+                    <span class="octicon octicon-cloud-upload" title="Commit to Github"></span> commit</button>
+                <button type="button" class="btn btn-default btn-sm" 
+                    onclick="bsController.logout()">
+                    <span class="octicon octicon-mark-github" title="Log out of Github"></span> logout</button>
+    {% else %}
+                <button type="button" class="btn btn-default btn-sm" 
+                    onclick="bsController.login(bsUI)">
+                    <span class="octicon octicon-mark-github" title="Log in to Github"></span> login
+                </button>
+    {% endif %}
+                </span>
+                <span class="btn btn-warning btn-sm" role="button" id="loading">WORKING</span>
+            </div>
         </div>
-        <div class="col-md-8">
-            <span id="navigation">
-            <button class="btn btn-default btn-sm" type="button" id="url_submit" 
-                onclick="bsController.load(bsGithubUtil, bsUI)">
-                <span class="octicon octicon-cloud-download" title="Load from Github"></span> load</button>
-            <button class="btn btn-default btn-sm"  type="button" id="gobutton">
-                <span class="octicon octicon-zap" title="Execute program"></span> GO!</button>
-            <button class="btn btn-default btn-sm"  type="button" id="haltbutton" disabled
-                onclick="bsUI.editmode()">
-                <span class="octicon octicon-x" title="Halt program"></span> STOP</button>
-            <a class="btn btn-default btn-sm" role="button" target="_blank" id="github_url" href="http://github.com">
-                <span class="octicon octicon-mark-github" title="View source on Github"></span></a>
-            <a class="btn btn-default btn-sm" role="button" target="_blank" id="share_url" href="#">
-                <span class="octicon octicon-link" title="Link to this program"></span></a>
-{% if github %}
-            <button type="button" class="btn btn-default btn-sm" 
-                onclick="bsController.commit(bsGithubUtil, bsUI)">
-                <span class="octicon octicon-cloud-upload" title="Commit to Github"></span> commit</button>
-            <button type="button" class="btn btn-default btn-sm" 
-                onclick="bsController.logout()">
-                <span class="octicon octicon-sign-out" title="Log out of Github"></span> logout</button>
 {% else %}
-            <button type="button" class="btn btn-default btn-sm" 
-                onclick="bsController.login(bsUI)">
-                <span class="octicon octicon-sign-in" title="Log in to Github"></span> login
-            </button>
+        {% include 'cookiebanner.html' %}
 {% endif %}
-            </span>
-            <span class="btn btn-warning btn-sm" role="button" id="loading">WORKING</span>
-        </div>
-    </div>
-
 
 
 
@@ -68,7 +71,9 @@
             <a href="https://github.com/tiggerntatie/brython-server">
             Brython-Server</a> and 
             <a href="http://www.brython.info/">Brython</a> projects.
-            <a href= "{{ url_for('brythonconsole') }}">{{ consolesite }}</a>
+            {% if cookieconsent %}
+                <a href= "{{ url_for('brythonconsole') }}">{{ consolesite }}</a>
+            {% endif %}
         </div>
     </div>
 
@@ -87,24 +92,24 @@
 
 {% block foot %}
 {{ super() }}
-<script type="text/javascript">
-    window.onload = function() {
-        brython(1);     // FIX?
-        bsConsole.init();
-        bsUI.init();    
-        bsUI.starteditor();
-        bsController.init();
-{% if edit != '' and editcontent == '' %}
-        bsController.load(bsGithubUtil, bsUI);    
-        bsUI.editmode();
-{% endif %}
-        $( "#gobutton" ).click(function( event ) {
-          event.stopPropagation();
-          bsUI.turtlemode();
-          bsController.runeditor(bsUI, bsConsole);
-        });
-    }
-</script>
-
-
+    {% if cookieconsent %}
+    <script type="text/javascript">
+        window.onload = function() {
+            brython(1);     // FIX?
+            bsConsole.init();
+            bsUI.init();    
+            bsUI.starteditor();
+            bsController.init();
+    {% if edit != '' and editcontent == '' %}
+            bsController.load(bsGithubUtil, bsUI);    
+            bsUI.editmode();
+    {% endif %}
+            $( "#gobutton" ).click(function( event ) {
+              event.stopPropagation();
+              bsUI.turtlemode();
+              bsController.runeditor(bsUI, bsConsole);
+            });
+        }
+    </script>
+    {% endif %}
 {% endblock %}

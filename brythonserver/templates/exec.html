@@ -2,30 +2,40 @@
 
 {% block body %}
 
-<div class="row" id="nav-row">
-    <div class="col-md-12">
-        <span id="navigation">
-        <button class="btn btn-default btn-sm"  type="button" id="haltgobutton">
-            <span class="octicon octicon-zap" title="Execute"></span> RESTART!</button>
-        <button class="btn btn-default btn-sm"  type="button" 
-            onclick="bsUI.runedit()">
-            <span class="octicon octicon-pencil" title="Open in editor"></span> EDIT</button>
-        <a class="btn btn-default btn-sm" role="button" target="_blank" id="github_url" href="http://github.com">
-            <span class="octicon octicon-mark-github" title="View source on Github"></span></a>
-        </span>
-        <span class="btn btn-warning btn-sm" role="button" id="loading">WORKING</span>
+{% if cookieconsent %}
+    <div class="row" id="nav-row">
+        <div class="col-md-12">
+            <span id="navigation">
+            <button class="btn btn-default btn-sm"  type="button" id="haltgobutton">
+                <span class="octicon octicon-zap" title="Execute"></span> RESTART!</button>
+            <button class="btn btn-default btn-sm"  type="button" 
+                onclick="bsUI.runedit()">
+                <span class="octicon octicon-pencil" title="Open in editor"></span> EDIT</button>
+            <a class="btn btn-default btn-sm" role="button" target="_blank" id="github_url" href="http://github.com">
+                <span class="octicon octicon-mark-github" title="View source on Github"></span></a>
+            </span>
+            <span class="btn btn-warning btn-sm" role="button" id="loading">WORKING</span>
+        </div>
     </div>
-</div>
+{% else %}
+    {% include 'cookiebanner.html' %}
+{% endif %}
+
+
 
 <div class="row" id="body-row">
+    {% if cookieconsent %}
     <div class="col-md-0" id="editor-column">
     </div>
+    {% endif %}
     <div class="col-md-12" id="output-column">
         <textarea class="form-control" id="console"></textarea>
 	</div>
+    {% if cookieconsent %}
     <div class="col-md-0" id="graphics-column" hidden>
         <canvas id="ggame-canvas" class="img-responsive"></canvas>
 	</div>
+    {% endif %}
 </div>
 
 
@@ -44,24 +54,30 @@
   <input id="run_edit" name="run_edit" type="hidden" value="">
 </form>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js" type="text/javascript" charset="utf-8" ></script>
+
 {% endblock %}
 
 {% block foot %}
 {{ super() }}
-<script type="text/javascript">
-    bsConsole.init();
-    bsUI.init();
-    var data = {'user':'{{ user }}', 'repo':'{{ repo }}', 'path':'{{ path }}', 'name':'{{ name }}' };
-    window.onload = function(){
-        bsUI.executemode();
-        bsController.rungithub(bsConsole, bsUI, data);
-    }
-    $( "#haltgobutton" ).click(function( event ) {
-        event.stopPropagation();
-        $("#haltgobutton").blur();
-        bsUI.editmode();
-        bsUI.executemode();
-        bsController.run(bsConsole);
-    });
-</script>
+    <script type="text/javascript">
+        {% if cookieconsent %}
+        bsConsole.init();
+        bsUI.init();
+        var data = {'user':'{{ user }}', 'repo':'{{ repo }}', 'path':'{{ path }}', 'name':'{{ name }}' };
+        $( "#haltgobutton" ).click(function( event ) {
+            event.stopPropagation();
+            $("#haltgobutton").blur();
+            bsUI.editmode();
+            bsUI.executemode();
+            bsController.run(bsConsole);
+        });
+        {% endif %}
+        window.onload = function(){
+            bsUI.executemode();
+            {% if cookieconsent %}
+                bsController.rungithub(bsConsole, bsUI, data);
+            {% endif %}
+        }
+    </script>
 {% endblock %}

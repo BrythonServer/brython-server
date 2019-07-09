@@ -340,7 +340,8 @@ def selectmainfile(names):
 
 def cachefilekey(context):
     """Return a key that is versioned and unique per installation."""
-    return (CACHE_VERSION + github_client_id() + json.dumps(context)).replace(" ", "_")
+    _retval = CACHE_VERSION + github_client_id() + json.dumps(context)
+    return _retval.replace("_", "__").replace(" ", "_")
 
 
 def cachefile(context, contents, sha, etag):

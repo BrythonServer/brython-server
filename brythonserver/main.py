@@ -110,6 +110,9 @@ def root():
     exec.html -- render template
     redirect -- to / or github
     """
+
+    cookieconsent = request.cookies.get("cookie_consent") == "true"
+
     github_loggedin = githubloggedin()
 
     returnedhtml = None
@@ -132,6 +135,7 @@ def root():
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
+                cookieconsent=cookieconsent,
             )
         elif "code" in request.args and "state" in request.args:
             # Github authorization response - check if valid
@@ -151,6 +155,7 @@ def root():
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
+                cookieconsent=cookieconsent,
             )
     elif request.method == "POST":
         if RUN_EDIT in request.form:
@@ -167,6 +172,7 @@ def root():
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
+                cookieconsent=cookieconsent,
             )
         elif AUTH_REQUEST in request.form:
             # user is requesting authorization from github
@@ -197,12 +203,14 @@ def favicon():
 def brythonconsole():
     """Return template for python/brython console.
     """
+    cookieconsent = request.cookies.get("cookie_consent") == "true"
     return render_template(
         "console.html",
         title=SITETITLE,
         contact=SITECONTACT,
         consolesite=SITETITLE + " Console",
         bsversion=VERSION,
+        cookieconsent=cookieconsent,
     )
 
 

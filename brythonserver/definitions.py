@@ -24,7 +24,7 @@ SESSION_GITHUBREPO = "githubrepo"
 SESSION_GITHUBPATH = "githubpath"
 SESSION_METADATA = "metadata"
 
-CACHE_VERSION = "1"
+CACHE_VERSION = "2"
 Context = namedtuple("Context", ["user", "repo", "path"])
 Cachedata = namedtuple("Cachedata", ["contents", "sha", "etag"])
 

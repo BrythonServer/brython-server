@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 {% block title %}
-    <title>Brython Server</title>
+    <title>{{ title }}</title>
 {% endblock %}
 {% block head %}
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">    
@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/octicons/4.4.0/font/octicons.min.css">
 {% endblock %}
 {% block brythonjs %}
+    {% if cookieconsent %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/{{ pixiversion }}/pixi.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/buzz/{{ buzzversion }}/buzz.min.js"></script>
     <script type="text/javascript" src="{{url_for('static', filename='brython/brython.js')}}?_{{ brythonversion }}"></script>
@@ -30,15 +31,16 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<script type="text/python3">
-from browser import document, window
+    <script type="text/python3">
+    from browser import document, window
 
-def __EXECUTE__BRYTHON__():
-    content = document['__main__'].innerHTML
-    exec(content, {"__name__":"__main__"})
+    def __EXECUTE__BRYTHON__():
+        content = document['__main__'].innerHTML
+        exec(content, {"__name__":"__main__"})
 
-window.__EXECUTE__BRYTHON__ = __EXECUTE__BRYTHON__
-</script>
+    window.__EXECUTE__BRYTHON__ = __EXECUTE__BRYTHON__
+    </script>
+    {% endif %}
 {% endblock %}
 </head>
 <body><div class="container-fluid">
@@ -46,7 +48,9 @@ window.__EXECUTE__BRYTHON__ = __EXECUTE__BRYTHON__
 {% endblock %}
 </div>
 {% block foot %}
+    {% if cookieconsent %}
     <script type="text/javascript" src="{{ url_for('static', filename='bs.js') }}?ver={{ bsversion }}"></script>
+    {% endif %}
 {% endblock %}
 </body>
 </html>

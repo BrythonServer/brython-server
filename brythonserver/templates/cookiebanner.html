@@ -1,0 +1,15 @@
+<div class="row" id="nav-row">
+    <div class="col-md-12">
+        {{ title }} uses cookies with your browser as part of its
+        normal operation. Your consent to use cookies <strong>is required</strong>
+        before you can use {{ title }}.
+        <button id="cookie-consent">I Consent</button>
+        <script>
+            var fn = function () {
+                document.cookie = "cookie_consent=true";
+                location.reload(true);
+            };
+            document.getElementById('cookie-consent').onclick = fn;
+        </script>            
+    </div>
+</div>
