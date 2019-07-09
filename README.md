@@ -85,7 +85,9 @@ should have several environment variables set for production use:
 * githubsecret (Github oauth secret)
 * githubclientid (Github oauth client id)
 * flasksecret (A Flask application secret key)
-* sitename (A string that will be displayed as the "name of the site")
+* sitetitle (A string that will be displayed as the "name of the site")
+* sitecontact (An e-mail address to use for contact)
+* siteurl (A full URL to the website)
 
 Note: to generate a unique, random Flask secret key, enter the following in
 a Python console:

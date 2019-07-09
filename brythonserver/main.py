@@ -27,10 +27,11 @@ from .reverseproxied import ReverseProxied
 from .definitions import (
     ENV_FLASKSECRET,
     ENV_DEBUG,
-    ENV_ADVERTISEMENT,
     BRYTHON_FOLDER,
     BRYTHON_JS,
-    ENV_SITENAME,
+    ENV_SITETITLE,
+    ENV_SITECONTACT,
+    ENV_SITEURL,
     INIT_CONTENT,
     RUN_EDIT,
     AUTH_REQUEST,
@@ -61,7 +62,6 @@ APP.wsgi_app = ReverseProxied(APP.wsgi_app)
 
 APP.secret_key = os.environ.get(ENV_FLASKSECRET, "A0Zr98j/3yX R~XHH!jmN]LWX/,?RT")
 APP.debug = os.environ.get(ENV_DEBUG, False)
-APP.advertisement = os.environ.get(ENV_ADVERTISEMENT, "")
 
 # Use memcached for session data
 APP.config["SESSION_TYPE"] = "memcached"
@@ -83,6 +83,10 @@ with open(
 
 # Locate the ggame directory
 GGAME_PATH = os.path.dirname(os.path.abspath(ggame.__version__.__file__))
+
+SITETITLE = os.environ.get(ENV_SITETITLE, "Brython Server")
+SITECONTACT = os.environ.get(ENV_SITECONTACT, "noone@nowhere.net")
+SITEURL = os.environ.get(ENV_SITEURL, "https://runpython.org")
 
 
 @APP.route("/", methods=["POST", "GET"])
@@ -107,7 +111,6 @@ def root():
     redirect -- to / or github
     """
     github_loggedin = githubloggedin()
-    sitename = os.environ.get(ENV_SITENAME, "Brython Server")
 
     returnedhtml = None
 
@@ -123,7 +126,8 @@ def root():
                 repo=repo,
                 name=name,
                 path=path,
-                site=sitename,
+                title=SITETITLE,
+                contact=SITECONTACT,
                 brythonversion=BRYTHON_VERSION,
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
@@ -138,11 +142,11 @@ def root():
             returnedhtml = render_template(
                 "index.html",
                 github=github_loggedin,
-                site=sitename,
-                consolesite=sitename + " Console",
+                title=SITETITLE,
+                contact=SITECONTACT,
+                consolesite=SITETITLE + " Console",
                 edit="",
                 editcontent=INIT_CONTENT,
-                advertisement=APP.advertisement,
                 brythonversion=BRYTHON_VERSION,
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
@@ -154,11 +158,11 @@ def root():
             returnedhtml = render_template(
                 "index.html",
                 edit=request.form[RUN_EDIT],
-                site=sitename,
-                consolesite=sitename + " Console",
+                title=SITETITLE,
+                contact=SITECONTACT,
+                consolesite=SITETITLE + " Console",
                 editcontent="",
                 github=github_loggedin,
-                advertisement=APP.advertisement,
                 brythonversion=BRYTHON_VERSION,
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
@@ -178,7 +182,6 @@ def root():
 
 
 @APP.route("/favicon.ico")
-@CACHE.cached(timeout=500)
 def favicon():
     """Return favicon.ico.
 
@@ -194,12 +197,11 @@ def favicon():
 def brythonconsole():
     """Return template for python/brython console.
     """
-    sitename = os.environ.get(ENV_SITENAME, "Brython Server")
     return render_template(
         "console.html",
-        site=sitename,
-        consolesite=sitename + " Console",
-        advertisement=APP.advertisement,
+        title=SITETITLE,
+        contact=SITECONTACT,
+        consolesite=SITETITLE + " Console",
         bsversion=VERSION,
     )
 
@@ -211,6 +213,15 @@ def brythonimport(filename):
     Add custom importable modules under the static/IMPORTNAME folder.
     """
     return APP.send_static_file(os.path.join(IMPORTNAME, filename))
+
+
+@APP.route("/legalnotices/<filename>")
+def legalnotices(filename):
+    """Return legal notice html
+    """
+    return render_template(
+        filename + ".html", title=SITETITLE, contact=SITECONTACT, url=SITEURL
+    )
 
 
 @APP.route("/ggame/<path:filename>")

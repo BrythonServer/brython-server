@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block title %}
+    <title>{{ title }} Cookies Policy</title>
+{% endblock %}
+{% block brythonjs %}
+{% endblock %}
+{% block body %}
+    <div class="row" id="body-row">
+        <div class="col-md-12" id="legal-column">
+        {% include '_rawcookies.html' %}    
+        </div>
+    </div>
+    <div class="row" id="bottom-row">
+        {% include 'legalese.html' %}
+        <div class="col-md-6" id="footer-row">
+            <a href = "{{ url_for('root') }}">{{ title }}</a> runs on the
+            <a href="https://github.com/tiggerntatie/brython-server">
+            Brython-Server</a> and 
+            <a href="http://www.brython.info/">Brython</a> projects.
+        </div>
+    </div>
+{% endblock %}
+{% block foot %}
+{% endblock %}

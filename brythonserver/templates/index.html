@@ -61,12 +61,10 @@
     </div>
 
 
-    <div class="row">
-        <div class="col-md-6" id="ad-row">
-            {{advertisement|safe}}
-        </div>
+    <div class="row" id="bottom-row">
+        {% include 'legalese.html' %}
         <div class="col-md-6" id="footer-row">
-            <a href = "{{ url_for('root') }}">{{ site }}</a> runs on the
+            <a href = "{{ url_for('root') }}">{{ title }}</a> runs on the
             <a href="https://github.com/tiggerntatie/brython-server">
             Brython-Server</a> and 
             <a href="http://www.brython.info/">Brython</a> projects.

@@ -35,7 +35,7 @@ body {
     padding-left:10px;
 }
 
-#output-column, #editor-column, #graphics-column {
+#output-column, #editor-column, #graphics-column, #legal-column {
     padding-left:10x;
     padding-right:10px;
     padding-bottom:10px;
@@ -46,9 +46,21 @@ body {
     color:red;
 }
 
-#footer-row, #ad-row {
+#bottom-row {
+    padding-left:10px;
+    padding-right:10px;
+}
+
+#footer-row, #legalese-row {
     padding:10px;
+}
+
+#footer-row {
     text-align:right;
+}
+
+#legalese-row {
+    text-align:left;
 }
 
 #console, #code {
