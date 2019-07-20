@@ -78,13 +78,6 @@
                     <img src="https://firebasestorage.googleapis.com/v0/b/drive-assets.google.com.a.appspot.com/o/Asset%20-%20Drive%20Icon512.png?alt=media"
                          width="20px"> save
                     </button>
-                <!-- LOGOUT GOOGLE --
-                <button type="button" id="googlelogoutbutton" class="btn btn-default btn-sm" title="Logout from Google Drive"
-                    onclick="bsController.googlelogout()">
-                    <img src="https://firebasestorage.googleapis.com/v0/b/drive-assets.google.com.a.appspot.com/o/Asset%20-%20Drive%20Icon512.png?alt=media"
-                         width="20px"> logout
-                    </button> 
-                -->
                 </span>
                 <span class="btn btn-warning btn-sm" role="button" id="loading">WORKING</span>
             </div>
@@ -167,12 +160,6 @@
 {% block foot %}
 {{ super() }}
     {% if cookieconsent %}
-<!--
-    <script async defer src="https://apis.google.com/js/api.js"
-            onload="this.onload=function(){window.alert('inner onload')};window.alert('onload);bsController.googleclientload({{ g_clientid}}, {{ g_apikey }})"
-            onreadystatechange="if (this.readyState === 'complete') this.onload()">
-    </script>
--->
     <script type="text/javascript">
         window.onload = function() {
             brython(1);
@@ -196,7 +183,7 @@
             bsUI.editmode();
     {% else %}
             // initialize google client, but without loading any sources
-            bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}"), "";
+            bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function() {})
     {% endif %}
             $( "#gobutton" ).click(function( event ) {
               event.stopPropagation();

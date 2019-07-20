@@ -177,7 +177,7 @@ var bsUI = function() {
         $("#editor-column").attr("class", TEXT_COLUMNS[0]);
         $("#output-column").attr("class", TEXT_COLUMNS[1]);
         $(GRAPHICS_COL_NAME).attr("class", TEXT_COLUMNS[2]);
-        $(GRAPHICS_COL_NAME).hide();
+        $(GRAPHICS_COL_NAME).attr("hidden", true);
         $(TURTLE_CANVAS_NAME).empty();
         $("#editor-column").show();
         $("#haltbutton").prop('disabled', true);
@@ -192,12 +192,12 @@ var bsUI = function() {
         $("#editor-column").attr("class", GRAPHICS_COLUMNS[0]);
         $("#output-column").attr("class", GRAPHICS_COLUMNS[1]);
         $(GRAPHICS_COL_NAME).attr("class", GRAPHICS_COLUMNS[2]);
+        $(GRAPHICS_COL_NAME).attr("hidden", false);
         $(CANVAS_NAME).hide();
         $(TURTLE_CANVAS_NAME).remove();
         $("#haltbutton").prop('disabled', false);
         $("#gobutton").prop('disabled', true);
         $("#editor-column").hide();
-        $(GRAPHICS_COL_NAME).show();
     }
 
     function setGraphicsMode() {
@@ -211,7 +211,7 @@ var bsUI = function() {
         $("#haltbutton").prop('disabled', false);
         $("#gobutton").prop('disabled', true);
         $("#editor-column").hide();
-        $(GRAPHICS_COL_NAME).show();
+        $(GRAPHICS_COL_NAME).attr("hidden", false);
         ingraphics = true;
     }
 
@@ -221,11 +221,11 @@ var bsUI = function() {
         $(GRAPHICS_COL_NAME).attr("class", GRAPHICS_COLUMNS[2]);
         $(CANVAS_NAME).height($(GRAPHICS_COL_NAME).clientHeight);
         $(CANVAS_NAME).width($(GRAPHICS_COL_NAME).clientWidth);
-        $(GRAPHICS_COL_NAME).show();
+        $(GRAPHICS_COL_NAME).attr("hidden", true);
         $("#editor-column").attr("class", CONSOLE_COLUMNS[0]);
         $("#output-column").attr("class", CONSOLE_COLUMNS[1]);
         $(GRAPHICS_COL_NAME).attr("class", CONSOLE_COLUMNS[2]);
-        $(GRAPHICS_COL_NAME).hide();
+        $(GRAPHICS_COL_NAME).attr("hidden", true);
         $("#editor-column").hide();
 
     }
