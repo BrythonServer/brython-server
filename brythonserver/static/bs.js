@@ -8,6 +8,7 @@
 /*global brython*/
 /*global __EXECUTE__BRYTHON__*/
 /*eslint-disable no-unused-vars*/
+ 
 
 /*
  * bsConsole
@@ -99,6 +100,11 @@ var bsConsole = function() {
  */
 var bsUI = function() {
 
+    const GOOGLE_AUTHORIZE = '#googleloginbutton';
+    const GOOGLE_LOAD = '#googleloadbutton';
+    const GOOGLE_LOGOUT = '#googlelogoutbutton';
+    const GOOGLE_SAVE = '#googlesavebutton';
+    const FILE_NAME = '#source_filename';
     const GITHUB_URL = '#github_url';
     const SHARE_URL = '#share_url';
     const URL_SUBMIT = '#url_submit';
@@ -114,6 +120,25 @@ var bsUI = function() {
 
     var editor = null;
     var ingraphics = false;
+    var hidedepth = 0;
+    
+    // hide buttons and show the working indicator
+    function showWorking() {
+        hidedepth += 1;
+        $("#loading").show();
+        $("#navigation").hide();
+    }
+    
+    // show buttons and hide working indicator
+    function hideWorking() {
+        if (hidedepth > 0) {
+            hidedepth -= 1;
+        }
+        if (hidedepth == 0) {
+            $("#loading").hide();
+            $("#navigation").show();
+        }
+    }
 
     function Initialize() {
         // Github link is not visible by default
@@ -130,17 +155,7 @@ var bsUI = function() {
                 $(URL_SUBMIT).click();
             }
         });
-        // loading image
-        $("#loading").hide();
-        $("#navigation").show();
-        $(document).ajaxStart(function() {
-            $("#loading").show();
-            $("#navigation").hide();
-        });
-        $(document).ajaxComplete(function() {
-            $("#loading").hide();
-            $("#navigation").show();
-        });
+        showWorking();
     }
 
 
@@ -216,8 +231,8 @@ var bsUI = function() {
     }
 
 
-    // Show github link
-    function showGithub(path) {
+    // Show github or google link
+    function showLink(path) {
         var element = $(GITHUB_URL);
         element.attr('href', path);
         element.show();
@@ -239,6 +254,15 @@ var bsUI = function() {
             }
         }
         element.show();
+    }
+    
+    // show GOOGLE share link
+    function showGoogleShareURL(fileId) {
+        var element = $(SHARE_URL);
+        if (element) {
+            element.attr('href', "?fileid=" + fileId);
+            element.show();
+        }
     }
 
     // Execute the EDIT button
@@ -284,13 +308,31 @@ var bsUI = function() {
             editor.selection.clearSelection();
         }
     }
+    
+    // Show controls appropriate when signed in to Google
+    function showGoogle() {
+        $(GOOGLE_LOGOUT).show();
+        $(GOOGLE_AUTHORIZE).hide();
+        $(GOOGLE_LOAD).show();
+        $(GOOGLE_SAVE).show();
+    }
+    
+    // Hide controls appropriate when not signed in to Google
+    function hideGoogle() {
+        $(GOOGLE_AUTHORIZE).show();
+        $(GOOGLE_LOAD).hide();
+        $(GOOGLE_LOGOUT).hide();
+        $(GOOGLE_SAVE).hide();
+    }
 
     // Public API
     return {
         URL_INPUT: URL_INPUT,
+        FILE_NAME: FILE_NAME,
         init: Initialize,
-        showgithub: showGithub,
+        showlink: showLink,
         showshareurl: showShareURL,
+        showgoogleshareurl: showGoogleShareURL,
         runedit: runEdit,
         starteditor: startEditor,
         geteditor: getEditor,
@@ -300,7 +342,11 @@ var bsUI = function() {
         turtlemode: setTurtleMode,
         graphicsmode: setGraphicsMode,
         consolemode: setConsoleMode,
-        executemode: setTurtleMode  //setExecMode
+        executemode: setTurtleMode,  //setExecMode
+        showgoogle: showGoogle,
+        hidegoogle: hideGoogle,
+        showworking: showWorking,
+        hideworking: hideWorking,
     };
 
 }();
@@ -391,6 +437,51 @@ var bsGithubUtil = function() {
 
 
 /*
+ * bsGoogleUtil
+ * 
+ * Google Utilities
+ */
+var bsGoogleUtil = function() {
+
+    // create a Google URL text for specific file
+    function createGoogleURL(id){ 
+        return "https://drive.google.com/file/d/" + id + "/view";
+    }
+
+    // parse Google URL text
+    // e.g. https://drive.google.com/a/hanovernorwichschools.org/file/d/1OGC1fguuXR_-PKraS9vYbYVunVYjKNFY/view?usp=drive_web
+    function parseGoogleURL(url_input) {
+        var data = { 'user': '', 'repo': '', 'path': '', 'name': '' };
+        if (url_input == null) {
+            return null;
+        }
+        var filematch = url_input.match(/.*drive\.google\.com(\/a\/[^\/]+)?\/file\/d\/([^\/]+).*/);
+        if (filematch) {
+            return filematch[2];
+        }
+        else {
+            return null;
+        }
+    }
+
+    // parse the url_input and return id
+    function parseGoogle(UI) {
+        return parseGoogleURL($(UI.URL_INPUT).val());
+    }
+
+
+
+    return {
+        parse: parseGoogle,
+        parseurl: parseGoogleURL,
+        createurl: createGoogleURL
+    };
+
+}();
+/* END bsGoogleUtil */
+
+
+/*
  * bsController
  * 
  * Miscellaneous actions and network transactions
@@ -401,6 +492,7 @@ var bsController = function() {
     var mainscript = null;
     const __MAIN__ = "__main__";
     var initialized = false;
+    var gdrive_fileid_loaded = null;
 
     // Initialize the brython interpreter
     function initBrython() {
@@ -444,12 +536,24 @@ var bsController = function() {
         loadGithubtoScript(UI, data, function(result) {
             setMainValue(maincontent);
             if (mainscript) {
-                $("#loading").hide();
-                $("#navigation").show();
+                UI.hideworking();
                 runBrython(Console, { debug: 0, ipy_id: [__MAIN__] });
             }
         });
     }
+    
+    
+    // load script from google and execute
+    function runGoogle(Console, UI, fileId) {
+        initBrython();
+        loadGoogletoScript(UI, fileId, function() {
+            setMainValue(maincontent);
+            if (mainscript) {
+                runBrython(Console, { debug: 0, ipy_id: [__MAIN__] });
+            }
+        });
+    }
+    
 
     // re-execute current mainscript
     function runCurrent(Console) {
@@ -483,13 +587,14 @@ var bsController = function() {
         var data = GH.parse(UI);
         data['editcontent'] = UI.geteditor();
         data['commitmsg'] = "Updated from Brython Server: " + ds + " " + ts;
+        UI.showworking();
         $.ajax({
             url: 'api/v1/commit',
             contentType: 'application/json; charset=UTF-8',
             dataType: 'json',
             data: JSON.stringify(data),
             type: 'PUT',
-            complete: function() {},
+            complete: function() {UI.hideworking();},
             success: function(data) {},
             error: function(err) {
                 alert(err.responseJSON.message);
@@ -501,16 +606,17 @@ var bsController = function() {
     // return file name
     function loadGithubtoScript(UI, data, callback) {
         if (data) {
+            UI.showworking();
             $.ajax({
                 url: 'api/v1/load',
                 contentType: 'application/json; charset=UTF-8',
                 dataType: 'json',
                 data: JSON.stringify(data),
                 type: 'PUT',
-                complete: function() {},
+                complete: function() {UI.hideworking();},
                 success: function(data) {
                     maincontent = data['content'];
-                    UI.showgithub(data['path']);
+                    UI.showlink(data['path']);
                     callback(data);
                 },
                 error: function(err) {
@@ -535,16 +641,329 @@ var bsController = function() {
 
     }
 
+    // Handling Google Drive and Oauth2
+    // See: https://developers.google.com/identity/protocols/OAuth2UserAgent#example
 
+    // Required for Google OAuth2
+    //var GoogleAuth;
+    var google_scope = 'https://www.googleapis.com/auth/drive';
+    var google_apikey = false;
+    var google_clientid = false;
+    var google_appid = false;
+    var post_google_init = function() {}
+    
+    // Google OAuth2 handleClientLoad
+    // also record whether exec or index
+    function handleClientLoad(clientid, apikey, appid, callback) {
+        post_google_init = callback;
+        // Load the API's client and auth2 modules.
+        // Call the initClient function after the modules load.
+        google_clientid = clientid;
+        google_apikey = apikey;
+        google_appid = appid;
+        gapi.load('client:auth2', initClient);
+    }
+    
+    function initClient() {
+        var UI = bsUI;
+        var Console = bsConsole;
+
+        // Retrieve the discovery document for version 3 of Google Drive API.
+        // In practice, your app can retrieve one or more discovery documents.
+        var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+
+        // Initialize the gapi.client object, which app uses to make API requests.
+        // Get API key and client ID from API Console.
+        // 'scope' field specifies space-delimited list of access scopes.
+        gapi.client.init({
+            'apiKey': google_apikey,
+            'discoveryDocs': [discoveryUrl],
+            'clientId': google_clientid,
+            'scope': google_scope
+        }).then(function () {
+            var GoogleAuth = gapi.auth2.getAuthInstance();
+            // Handle initial sign-in state. (Determine if user is already signed in.)
+            var user = GoogleAuth.currentUser.get();
+            // Listen for sign-in state changes.
+            GoogleAuth.isSignedIn.listen(setSigninStatus);
+            // get the google buttons visible
+            setSigninStatus();
+            // now show all of the buttons
+            UI.hideworking();
+            $("span#navigation").removeClass("hidden");
+            // post execute something
+            post_google_init();
+        }, function () {
+            UI.hideworking();
+            $("span#navigation").removeClass("hidden");
+        });
+    }
+    
+    
+    // read script from google
+    function loadGoogletoScript(UI, fileId, callback) {
+        var UI = bsUI;
+        var GU = bsGoogleUtil;
+        UI.showworking();
+        var request = gapi.client.drive.files.get({
+            fileId: fileId,
+        });
+        request.then(function(response){
+            // first, get the filename
+            $(UI.FILE_NAME).val(response.result.name);
+            // set up for another "get" for the data
+            var request = gapi.client.drive.files.get({
+                fileId: fileId,
+                alt: 'media'
+            });
+            request.then(
+                function(response) {
+                    $(UI.URL_INPUT).val(GU.createurl(fileId));
+                    maincontent = response.body;
+                    UI.showlink(GU.createurl(fileId));
+                    UI.seteditor(maincontent);
+                    UI.clearselect();
+                    UI.showgoogleshareurl(fileId);
+                    gdrive_fileid_loaded = fileId;
+                    UI.hideworking();
+                    callback();
+                }, 
+                function(error) {
+                    UI.hideworking();
+                    gdrive_fileid_loaded = null;
+                    alert("Something went wrong loading your file from Google Drive!")
+                    console.error(error);
+            });
+        },
+            function(error) {
+            UI.hideworking();
+            gdrive_fileid_loaded = null;
+            alert("Not Found")
+            console.error(error);
+        })
+    }
+
+    // from https://stackoverflow.com/questions/39381563/get-file-content-of-google-docs-using-google-drive-api-v3
+    function pickerLoadFile(data) {
+        if (data.action == google.picker.Action.PICKED) {
+            var file = data.docs[0];
+            var fileId = file.id;
+            var fileName = file.name;
+            var fileUrl = file.url;
+            var UI = bsUI;
+            var request = gapi.client.drive.files.get({
+                'fields': ['url','title'],
+                fileId: fileId,
+                alt: 'media'
+            })
+            UI.showworking();
+            request.then(function(response) {
+                UI.seteditor(response.body);
+                UI.clearselect();
+                $(UI.FILE_NAME).val(fileName);
+                $(UI.URL_INPUT).val(fileUrl);
+                gdrive_fileid_loaded = fileId;
+                UI.hideworking();
+                UI.showgoogleshareurl(fileId);
+            }, function(error) {
+                UI.hideworking();
+                console.error(error);
+            })
+            return request;
+        }
+    }
+    
+  
+    
+    // Create and render a Picker object for searching images.
+    function loadPicker() {
+        var GoogleAuth = gapi.auth2.getAuthInstance();
+        if (!GoogleAuth.isSignedIn.get()) {
+            // User is not signed in. Start Google auth flow.
+            GoogleAuth.signIn();
+        }
+        var oauthToken = gapi.auth.getToken().access_token;
+        gapi.load('picker', {'callback': function(){
+            if (oauthToken) {
+            //var view = new google.picker.View(google.picker.ViewId.DOCS);
+            var view = new google.picker.DocsView();
+                view.setParent('root');
+                view.setIncludeFolders(true);
+            view.setMimeTypes("text/plain,text/x-python");
+            var picker = new google.picker.PickerBuilder()
+                .enableFeature(google.picker.Feature.NAV_HIDDEN)
+                .enableFeature(google.picker.Feature.MULTISELECT_DISABLED)
+                .setAppId(google_appid)
+                .setOAuthToken(oauthToken)
+                .addView(view)
+                .addView(new google.picker.DocsUploadView())
+                .setDeveloperKey(google_apikey)
+                .setCallback(pickerLoadFile)
+                .build();
+
+             picker.setVisible(true);
+            }
+        }});
+    }
+    
+    // Save content to Google Drive with ID (already authenticated)
+    // File ID must be in gdrive_fileid_loaded
+    function gdriveSaveFile() {
+        var UI = bsUI;
+        var fileId = gdrive_fileid_loaded;
+        var content = UI.geteditor();
+        var contentArray = new Array(content.length);
+        for (var i = 0; i < contentArray.length; i++) 
+        {
+            contentArray[i] = content.charCodeAt(i);
+        }
+        var byteArray = new Uint8Array(contentArray);
+        var blob = new Blob([byteArray], {type: 'text/x-python'});  
+        UI.showworking();
+        var xhr = new XMLHttpRequest();
+        xhr.responseType = 'json';
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState != XMLHttpRequest.DONE) {
+                return;
+            }
+            bsUI.hideworking();  // why didn't it know about UI here?
+            switch (xhr.status) {
+                case 200:
+                    var UI = bsUI;
+                    $(UI.URL_INPUT).val(bsGoogleUtil.createurl(gdrive_fileid_loaded));
+                    break;
+                default:
+                    alert("Unable to save code to Google Drive.")
+                    break;
+                    
+            }
+        };
+        xhr.open('PATCH', 'https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media');
+        xhr.setRequestHeader('Authorization', 'Bearer ' + gapi.auth.getToken().access_token);
+        xhr.send(blob);
+    }
+    
+    
+    // Handle the Google Drive "save" button
+    function saveGoogle() {
+        var GoogleAuth = gapi.auth2.getAuthInstance();
+        if (!GoogleAuth.isSignedIn.get()) {
+            // User is not signed in. Start Google auth flow.
+            GoogleAuth.signIn();
+        }
+        var oauthToken = gapi.auth.getToken().access_token;
+        if (oauthToken) {
+            if (gdrive_fileid_loaded) {
+                gdriveSaveFile();
+            }
+            else {
+                $("#newfileModal").modal();
+            //var newfilename = prompt("Please enter a file name (lowercase a-z only, ending in .py)", "untitled.py");
+            }
+        }
+    }
+    
+    // function called following successful processing of new file modal
+    function saveGoogleWithName(newfilename) {
+        if (newfilename != null) {
+            var fileMetadata = {
+              'name' : newfilename,
+              'mimeType' : 'text/x-python',
+              'alt' : 'media',
+              'useContentAsIndexableText' : true
+            };
+            gapi.client.drive.files.create({
+              resource: fileMetadata,
+            }).then(function(response) {
+              switch(response.status){
+                case 200:
+                    var file = response.result;
+                    var UI = bsUI;
+                    $(UI.FILE_NAME).val(file.name);
+                    gdrive_fileid_loaded = file.id;
+                    gdriveSaveFile();
+                    break;
+                default:
+                  alert("Unable to create file in Google Drive");
+                  break;
+                }
+            });
+        }
+    }
+
+    
+    // revoke google authorization
+    function revokeAccess() {
+        var GoogleAuth = gapi.auth2.getAuthInstance();
+        GoogleAuth.disconnect();
+        setSigninStatus();
+        gdrive_fileid_loaded = null;
+    }
+    
+    // update display according to whether user is logged in to google
+    function setSigninStatus() {
+        var UI = bsUI;
+        var GoogleAuth = gapi.auth2.getAuthInstance();
+        var user = GoogleAuth.currentUser.get();
+        var isAuthorized = user.hasGrantedScopes(google_scope);
+        if (isAuthorized) {
+            UI.showgoogle();
+        } else {
+            UI.hidegoogle();
+        }
+    }
+    
+    // examine the Url and attempt to parse as Google (1st) or Github (2nd)
+    function loadCloud(GH, GU, UI) {
+        var fileId = GU.parse(UI);
+        if (fileId) {
+            loadGoogletoScript(UI, fileId, function() {});
+        }
+        else {
+            var data = GH.parse(UI);
+            loadGithubtoScript(UI, data,
+                function(result) {
+                    data = GH.parseurl(result['path']);
+                    $(UI.URL_INPUT).val(GH.createurl(data));
+                    $(UI.FILE_NAME).val(data['name']);
+                    UI.showshareurl(data);
+                    UI.seteditor(maincontent);
+                    UI.clearselect();
+                    UI.hideworking();
+                });
+        }
+    }
+    
+    
+    // log in to Google and grant basic permissions
+    function loginGoogle() {
+        var GoogleAuth = gapi.auth2.getAuthInstance();
+        if (!GoogleAuth.isSignedIn.get()) {
+            // User is not signed in. Start Google auth flow.
+            GoogleAuth.signIn();
+        }
+    }
+    
+    
     return {
         rungithub: runGithub,
         run: runCurrent,
         login: loginGithub,
         logout: logoutGithub,
         commit: commitGithub,
-        load: loadGithub,
+        load: loadCloud,
         runeditor: runEditor,
-        init: initBrython
+        init: initBrython,
+        googleclientload: handleClientLoad,
+        googleclientinit: initClient,
+        googleloadclick: loadPicker,
+        googlesaveclick: saveGoogle,
+        googlerevoke: revokeAccess,
+        googlesetstatus: setSigninStatus,
+        googlelogout: revokeAccess,
+        googlelogin: loginGoogle,
+        googlesavename: saveGoogleWithName,
+        rungoogle: runGoogle,
     };
 }();
 /* END bsController */

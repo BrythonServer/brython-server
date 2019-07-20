@@ -27,6 +27,9 @@ from .reverseproxied import ReverseProxied
 from .definitions import (
     ENV_FLASKSECRET,
     ENV_DEBUG,
+    ENV_GOOGLECLIENTID,
+    ENV_GOOGLEAPIKEY,
+    ENV_GOOGLEAPPID,
     BRYTHON_FOLDER,
     BRYTHON_JS,
     ENV_SITETITLE,
@@ -65,6 +68,7 @@ APP.debug = os.environ.get(ENV_DEBUG, False)
 
 # Use memcached for session data
 APP.config["SESSION_TYPE"] = "memcached"
+APP.config["SESSION_PERMANENT"] = True
 Session(APP)
 
 # Use memcached for memoizing view functions
@@ -87,6 +91,9 @@ GGAME_PATH = os.path.dirname(os.path.abspath(ggame.__version__.__file__))
 SITETITLE = os.environ.get(ENV_SITETITLE, "Brython Server")
 SITECONTACT = os.environ.get(ENV_SITECONTACT, "noone@nowhere.net")
 SITEURL = os.environ.get(ENV_SITEURL, "https://runpython.org")
+G_CLIENTID = os.environ.get(ENV_GOOGLECLIENTID, "")
+G_APIKEY = os.environ.get(ENV_GOOGLEAPIKEY, "")
+G_APPID = os.environ.get(ENV_GOOGLEAPPID, "")
 
 
 @APP.route("/", methods=["POST", "GET"])
@@ -110,7 +117,6 @@ def root():
     exec.html -- render template
     redirect -- to / or github
     """
-
     cookieconsent = request.cookies.get("cookie_consent") == "true"
 
     github_loggedin = githubloggedin()
@@ -118,17 +124,19 @@ def root():
     returnedhtml = None
 
     if request.method == "GET":
-        if "user" in request.args or "gist" in request.args:
+        if "user" in request.args or "gist" in request.args or "fileid" in request.args:
             user = request.args.get("user", "")
             repo = request.args.get("repo", "")
             name = request.args.get("name", request.args.get("gist", ""))
             path = request.args.get("path", "")
+            fileid = request.args.get("fileid", "")
             returnedhtml = render_template(
                 "exec.html",
                 user=user,
                 repo=repo,
                 name=name,
                 path=path,
+                fileid=fileid,
                 title=SITETITLE,
                 contact=SITECONTACT,
                 brythonversion=BRYTHON_VERSION,
@@ -136,6 +144,9 @@ def root():
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
                 cookieconsent=cookieconsent,
+                g_clientid=G_CLIENTID,
+                g_apikey=G_APIKEY,
+                g_appid=G_APPID,
             )
         elif "code" in request.args and "state" in request.args:
             # Github authorization response - check if valid
@@ -156,6 +167,9 @@ def root():
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
                 cookieconsent=cookieconsent,
+                g_clientid=G_CLIENTID,
+                g_apikey=G_APIKEY,
+                g_appid=G_APPID,
             )
     elif request.method == "POST":
         if RUN_EDIT in request.form:
@@ -173,6 +187,9 @@ def root():
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
                 cookieconsent=cookieconsent,
+                g_clientid=G_CLIENTID,
+                g_apikey=G_APIKEY,
+                g_appid=G_APPID,
             )
         elif AUTH_REQUEST in request.form:
             # user is requesting authorization from github
@@ -334,8 +351,6 @@ def v1_commit():
         return (json.dumps({"success": True}), 200, {"ContentType": "application/json"})
     except urllib.error.HTTPError as err:
         error = err.msg + " " + str(err.code)
-        print(dir(err))
-        print(err.headers)
         print(
             "Github commit error: " + error + ", token was ",
             token,

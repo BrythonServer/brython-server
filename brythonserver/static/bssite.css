@@ -17,6 +17,11 @@ body {
     height:100%;
 }
 
+span.hidden
+{
+   display: none;
+}
+
 #nav-row {
     padding-top:5px;
     padding-left:0;
@@ -44,6 +49,10 @@ body {
 
 #loading {
     color:red;
+}
+
+#source_filename {
+    width:150px;
 }
 
 #bottom-row {
