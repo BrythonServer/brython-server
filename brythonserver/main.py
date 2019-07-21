@@ -67,17 +67,14 @@ APP.secret_key = os.environ.get(ENV_FLASKSECRET, "A0Zr98j/3yX R~XHH!jmN]LWX/,?RT
 APP.debug = os.environ.get(ENV_DEBUG, False)
 
 # Use memcached for session data
-APP.config["SESSION_TYPE"] = "memcached"
+
+APP.config["SESSION_TYPE"] = "redis"
 APP.config["SESSION_PERMANENT"] = True
 Session(APP)
 
 # Use memcached for memoizing view functions
-APP.config["CACHE_TYPE"] = "memcached"
+APP.config["CACHE_TYPE"] = "redis"
 CACHE = Cache(APP)
-
-# Install Brython
-os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), BRYTHON_FOLDER))
-os.system("python -m brython --update")
 
 # Retrieve Brython Version
 with open(

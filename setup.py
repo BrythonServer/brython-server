@@ -20,7 +20,8 @@ setuptools.setup(
     url="https://github.com/tiggerntatie/brython-server",
     packages=setuptools.find_packages(),
     install_requires=[
-        'pylibmc>=1.6.0',
+        'gunicorn==19.9.0',
+        'redis>=2.10.3',
         'Flask-Session>=0.3.1',
         'Flask-Caching>=1.7.2',
         'Flask>=0.12.3',

@@ -22,6 +22,7 @@ from .definitions import (
     CACHE_VERSION,
     Context,
     Cachedata,
+    CACHE_TIMEOUT_S,
     CACHE_CLIENT,
 )
 
@@ -352,7 +353,11 @@ def cachefile(context, contents, sha, etag):
     contents -- Raw file content (binary or text)
     sha -- sha string
     """
-    CACHE_CLIENT[cachefilekey(context)] = json.dumps(Cachedata(contents, sha, etag))
+    CACHE_CLIENT.set(
+        cachefilekey(context),
+        json.dumps(Cachedata(contents, sha, etag)),
+        ex=CACHE_TIMEOUT_S,
+    )
 
 
 def cachedfileexists(context):

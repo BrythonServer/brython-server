@@ -2,4 +2,5 @@ include brythonserver/*
 include brythonserver/static/*
 include brythonserver/templates/*
 include /brythonserver/static/brython
+include /brythonserver/static/brython/*
 include brythonserver/static/brythonserver/*
