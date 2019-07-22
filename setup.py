@@ -21,12 +21,11 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         'gunicorn==19.9.0',
-        'redis>=2.10.3',
+        'redis>=3.2.1',
         'Flask-Session>=0.3.1',
         'Flask-Caching>=1.7.2',
         'Flask>=0.12.3',
         'ggame==1.0.10',
-        'brython==3.7.3',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -6,7 +6,7 @@ gunicorn==19.9.0
 itsdangerous==0.24
 brython==3.7.3
 ggame==1.0.10
-redis==2.10.3
+redis==3.2.1
 Flask-Session==0.3.1
 Flask-Caching==1.7.2
 pylint==2.3.0

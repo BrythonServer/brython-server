@@ -9,6 +9,7 @@ import urllib.parse
 import json
 import base64
 import re
+import redis
 from flask import (
     Flask,
     render_template,
@@ -44,6 +45,8 @@ from .definitions import (
     SESSION_MAINSHA,
     SESSION_MAINFILE,
     SESSION_METADATA,
+    REDIS_HOST,
+    REDIS_PORT,
     Context,
 )
 from .utility import (
@@ -69,11 +72,13 @@ APP.debug = os.environ.get(ENV_DEBUG, False)
 # Use memcached for session data
 
 APP.config["SESSION_TYPE"] = "redis"
-APP.config["SESSION_PERMANENT"] = True
+APP.config["SESSION_REDIS"] = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
 Session(APP)
 
 # Use memcached for memoizing view functions
 APP.config["CACHE_TYPE"] = "redis"
+APP.config["CACHE_REDIS_HOST"] = REDIS_HOST
+APP.config["CACHE_REDIS_PORT"] = REDIS_PORT
 CACHE = Cache(APP)
 
 # Retrieve Brython Version

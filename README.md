@@ -95,7 +95,7 @@ pip install brython-server
 
 The essential requirements for Brython-Server are met when you install with pip.
 In addition, you will need to install 
-[memcached](https://memcached.org/downloads) and, for a production install, 
+[redis](https://redis.io/download) and, for a production install, 
 [gunicorn](http://docs.gunicorn.org/en/stable/install.html).
 
 Brython-Server will use [Brython](https://github.com/brython-dev/brython) as
@@ -124,6 +124,10 @@ Required for creating a "personalized" Brython-Server instance:
 * sitecontact (An e-mail address to use for contact)
 * siteurl (A full URL to the website)
 * flasksecret (A Flask application secret key)
+
+Required for connecting to a non-standard Redis instance:
+* redishost (An IP address)
+* redisport (The port number)
 
 Note: to generate a unique, random Flask secret key, enter the following in
 a Python console:
