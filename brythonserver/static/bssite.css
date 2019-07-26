@@ -108,6 +108,8 @@ span.hidden
     border-bottom-right-radius: 0px;
     margin-top:15px;
     margin-left:-10px;
+    font-family: "Lucida Console", Monaco, monospace; 
+    font-size:10pt;
 }
 
 
