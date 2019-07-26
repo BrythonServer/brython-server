@@ -63,20 +63,17 @@
                 <!-- LOGIN GOOGLE -->
                 <button type="button" id="googleloginbutton" class="btn btn-default btn-sm" title="Authorize Google Drive"
                     onclick="bsController.googlelogin()">
-                    <img src="https://firebasestorage.googleapis.com/v0/b/drive-assets.google.com.a.appspot.com/o/Asset%20-%20Drive%20Icon512.png?alt=media"
-                         width="20px"> authorize
+                    <img src="{{ url_for('static', filename='drive_64dp.png') }}" width="20px"> authorize
                     </button>
                 <!-- LOAD FROM DRIVE -->
                 <button type="button" id="googleloadbutton" class="btn btn-default btn-sm" title="Load from Google Drive"
                     onclick="bsController.googleloadclick()">
-                    <img src="https://firebasestorage.googleapis.com/v0/b/drive-assets.google.com.a.appspot.com/o/Asset%20-%20Drive%20Icon512.png?alt=media"
-                         width="20px"> load
+                    <img src="{{ url_for('static', filename='drive_64dp.png') }}" width="20px"> load
                     </button>
                 <!-- SAVE TO DRIVE -->
                 <button type="button" id="googlesavebutton" class="btn btn-default btn-sm" title="Save to Google Drive"
                     onclick="bsController.googlesaveclick()">
-                    <img src="https://firebasestorage.googleapis.com/v0/b/drive-assets.google.com.a.appspot.com/o/Asset%20-%20Drive%20Icon512.png?alt=media"
-                         width="20px"> save
+                    <img src="{{ url_for('static', filename='drive_64dp.png') }}" width="20px"> save
                     </button>
                 </span>
                 <span class="btn btn-warning btn-sm" role="button" id="loading">WORKING</span>
