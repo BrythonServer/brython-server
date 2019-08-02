@@ -451,17 +451,10 @@ var bsGoogleUtil = function() {
     // parse Google URL text
     // e.g. https://drive.google.com/a/hanovernorwichschools.org/file/d/1OGC1fguuXR_-PKraS9vYbYVunVYjKNFY/view?usp=drive_web
     function parseGoogleURL(url_input) {
-        var data = { 'user': '', 'repo': '', 'path': '', 'name': '' };
         if (url_input == null) {
             return null;
         }
-        var filematch = url_input.match(/.*drive\.google\.com(\/a\/[^\/]+)?\/file\/d\/([^\/]+).*/);
-        if (filematch) {
-            return filematch[2];
-        }
-        else {
-            return null;
-        }
+        return url_input.match(/[-_\w]{25,}/);
     }
 
     // parse the url_input and return id
@@ -646,7 +639,7 @@ var bsController = function() {
 
     // Required for Google OAuth2
     //var GoogleAuth;
-    var google_scope = 'https://www.googleapis.com/auth/drive';
+    var google_scope = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.install";
     var google_apikey = false;
     var google_clientid = false;
     var google_appid = false;
@@ -858,18 +851,18 @@ var bsController = function() {
             }
             else {
                 $("#newfileModal").modal();
-            //var newfilename = prompt("Please enter a file name (lowercase a-z only, ending in .py)", "untitled.py");
             }
         }
     }
     
     // function called following successful processing of new file modal
-    function saveGoogleWithName(newfilename) {
+    function saveGoogleWithName(newfilename, folderid) {
         if (newfilename != null) {
             var fileMetadata = {
               'name' : newfilename,
               'mimeType' : 'text/x-python',
               'alt' : 'media',
+              'parents' : [(folderid ? folderid : "root"),],
               'useContentAsIndexableText' : true
             };
             gapi.client.drive.files.create({

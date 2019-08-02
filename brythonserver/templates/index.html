@@ -135,7 +135,7 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" data-dismiss="modal" 
                 id="new-file-name-create"
-                onclick="bsController.googlesavename($('#new-file-name').val())">Create File</button>
+                onclick="bsController.googlesavename($('#new-file-name').val(), '{{ new }}')">Create File</button>
       </div>
     </div>
   </div>
@@ -178,6 +178,12 @@
                 bsController.load(bsGithubUtil, bsGoogleUtil, bsUI);    
             }
             bsUI.editmode();
+    {% elif new != '' %}
+            // jump to creating a new file with Google Drive UI integration
+            bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function() {
+                // post-init
+                bsController.googlesaveclick();
+            })
     {% else %}
             // initialize google client, but without loading any sources
             bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function() {})
@@ -187,6 +193,15 @@
               bsUI.turtlemode();
               bsController.runeditor(bsUI, bsConsole);
             });
+     
+             // simulate default <enter> behavior on new file
+             $( '#newfileModal' ).on( 'keypress', function( e ) {
+                if( e.keyCode === 13 ) {
+                    e.preventDefault();
+                    bsController.googlesavename($('#new-file-name').val(), '{{ new }}');
+                    $("#newfileModal").modal('hide');
+                }
+            } )    
         }
     </script>
     {% endif %}

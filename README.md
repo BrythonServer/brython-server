@@ -33,7 +33,7 @@ a **load** and **save** buttons.
 
 The Google Drive **load** button directs you to a standard Google Drive file picking
 screen. Only compatible text files are available to pick. Once you have selected a file,
-the URL for the file will be displayed in the upper left edit window. 
+the URL for the file will be displayed in the upper left edit window.
 
 The Google Drive **save** button will upload any changes you have made to a file since
 you downloaded it, but only if you own or have edit priveleges on the file. If you didn't
@@ -43,6 +43,14 @@ of your Google Drive.
 
 If you previously **load**-ed or refreshed an existing file from Google Drive then the
 **save** button will simply udate your file with any changes you have made since then.
+
+Authorizing Google Drive will also add the Brython-Server app to your Google Drive.
+This will give you a custom **new** file type in Google Drive, and a custom option
+under the Google Drive **Open with** context menu.
+
+Note: files that were not created by Brython-Server may not be opened from the **load**
+button unless you previously opened them with the Google Drive **Open with** context
+menu.
 
 Note: you may access (but not modify) any public Github or Google Drive Python source file without
 logging in to Github, Google, or creating an account. You *can* edit the source file locally

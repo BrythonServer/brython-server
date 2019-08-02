@@ -127,6 +127,7 @@ def root():
 
     if request.method == "GET":
         if "user" in request.args or "gist" in request.args or "fileid" in request.args:
+            # Executing an existing file
             user = request.args.get("user", "")
             repo = request.args.get("repo", "")
             name = request.args.get("name", request.args.get("gist", ""))
@@ -155,7 +156,48 @@ def root():
             if checkgithubstate(request.args.get("state")):
                 githubretrievetoken(request.args.get("code"))
             returnedhtml = redirect(url_for("root"))
+        elif "gui_edit" in request.args:
+            # Drive UI integration: Edit
+            returnedhtml = render_template(
+                "index.html",
+                edit=request.args.get("gui_edit", ""),
+                new="",
+                title=SITETITLE,
+                contact=SITECONTACT,
+                consolesite=SITETITLE + " Console",
+                editcontent="",
+                github=github_loggedin,
+                brythonversion=BRYTHON_VERSION,
+                buzzversion=BUZZ_VERSION,
+                pixiversion=PIXI_VERSION,
+                bsversion=VERSION,
+                cookieconsent=cookieconsent,
+                g_clientid=G_CLIENTID,
+                g_apikey=G_APIKEY,
+                g_appid=G_APPID,
+            )
+        elif "gui_new" in request.args:
+            # Drive UI integration: New
+            returnedhtml = render_template(
+                "index.html",
+                edit="",
+                new=request.args.get("gui_new", ""),
+                title=SITETITLE,
+                contact=SITECONTACT,
+                consolesite=SITETITLE + " Console",
+                editcontent="",
+                github=github_loggedin,
+                brythonversion=BRYTHON_VERSION,
+                buzzversion=BUZZ_VERSION,
+                pixiversion=PIXI_VERSION,
+                bsversion=VERSION,
+                cookieconsent=cookieconsent,
+                g_clientid=G_CLIENTID,
+                g_apikey=G_APIKEY,
+                g_appid=G_APPID,
+            )
         else:
+            # Nothing special going on
             returnedhtml = render_template(
                 "index.html",
                 github=github_loggedin,
@@ -163,6 +205,7 @@ def root():
                 contact=SITECONTACT,
                 consolesite=SITETITLE + " Console",
                 edit="",
+                new="",
                 editcontent=INIT_CONTENT,
                 brythonversion=BRYTHON_VERSION,
                 buzzversion=BUZZ_VERSION,
@@ -179,6 +222,7 @@ def root():
             returnedhtml = render_template(
                 "index.html",
                 edit=request.form[RUN_EDIT],
+                new="",
                 title=SITETITLE,
                 contact=SITECONTACT,
                 consolesite=SITETITLE + " Console",
