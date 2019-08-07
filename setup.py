@@ -25,7 +25,7 @@ setuptools.setup(
         'Flask-Session>=0.3.1',
         'Flask-Caching>=1.7.2',
         'Flask>=0.12.3',
-        'ggame==1.0.10',
+        'ggame==1.0.11',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

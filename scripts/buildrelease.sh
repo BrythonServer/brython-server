@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd ~/workspace/brython-server
 mkdir -p brythonserver/static/brython
 pushd brythonserver/static/brython
 python3 -m brython --update

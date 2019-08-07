@@ -262,7 +262,6 @@ def favicon():
 
 
 @APP.route("/brythonconsole")
-@CACHE.cached(timeout=50)
 def brythonconsole():
     """Return template for python/brython console.
     """
@@ -272,6 +271,7 @@ def brythonconsole():
         title=SITETITLE,
         contact=SITECONTACT,
         consolesite=SITETITLE + " Console",
+        brythonversion=BRYTHON_VERSION,
         bsversion=VERSION,
         cookieconsent=cookieconsent,
     )
@@ -296,7 +296,7 @@ def legalnotices(filename):
 
 
 @APP.route("/ggame/<path:filename>")
-@CACHE.cached(timeout=50)
+@CACHE.cached(timeout=60)
 def ggameimport(filename):
     """Return content from the ggame file tree."""
     try:
@@ -309,6 +309,16 @@ def ggameimport(filename):
         print(err)
         abort(404)
     return "You should never see this!"
+
+
+@APP.route("/ggame.py")
+@CACHE.cached(timeout=600)
+def ggame_py():
+    """Return a 404 on any attempt to load ggame.py. This is will
+    avoid 'wasting time' before searching for modules in the
+    ggame package."""
+    # ggame is an available package, no ggame.py will be possible
+    abort(404)
 
 
 @APP.route("/<path:filename>")

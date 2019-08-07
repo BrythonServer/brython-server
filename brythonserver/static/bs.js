@@ -496,7 +496,7 @@ var bsController = function() {
     }
 
     // Execute the brython interpreter
-    function runBrython(console, argdict) {
+    function runBrython(console) {
         console.clear();
         __EXECUTE__BRYTHON__();
     }
@@ -530,7 +530,7 @@ var bsController = function() {
             setMainValue(maincontent);
             if (mainscript) {
                 UI.hideworking();
-                runBrython(Console, { debug: 0, ipy_id: [__MAIN__] });
+                runBrython(Console);
             }
         });
     }
@@ -542,7 +542,7 @@ var bsController = function() {
         loadGoogletoScript(UI, fileId, function() {
             setMainValue(maincontent);
             if (mainscript) {
-                runBrython(Console, { debug: 0, ipy_id: [__MAIN__] });
+                runBrython(Console);
             }
         });
     }
@@ -551,7 +551,7 @@ var bsController = function() {
     // re-execute current mainscript
     function runCurrent(Console) {
         if (mainscript) {
-            runBrython(Console, { debug: 0, ipy_id: [__MAIN__] });
+            runBrython(Console);
         }
     }
 

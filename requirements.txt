@@ -4,8 +4,8 @@ MarkupSafe==0.23
 Werkzeug==0.15.4
 gunicorn==19.9.0
 itsdangerous==0.24
-brython==3.7.3
-ggame==1.0.10
+brython==3.7.4
+ggame==1.0.11
 redis==3.2.1
 Flask-Session==0.3.1
 Flask-Caching==1.7.2
