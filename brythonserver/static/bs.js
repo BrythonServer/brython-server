@@ -864,7 +864,7 @@ var bsController = function() {
         var oauthToken = gapi.auth.getToken().access_token;
         gapi.load('picker', {'callback': function(){
             if (oauthToken) {
-                var view = new google.picker.DocsView()
+                var view = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
                     .setParent('root')  
                     .setIncludeFolders(true) 
                     .setMimeTypes('application/vnd.google-apps.folder')

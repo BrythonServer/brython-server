@@ -134,8 +134,11 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" data-dismiss="modal" 
+                id="new-file-name-create-root"
+                onclick="bsController.googlesavename($('#new-file-name').val(), 'root')">Add to Drive Root</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" 
                 id="new-file-name-create"
-                onclick="bsController.googlesavename($('#new-file-name').val(), '{{ new }}')">Create File</button>
+                onclick="bsController.googlesavename($('#new-file-name').val(), '')">Select Destination</button>
       </div>
     </div>
   </div>
@@ -197,7 +200,7 @@
              $( '#newfileModal' ).on( 'keypress', function( e ) {
                 if( e.keyCode === 13 ) {
                     e.preventDefault();
-                    bsController.googlesavename($('#new-file-name').val(), '{{ new }}');
+                    bsController.googlesavename($('#new-file-name').val(), 'root');
                     $("#newfileModal").modal('hide');
                 }
             } )    
