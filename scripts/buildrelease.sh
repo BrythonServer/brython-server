@@ -1,4 +1,5 @@
 #!/bin/bash
+# Note: you must pip install brython in accordance with requirements.txt
 
 cd ~/workspace/brython-server
 mkdir -p brythonserver/static/brython

@@ -766,9 +766,8 @@ var bsController = function() {
         }
     }
     
-  
     
-    // Create and render a Picker object for searching images.
+    // Create and render a Picker object for finding python sources.
     function loadPicker() {
         var GoogleAuth = gapi.auth2.getAuthInstance();
         if (!GoogleAuth.isSignedIn.get()) {
@@ -778,7 +777,6 @@ var bsController = function() {
         var oauthToken = gapi.auth.getToken().access_token;
         gapi.load('picker', {'callback': function(){
             if (oauthToken) {
-            //var view = new google.picker.View(google.picker.ViewId.DOCS);
             var view = new google.picker.DocsView();
                 view.setParent('root');
                 view.setIncludeFolders(true);
@@ -854,15 +852,58 @@ var bsController = function() {
             }
         }
     }
+
+
+    // select a newfile directory from google drive
+    function directoryPicker(newfile) {
+        var GoogleAuth = gapi.auth2.getAuthInstance();
+        if (!GoogleAuth.isSignedIn.get()) {
+            // User is not signed in. Start Google auth flow.
+            GoogleAuth.signIn();
+        }
+        var oauthToken = gapi.auth.getToken().access_token;
+        gapi.load('picker', {'callback': function(){
+            if (oauthToken) {
+                var view = new google.picker.DocsView()
+                    .setParent('root')  
+                    .setIncludeFolders(true) 
+                    .setMimeTypes('application/vnd.google-apps.folder')
+                    .setSelectFolderEnabled(true);
+                var picker = new google.picker.PickerBuilder()
+                    .enableFeature(google.picker.Feature.NAV_HIDDEN)
+                    .enableFeature(google.picker.Feature.MULTISELECT_DISABLED)
+                    .setAppId(google_appid)
+                    .setOAuthToken(oauthToken)
+                    .addView(view)
+                    .setTitle("Select Destination Folder")
+                    .setDeveloperKey(google_apikey)
+                    .setCallback(function(data) {
+                        if (data.action == google.picker.Action.PICKED) {
+                            var dir = data.docs[0];
+                            if (dir.id) {
+                                saveGoogleWithName(newfile, dir.id)
+                            }
+                        }
+                    })
+                    .build();
+                 picker.setVisible(true);
+            }
+        }});
+    }
+
     
     // function called following successful processing of new file modal
     function saveGoogleWithName(newfilename, folderid) {
         if (newfilename != null) {
+            // if folderid is empty, user must pick one
+            if (! folderid){
+                directoryPicker(newfilename);
+            }
             var fileMetadata = {
               'name' : newfilename,
               'mimeType' : 'text/x-python',
               'alt' : 'media',
-              'parents' : [(folderid ? folderid : "root"),],
+              'parents' : [folderid,],
               'useContentAsIndexableText' : true
             };
             gapi.client.drive.files.create({
