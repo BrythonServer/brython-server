@@ -3,5 +3,5 @@ Brython-Server version definition.
 Author: E Dennison
 """
 
-VERSION = "2.1.11"
+VERSION = "2.1.12"
 

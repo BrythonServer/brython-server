@@ -133,12 +133,18 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        {% if new == '' %}
         <button type="button" class="btn btn-primary" data-dismiss="modal" 
                 id="new-file-name-create-root"
                 onclick="bsController.googlesavename($('#new-file-name').val(), 'root')">Add to Drive Root</button>
+        {% endif %}
         <button type="button" class="btn btn-primary" data-dismiss="modal" 
                 id="new-file-name-create"
+        {% if new == '' %}
                 onclick="bsController.googlesavename($('#new-file-name').val(), '')">Select Destination</button>
+        {% else %}
+                onclick="bsController.googlesavename($('#new-file-name').val(), '{{ new }}')">Create File</button>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -185,6 +191,8 @@
             bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function() {
                 // post-init
                 bsController.googlesaveclick();
+                // remove the 'gui_new' bit in the address so that reloading won't create a new file
+                history.pushState('', '', '/');
             })
     {% else %}
             // initialize google client, but without loading any sources
@@ -200,7 +208,11 @@
              $( '#newfileModal' ).on( 'keypress', function( e ) {
                 if( e.keyCode === 13 ) {
                     e.preventDefault();
+                    {% if new == '' %}
                     bsController.googlesavename($('#new-file-name').val(), 'root');
+                    {% else %}
+                    bsController.googlesavename($('#new-file-name').val(), '{{ new }}');
+                    {% endif %}
                     $("#newfileModal").modal('hide');
                 }
             } )    
