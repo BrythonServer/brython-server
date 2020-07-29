@@ -688,6 +688,8 @@ var bsController = function() {
             post_google_init();
         }, function () {
             UI.hideworking();
+            // get the google buttons invisible
+            setSigninStatus();
             $("span#navigation").removeClass("hidden");
         });
     }
