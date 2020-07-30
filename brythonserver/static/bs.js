@@ -690,11 +690,13 @@ var bsController = function() {
             post_google_init_success();
         }, function () {
             UI.hideworking();
-            // post execute something
-            post_google_init_fail();
-            // get the google buttons invisible
-            setSigninStatus();
             $("span#navigation").removeClass("hidden");
+            // post execute something after a long delay if gapi isn't ready yet
+            setTimeout(function(){
+                post_google_init_fail();
+                // get the google buttons invisible
+                setSigninStatus();
+            }, typeof(gapi.client.drive) === 'undefined' ? 1000 : 1)
         });
     }
     
