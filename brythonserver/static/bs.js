@@ -454,7 +454,12 @@ var bsGoogleUtil = function() {
         if (url_input == null) {
             return null;
         }
-        return url_input.match(/[-_\w]{25,}/);
+        // rule out an obvious github url
+        if (url_input.match(/github/)) {
+            return false;
+        } else {
+            return url_input.match(/[-_\w]{25,}/);
+        }
     }
 
     // parse the url_input and return id
