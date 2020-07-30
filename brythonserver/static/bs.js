@@ -643,12 +643,14 @@ var bsController = function() {
     var google_apikey = false;
     var google_clientid = false;
     var google_appid = false;
-    var post_google_init = function() {}
+    var post_google_init_success = function() {}
+    var post_google_init_fail = function() {}
     
     // Google OAuth2 handleClientLoad
     // also record whether exec or index
-    function handleClientLoad(clientid, apikey, appid, callback) {
-        post_google_init = callback;
+    function handleClientLoad(clientid, apikey, appid, successcb, failcb) {
+        post_google_init_success = successcb;
+        post_google_init_fail = failcb;
         // Load the API's client and auth2 modules.
         // Call the initClient function after the modules load.
         google_clientid = clientid;
@@ -685,9 +687,11 @@ var bsController = function() {
             UI.hideworking();
             $("span#navigation").removeClass("hidden");
             // post execute something
-            post_google_init();
+            post_google_init_success();
         }, function () {
             UI.hideworking();
+            // post execute something
+            post_google_init_fail();
             // get the google buttons invisible
             setSigninStatus();
             $("span#navigation").removeClass("hidden");
