@@ -52,6 +52,7 @@ from .definitions import (
 from .utility import (
     githubloggedin,
     checkgithubstate,
+    gistrequest,
     githubretrievetoken,
     githubretrievefile,
     githubauthurl,
