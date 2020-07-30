@@ -180,10 +180,13 @@
                 bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function() {
                     // post-init
                     bsController.load(bsGithubUtil, bsGoogleUtil, bsUI);
+                }, function() {
+                    // post-init
+                    bsController.load(bsGithubUtil, bsGoogleUtil, bsUI);
                 })
             } else {
                 // initialize google client, but without loading any sources
-                bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function() {})
+                bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function() {}, function() {})
                 // Github version
                 bsController.load(bsGithubUtil, bsGoogleUtil, bsUI);    
             }
@@ -195,10 +198,10 @@
                 bsController.googlesaveclick();
                 // remove the 'gui_new' bit in the address so that reloading won't create a new file
                 history.pushState('', '', '/');
-            })
+            }, function() {})
     {% else %}
             // initialize google client, but without loading any sources
-            bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function() {})
+            bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function() {}, function() {})
     {% endif %}
             $( "#gobutton" ).click(function( event ) {
               event.stopPropagation();

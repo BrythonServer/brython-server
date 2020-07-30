@@ -90,8 +90,9 @@
                 }
                 else {
                     // presumed google exec
-                    bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", 
-                                                 function () {
+                    bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function () {
+                        bsController.rungoogle(bsConsole, bsUI, "{{ fileid }}");
+                    }, function () {
                         bsController.rungoogle(bsConsole, bsUI, "{{ fileid }}");
                     });
                 }
