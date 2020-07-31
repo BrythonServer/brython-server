@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/BrythonServer/brython-server.svg?branch=master)](https://travis-ci.org/BrythonServer/brython-server)
+
 # Brython-Server
 
 **Brython-Server** is a Flask-based web application focused on providing a simple
@@ -174,4 +176,52 @@ To run the server in a production environment, use gunicorn:
 ```bash
 $ gunicorn -b 0.0.0.0:3000 -w 4   brythonserver.main:APP
 ```
+## Development Environment
+
+To begin working with Brython Server in development environment:
+
+* Clone this repository and cd into it.
+* Create a virtual environment: `python3 -m venv ./env`
+* Activate the virtual environment: `source ./env/bin/activate`
+* Install the dependencies: `pip install -r requirements.txt`
+
+### Other Dependencies
+
+Your development environment will need redis to execute and standardjs to 
+execute the `run_tests` script (in the scripts folder).
+
+### Execution
+
+Prior to executing the server in your development environment you will have to 
+perform the following manual steps to populate the Brython distribution files
+where Brython Server can access them:
+
+```bash
+cd ~/workspace/brython-server
+mkdir -p brythonserver/static/brython
+cd brythonserver/static/brython
+python3 -m brython --update
+
+```
+
+Now you should be able to run Brython Server in your development environment 
+using a script similar to this:
+
+```bash
+export githubclientid=<insert your github client id here>
+export githubsecret=<insert your github secret here>
+export githubtoken=<insert your personal github token here>
+export googleclientid='<insert your google client id here>.apps.googleusercontent.com'
+export googleapikey='<insert your google api key here>'
+export googleappid='<insert your google app id here>'
+export sitetitle="<insert the name of your development site here>"
+export sitecontact=<insert an e-mail address here>
+export siteurl=<insert the url for your development page here>
+export PORT=<use your port number here>
+source ~/workspace/brython-server/env/bin/activate
+cd ~/workspace/brython-server
+python3 wsgi.py
+```
+
+
 
