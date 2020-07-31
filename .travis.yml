@@ -7,8 +7,9 @@ matrix:
       install:
         - pip install -r requirements.txt
         - mkdir -p brythonserver/static/brython
-        - cd brythonserver/static/brython
+        - pushd brythonserver/static/brython
         - python3 -m brython --update
+        - popd
       script:
         - ./scripts/run_tests.sh
     - language: node_js
