@@ -23,7 +23,7 @@ from flask import (
 from flask_session import Session
 from flask_caching import Cache
 import ggame.__version__
-from ggame.__version__ import VERSION, BUZZ_VERSION, PIXI_VERSION
+from ggame.__version__ import VERSION as GGVERSION, BUZZ_VERSION, PIXI_VERSION
 from .reverseproxied import ReverseProxied
 from .definitions import (
     ENV_FLASKSECRET,
@@ -147,6 +147,7 @@ def root():
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
+                ggversion=GGVERSION,
                 cookieconsent=cookieconsent,
                 g_clientid=G_CLIENTID,
                 g_apikey=G_APIKEY,
@@ -172,6 +173,7 @@ def root():
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
+                ggversion=GGVERSION,
                 cookieconsent=cookieconsent,
                 g_clientid=G_CLIENTID,
                 g_apikey=G_APIKEY,
@@ -192,6 +194,7 @@ def root():
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
+                ggversion=GGVERSION,
                 cookieconsent=cookieconsent,
                 g_clientid=G_CLIENTID,
                 g_apikey=G_APIKEY,
@@ -212,6 +215,7 @@ def root():
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
+                ggversion=GGVERSION,
                 cookieconsent=cookieconsent,
                 g_clientid=G_CLIENTID,
                 g_apikey=G_APIKEY,
@@ -233,6 +237,7 @@ def root():
                 buzzversion=BUZZ_VERSION,
                 pixiversion=PIXI_VERSION,
                 bsversion=VERSION,
+                ggversion=GGVERSION,
                 cookieconsent=cookieconsent,
                 g_clientid=G_CLIENTID,
                 g_apikey=G_APIKEY,
