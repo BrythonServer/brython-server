@@ -188,7 +188,7 @@ To begin working with Brython Server in development environment:
 ### Other Dependencies
 
 Your development environment will need redis to execute and standardjs to 
-execute the `run_tests` script (in the scripts folder).
+execute the `run_tests` and `run_js_tests` scripts (in the scripts folder).
 
 ### Execution
 
