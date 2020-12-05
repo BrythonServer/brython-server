@@ -286,7 +286,7 @@ def githubgetmainfile(user, repo, path):
     return selectmainfile(names)
 
 
-def githubpath(user, repo, path, name):
+def githubpath(user, repo, branch, path, name):
     """Build a valid URL to file on Github.
 
     Note: This is sensitive to changes in how Github URLs work.
@@ -294,13 +294,14 @@ def githubpath(user, repo, path, name):
     Arguments:
     user -- the Github user ID/name
     repo -- the Github user's repository name
+    branch -- specific branch name (typ. master or main)
     path -- specific path to file within the repo
     name -- specific file name or gist id
 
     Returns URL to Github file or gist.
     """
     if user != "" and repo != "":
-        retval = "https://github.com/{0}/{1}/blob/master/".format(user, repo)
+        retval = "https://github.com/{0}/{1}/blob/{2}/".format(user, repo, branch)
     else:
         retval = "https://gist.github.com/"
     if path:

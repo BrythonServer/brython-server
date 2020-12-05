@@ -364,7 +364,7 @@ var bsGithubUtil = (function () {
     var url = 'not found...'
     if (data.user !== '' && data.repo !== '') {
       url = 'https://github.com/' + data.user + '/' + data.repo
-      url += '/blob/master/' + createGithubPath(data)
+      url += '/blob/' + data.branch + '/' + createGithubPath(data)
     } else if (data.name !== '') {
       url = 'https://gist.github.com/' + data.name
     }
@@ -376,6 +376,7 @@ var bsGithubUtil = (function () {
     var data = {
       user: '',
       repo: '',
+      branch: '',
       path: '',
       name: ''
     }
@@ -386,9 +387,9 @@ var bsGithubUtil = (function () {
     // example: https://github.com/tiggerntatie/brython-student-test/blob/master/hello.py
     // example: https://github.com/tiggerntatie/hhs-cp-site/blob/master/hhscp/static/exemplars/c02hello.py
     // example subtree: https://github.com/tiggerntatie/hhs-cp-site/tree/master/hhscp/static/exemplars
-    var gittreematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/tree\/master\/(.+)/)
-    var gitfilematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/master\/([^/]+)/)
-    var gittreefilematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/master\/(.+)\/([^/]+)/)
+    var gittreematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)\/(.+)/)
+    var gitfilematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/([^/]+)/)
+    var gittreefilematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)\/([^/]+)/)
     var gitrepomatch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+).*/)
     var gisturlmatch = urlInput.match(/.*gist\.github\.com(\/[^/]+)?\/([0-9,a-f]+)/)
     var gistmatch = urlInput.match(/^[0-9,a-f]+$/)
@@ -397,6 +398,7 @@ var bsGithubUtil = (function () {
       data = {
         user: '',
         repo: '',
+        branch: '',
         path: '',
         name: gist
       }
@@ -404,17 +406,20 @@ var bsGithubUtil = (function () {
       data = {
         user: gitrepomatch[1],
         repo: gitrepomatch[2],
+        branch: '',
         path: '',
         name: ''
       }
       if (gittreematch) {
-        data.path = gittreematch[3]
+        data.branch = gittreematch[3]
+        data.path = gittreematch[4]
       }
       if (gittreefilematch) {
-        data.path = gittreefilematch[3]
-        data.name = gittreefilematch[4]
+        data.path = gittreefilematch[4]
+        data.name = gittreefilematch[5]
       } else if (gitfilematch) {
-        data.name = gitfilematch[3]
+        data.branch = gitfilematch[3]
+        data.name = gitfilematch[4]
       }
     }
     return data
@@ -807,13 +812,8 @@ var bsController = (function () {
     var UI = bsUI
     var fileId = gdriveFileidLoaded
     var content = UI.geteditor()
-    var contentArray = new Array(content.length)
-    for (var i = 0; i < contentArray.length; i++) {
-      contentArray[i] = content.charCodeAt(i)
-    }
-    var byteArray = new Uint8Array(contentArray)
-    var blob = new Blob([byteArray], {
-      type: 'text/x-python'
+    var blob = new Blob([content], { 
+      type: 'text/x-python;charset=utf8'
     })
     UI.showworking()
     var xhr = new XMLHttpRequest()

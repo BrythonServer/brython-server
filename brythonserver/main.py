@@ -435,6 +435,7 @@ def v1_load():
     JSON arguments:
     user -- Github user name (blank for gist)
     repo -- Github user's repo name (blank for gist)
+    branch -- optional branch identifier
     path -- optional path (fragment) to a specific file
     name -- optional specific file name or gist ID
 
@@ -447,6 +448,7 @@ def v1_load():
     content = request.json
     user = content.get("user", "")
     repo = content.get("repo", "")
+    branch = content.get("branch", "")
     path = content.get("path", "")
     name = content.get("name", "")
     mainfile = name
@@ -473,7 +475,7 @@ def v1_load():
                     {
                         "success": True,
                         "name": mainfile,
-                        "path": githubpath(user, repo, path, mainfile),
+                        "path": githubpath(user, repo, branch, path, mainfile),
                         "content": maincontent,
                     }
                 ),
