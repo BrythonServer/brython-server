@@ -812,7 +812,7 @@ var bsController = (function () {
     var UI = bsUI
     var fileId = gdriveFileidLoaded
     var content = UI.geteditor()
-    var blob = new Blob([content], { 
+    var blob = new Blob([content], {
       type: 'text/x-python;charset=utf8'
     })
     UI.showworking()
