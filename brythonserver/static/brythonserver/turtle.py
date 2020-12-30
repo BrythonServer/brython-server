@@ -4,6 +4,7 @@ Author: E Dennison
 """
 from browser import document
 from turtle import *
+from turtle import set_defaults, FormattedTuple
 
 set_defaults(turtle_canvas_wrapper=document["graphics-column"])
 
