@@ -36,12 +36,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <script type="text/python3">
+    import sys
+    import tb as traceback
     from browser import document, window
-
+        
     def __EXECUTE__BRYTHON__():
         content = document['__main__'].innerHTML
-        exec(content, {"__name__":"__main__"})
-
+        try:
+            exec(content, {"__name__":"__main__"})
+        except Exception as exc:
+            traceback.print_exc(file=sys.stderr)
+           
     window.__EXECUTE__BRYTHON__ = __EXECUTE__BRYTHON__
     </script>
     {% endif %}
