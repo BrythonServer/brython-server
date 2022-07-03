@@ -10,6 +10,7 @@
 /* global google */
 /* global XMLHttpRequest */
 /* global Blob */
+/* global alert */
 /* global __EXECUTE__BRYTHON__ */
 /* eslint-disable no-unused-vars */
 
@@ -18,9 +19,9 @@
  *
  * Console Proxy routes alert and prompt calls to our own handler.
  */
-var bsConsole = (function () {
+const bsConsole = (function () {
   // var consolequeue = [];
-  var consolecontext = ''
+  let consolecontext = ''
   const CONSOLETIMEOUT = 10
   const CONSOLEID = '#console'
   const OLDPROMPT = window.prompt
@@ -28,7 +29,7 @@ var bsConsole = (function () {
 
   // handle console printing
   function PrintConsole (text) {
-    var textarea = $(CONSOLEID)
+    const textarea = $(CONSOLEID)
     textarea.val(textarea.val() + text)
     textarea.scrollTop(textarea[0].scrollHeight)
     consolecontext += text
@@ -38,8 +39,8 @@ var bsConsole = (function () {
     // take over the prompt dialog so we can display prompt text in the console
     window.prompt = function (text, defvalue) {
       PrintConsole(text) // put prompt
-      var truncatedcontext = consolecontext.split('\n').slice(-CONSOLECONTEXTSIZE).join('\n')
-      var returnedValue = OLDPROMPT(truncatedcontext, defvalue)
+      const truncatedcontext = consolecontext.split('\n').slice(-CONSOLECONTEXTSIZE).join('\n')
+      const returnedValue = OLDPROMPT(truncatedcontext, defvalue)
       consolecontext = truncatedcontext
       PrintConsole(returnedValue + '\n')
       return returnedValue
@@ -51,13 +52,13 @@ var bsConsole = (function () {
   // Console hijacker - http://tobyho.com/2012/07/27/taking-over-console-log/
   // target is ID of alternate destination
   function takeOverConsole () {
-    var console = window.console
+    const console = window.console
     if (!console) return
 
     function intercept (method) {
-      var original = console[method]
+      const original = console[method]
       console[method] = function () {
-        for (i = 0; i < arguments.length; i++) {
+        for (let i = 0; i < arguments.length; i++) {
           if (typeof arguments[i] === 'string' &&
                         arguments[i].indexOf('Error 404 means that Python module') === -1 &&
                         arguments[i].indexOf('using indexedDB for stdlib modules cache') === -1) {
@@ -69,13 +70,13 @@ var bsConsole = (function () {
           original.apply(console, arguments)
         } else {
           // Do this for IE
-          var message = Array.prototype.slice.apply(arguments).join(' ')
+          const message = Array.prototype.slice.apply(arguments).join(' ')
           original(message)
         }
       }
     }
-    var methods = ['log', 'warn', 'error']
-    for (var i = 0; i < methods.length; i++) { intercept(methods[i]) }
+    const methods = ['log', 'warn', 'error']
+    for (let i = 0; i < methods.length; i++) { intercept(methods[i]) }
   }
 
   // clear the console output
@@ -98,7 +99,7 @@ var bsConsole = (function () {
  *
  * User Interface Functionality
  */
-var bsUI = (function () {
+const bsUI = (function () {
   const GOOGLE_AUTHORIZE = '#googleloginbutton'
   const GOOGLE_LOAD = '#googleloadbutton'
   const GOOGLE_LOGOUT = '#googlelogoutbutton'
@@ -117,9 +118,9 @@ var bsUI = (function () {
   const CONSOLE_COLUMNS = ['col-md-0', 'col-md-12', 'col-md-0']
   const GRAPHICS_COLUMNS = ['col-md-0', 'col-md-4', 'col-md-8']
 
-  var editor = null
-  var ingraphics = false
-  var hidedepth = 0
+  let editor = null
+  let ingraphics = false
+  let hidedepth = 0
 
   // hide buttons and show the working indicator
   function showWorking () {
@@ -143,7 +144,7 @@ var bsUI = (function () {
     // Github link is not visible by default
     $(GITHUB_URL).hide()
     // Share link is not visible by default
-    var shareLink = $(SHARE_URL)
+    const shareLink = $(SHARE_URL)
     if (shareLink) {
       shareLink.hide()
     }
@@ -227,18 +228,18 @@ var bsUI = (function () {
 
   // Show github or google link
   function showLink (path) {
-    var element = $(GITHUB_URL)
+    const element = $(GITHUB_URL)
     element.attr('href', path)
     element.show()
   }
 
   // Show share link
   function showShareURL (data) {
-    var element = $(SHARE_URL)
+    const element = $(SHARE_URL)
     if (data.user === '' && data.repo === '') {
       element.attr('href', '?gist=' + data.name)
     } else {
-      var baseargs = '?user=' + data.user + '&repo=' + data.repo + '&branch=' + data.branch + '&name=' + data.name
+      const baseargs = '?user=' + data.user + '&repo=' + data.repo + '&branch=' + data.branch + '&name=' + data.name
       if (data.path === '') {
         element.attr('href', baseargs)
       } else {
@@ -250,7 +251,7 @@ var bsUI = (function () {
 
   // show GOOGLE share link
   function showGoogleShareURL (fileId) {
-    var element = $(SHARE_URL)
+    const element = $(SHARE_URL)
     if (element) {
       element.attr('href', '?fileid=' + fileId)
       element.show()
@@ -271,7 +272,7 @@ var bsUI = (function () {
     editor.setDisplayIndentGuides(true)
     editor.getSession().setMode('ace/mode/python')
     editor.$blockScrolling = Infinity
-    var textarea = $('textarea[name="editorcache"]').hide()
+    const textarea = $('textarea[name="editorcache"]').hide()
     if (textarea.val().length !== 0) {
       editor.getSession().setValue(textarea.val())
     }
@@ -319,8 +320,8 @@ var bsUI = (function () {
 
   // Public API
   return {
-    URL_INPUT: URL_INPUT,
-    FILE_NAME: FILE_NAME,
+    URL_INPUT,
+    FILE_NAME,
     init: Initialize,
     showlink: showLink,
     showshareurl: showShareURL,
@@ -348,10 +349,10 @@ var bsUI = (function () {
  *
  * Github Utilities
  */
-var bsGithubUtil = (function () {
+const bsGithubUtil = (function () {
   // create a Github file path
   function createGithubPath (data) {
-    var path = data.path
+    let path = data.path
     if (path.length > 0 && path.substr(path.length - 1) !== '/') {
       path += '/'
     }
@@ -361,7 +362,7 @@ var bsGithubUtil = (function () {
 
   // create a Github URL text for specific file
   function createGithubURL (data) {
-    var url = 'not found...'
+    let url = 'not found...'
     if (data.user !== '' && data.repo !== '') {
       url = 'https://github.com/' + data.user + '/' + data.repo
       url += '/blob/' + data.branch + '/' + createGithubPath(data)
@@ -373,7 +374,7 @@ var bsGithubUtil = (function () {
 
   // parse Github URL text
   function parseGithubURL (urlInput) {
-    var data = {
+    let data = {
       user: '',
       repo: '',
       branch: '',
@@ -387,14 +388,14 @@ var bsGithubUtil = (function () {
     // example: https://github.com/tiggerntatie/brython-student-test/blob/master/hello.py
     // example: https://github.com/tiggerntatie/hhs-cp-site/blob/master/hhscp/static/exemplars/c02hello.py
     // example subtree: https://github.com/tiggerntatie/hhs-cp-site/tree/master/hhscp/static/exemplars
-    var gittreematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)\/(.+)/)
-    var gitfilematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/([^/]+)/)
-    var gittreefilematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)\/([^/]+)/)
-    var gitrepomatch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+).*/)
-    var gisturlmatch = urlInput.match(/.*gist\.github\.com(\/[^/]+)?\/([0-9,a-f]+)/)
-    var gistmatch = urlInput.match(/^[0-9,a-f]+$/)
+    const gittreematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)\/(.+)/)
+    const gitfilematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/([^/]+)/)
+    const gittreefilematch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)\/([^/]+)/)
+    const gitrepomatch = urlInput.match(/.*github\.com\/([^/]+)\/([^/]+).*/)
+    const gisturlmatch = urlInput.match(/.*gist\.github\.com(\/[^/]+)?\/([0-9,a-f]+)/)
+    const gistmatch = urlInput.match(/^[0-9,a-f]+$/)
     if (gisturlmatch || gistmatch) {
-      var gist = gisturlmatch ? gisturlmatch[2] : gistmatch[0]
+      const gist = gisturlmatch ? gisturlmatch[2] : gistmatch[0]
       data = {
         user: '',
         repo: '',
@@ -443,7 +444,7 @@ var bsGithubUtil = (function () {
  *
  * Google Utilities
  */
-var bsGoogleUtil = (function () {
+const bsGoogleUtil = (function () {
   // create a Google URL text for specific file
   function createGoogleURL (id) {
     return 'https://drive.google.com/file/d/' + id + '/view'
@@ -481,12 +482,12 @@ var bsGoogleUtil = (function () {
  *
  * Miscellaneous actions and network transactions
  */
-var bsController = (function () {
-  var maincontent = ''
-  var mainscript = null
+const bsController = (function () {
+  let maincontent = ''
+  let mainscript = null
   const __MAIN__ = '__main__'
-  var initialized = false
-  var gdriveFileidLoaded = null
+  let initialized = false
+  let gdriveFileidLoaded = null
 
   // Initialize the brython interpreter
   function initBrython () {
@@ -573,10 +574,10 @@ var bsController = (function () {
 
   // send request to commit/save to github
   function commitGithub (GH, UI) {
-    var d = new Date()
-    var ds = d.toLocaleDateString()
-    var ts = d.toLocaleTimeString()
-    var data = GH.parse(UI)
+    const d = new Date()
+    const ds = d.toLocaleDateString()
+    const ts = d.toLocaleTimeString()
+    const data = GH.parse(UI)
     data.editcontent = UI.geteditor()
     data.commitmsg = 'Updated from Brython Server: ' + ds + ' ' + ts
     UI.showworking()
@@ -626,50 +627,49 @@ var bsController = (function () {
   // Handling Google Drive and Oauth2
 
   // Required for Google OAuth2
-  var googleScope = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.install'
-  let googleApiKey;
-  let googleAppId;
+  const googleScope = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.install'
+  let googleApiKey
+  let googleAppId
 
   // GAPI init with callback https://developers.google.com/identity/oauth2/web/guides/migration-to-gis#gapi-callback
-  let tokenClient;
-  let gapiInited;
-  let gisInited;
+  let tokenClient
+  let gapiInited
+  let gisInited
 
-  function checkBeforeStart() {
+  function checkBeforeStart () {
     if (gapiInited && gisInited) {
       // Start only when both gapi and gis are initialized
-      var UI = bsUI;
-      UI.hideworking();
-      UI.showgoogle();
+      const UI = bsUI
+      UI.hideworking()
+      UI.showgoogle()
     }
   }
 
-  function gapiInit() {
+  function gapiInit () {
     gapi.client.init({
       // NOTE: OAuth2 'scope' and 'client_id' parameters have moved to initTokenClient().
     })
-    .then(function() {  // Load the API discovery document
-      gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
-      gapiInited = true;
-      checkBeforeStart();
-    });
+      .then(function () {
+      // Load the API discovery document
+        gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest')
+        gapiInited = true
+        checkBeforeStart()
+      })
   }
 
-  function gapiLoad() {
+  function gapiLoad () {
     gapi.load('client', gapiInit)
   }
 
-  function gisInit(clientid) {
+  function gisInit (clientid) {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: clientid,
       scope: googleScope,
-      callback: '',  // defined at request time
-    });
-    gisInited = true;
-    checkBeforeStart();
+      callback: '' // defined at request time
+    })
+    gisInited = true
+    checkBeforeStart()
   }
-
-
 
   // Google OAuth2 handleClientLoad
   // also record whether exec or index
@@ -682,20 +682,20 @@ var bsController = (function () {
   function loadGoogletoScript (UI, fileId, callback) {
     tokenClient.callback = (resp) => {
       if (resp.error !== undefined) {
-        throw(resp);
+        throw resp
       }
 
-      var GU = bsGoogleUtil
+      const GU = bsGoogleUtil
       UI.showworking()
-      var request = gapi.client.drive.files.get({
-        fileId: fileId
+      const request = gapi.client.drive.files.get({
+        fileId
       })
       request.then(function (response) {
         // first, get the filename
         $(UI.FILE_NAME).val(response.result.name)
         // set up for another "get" for the data
-        var request = gapi.client.drive.files.get({
-          fileId: fileId,
+        const request = gapi.client.drive.files.get({
+          fileId,
           alt: 'media'
         })
         request.then(
@@ -724,30 +724,30 @@ var bsController = (function () {
         console.error(error)
       })
     }
-    // Conditionally ask users to select the Google Account they'd like to use, 
+    // Conditionally ask users to select the Google Account they'd like to use,
     // and explicitly obtrain their consent to open the file picker.
     // NOTE: To request an access token a user gesture is necessary.
     if (gapi.client.getToken() === null) {
       // Prompt the user to select a Google Account and ask for for consent to access their data
       // when establishing a new session.
-      tokenClient.requestAccessToken({prompt: 'consent'});
+      tokenClient.requestAccessToken({ prompt: 'consent' })
     } else {
       // Skip display of account chooser and consent dialog for an existing session.
-      tokenClient.requestAccessToken({prompt: ''});
+      tokenClient.requestAccessToken({ prompt: '' })
     }
   }
 
   // from https://stackoverflow.com/questions/39381563/get-file-content-of-google-docs-using-google-drive-api-v3
   function pickerLoadFile (data) {
     if (data.action === google.picker.Action.PICKED) {
-      var file = data.docs[0]
-      var fileId = file.id
-      var fileName = file.name
-      var fileUrl = file.url
-      var UI = bsUI
-      var request = gapi.client.drive.files.get({
+      const file = data.docs[0]
+      const fileId = file.id
+      const fileName = file.name
+      const fileUrl = file.url
+      const UI = bsUI
+      const request = gapi.client.drive.files.get({
         fields: ['url', 'title'],
-        fileId: fileId,
+        fileId,
         alt: 'media'
       })
       UI.showworking()
@@ -772,18 +772,18 @@ var bsController = (function () {
   function loadPicker () {
     tokenClient.callback = (resp) => {
       if (resp.error !== undefined) {
-        throw(resp);
+        throw resp
       }
 
-      var oauthToken = gapi.auth.getToken().access_token
+      const oauthToken = gapi.auth.getToken().access_token
       gapi.load('picker', {
         callback: function () {
           if (oauthToken) {
-            var view = new google.picker.DocsView()
+            const view = new google.picker.DocsView()
             view.setParent('root')
             view.setIncludeFolders(true)
             view.setMimeTypes('text/plain,text/x-python')
-            var picker = new google.picker.PickerBuilder()
+            const picker = new google.picker.PickerBuilder()
               .enableFeature(google.picker.Feature.NAV_HIDDEN)
               .enableFeature(google.picker.Feature.MULTISELECT_DISABLED)
               .setAppId(googleAppId)
@@ -799,30 +799,30 @@ var bsController = (function () {
         }
       })
     }
-    // Conditionally ask users to select the Google Account they'd like to use, 
+    // Conditionally ask users to select the Google Account they'd like to use,
     // and explicitly obtrain their consent to open the file picker.
     // NOTE: To request an access token a user gesture is necessary.
     if (gapi.client.getToken() === null) {
       // Prompt the user to select a Google Account and ask for for consent to access their data
       // when establishing a new session.
-      tokenClient.requestAccessToken({prompt: 'consent'});
+      tokenClient.requestAccessToken({ prompt: 'consent' })
     } else {
       // Skip display of account chooser and consent dialog for an existing session.
-      tokenClient.requestAccessToken({prompt: ''});
+      tokenClient.requestAccessToken({ prompt: '' })
     }
   }
 
   // Save content to Google Drive with ID (already authenticated)
   // File ID must be in gdriveFileidLoaded
   function gdriveSaveFile () {
-    var UI = bsUI
-    var fileId = gdriveFileidLoaded
-    var content = UI.geteditor()
-    var blob = new Blob([content], {
+    const UI = bsUI
+    const fileId = gdriveFileidLoaded
+    const content = UI.geteditor()
+    const blob = new Blob([content], {
       type: 'text/x-python;charset=utf8'
     })
     UI.showworking()
-    var xhr = new XMLHttpRequest()
+    const xhr = new XMLHttpRequest()
     xhr.responseType = 'json'
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== XMLHttpRequest.DONE) {
@@ -831,8 +831,7 @@ var bsController = (function () {
       bsUI.hideworking() // why didn't it know about UI here?
       switch (xhr.status) {
         case 200:
-          var UI = bsUI
-          $(UI.URL_INPUT).val(bsGoogleUtil.createurl(gdriveFileidLoaded))
+          $(bsUI.URL_INPUT).val(bsGoogleUtil.createurl(gdriveFileidLoaded))
           break
         default:
           window.alert('Unable to save code to Google Drive.')
@@ -848,9 +847,9 @@ var bsController = (function () {
   function saveGoogle () {
     tokenClient.callback = (resp) => {
       if (resp.error !== undefined) {
-        throw(resp);
+        throw resp
       }
-      var oauthToken = gapi.auth.getToken().access_token
+      const oauthToken = gapi.auth.getToken().access_token
       if (oauthToken) {
         if (gdriveFileidLoaded) {
           gdriveSaveFile()
@@ -859,31 +858,31 @@ var bsController = (function () {
         }
       }
     }
-    // Conditionally ask users to select the Google Account they'd like to use, 
+    // Conditionally ask users to select the Google Account they'd like to use,
     // and explicitly obtrain their consent to open the file picker.
     // NOTE: To request an access token a user gesture is necessary.
     if (gapi.client.getToken() === null) {
       // Prompt the user to select a Google Account and ask for for consent to access their data
       // when establishing a new session.
-      tokenClient.requestAccessToken({prompt: 'consent'});
+      tokenClient.requestAccessToken({ prompt: 'consent' })
     } else {
       // Skip display of account chooser and consent dialog for an existing session.
-      tokenClient.requestAccessToken({prompt: ''});
+      tokenClient.requestAccessToken({ prompt: '' })
     }
   }
 
   // select a newfile directory from google drive
   function directoryPicker (newfile) {
-    var oauthToken = gapi.auth.getToken().access_token
+    const oauthToken = gapi.auth.getToken().access_token
     gapi.load('picker', {
       callback: function () {
         if (oauthToken) {
-          var view = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
+          const view = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
             .setParent('root')
             .setIncludeFolders(true)
             .setMimeTypes('application/vnd.google-apps.folder')
             .setSelectFolderEnabled(true)
-          var picker = new google.picker.PickerBuilder()
+          const picker = new google.picker.PickerBuilder()
             .enableFeature(google.picker.Feature.NAV_HIDDEN)
             .enableFeature(google.picker.Feature.MULTISELECT_DISABLED)
             .setAppId(googleAppId)
@@ -893,7 +892,7 @@ var bsController = (function () {
             .setDeveloperKey(googleApiKey)
             .setCallback(function (data) {
               if (data.action === google.picker.Action.PICKED) {
-                var dir = data.docs[0]
+                const dir = data.docs[0]
                 if (dir.id) {
                   saveGoogleWithName(newfile, dir.id)
                 }
@@ -913,7 +912,7 @@ var bsController = (function () {
       if (!folderid) {
         directoryPicker(newfilename)
       }
-      var fileMetadata = {
+      const fileMetadata = {
         name: newfilename,
         mimeType: 'text/x-python',
         alt: 'media',
@@ -924,13 +923,14 @@ var bsController = (function () {
         resource: fileMetadata
       }).then(function (response) {
         switch (response.status) {
-          case 200:
-            var file = response.result
-            var UI = bsUI
+          case 200: {
+            const file = response.result
+            const UI = bsUI
             $(UI.FILE_NAME).val(file.name)
             gdriveFileidLoaded = file.id
             gdriveSaveFile()
             break
+          }
           default:
             window.alert('Unable to create file in Google Drive')
             break
@@ -941,7 +941,7 @@ var bsController = (function () {
 
   // revoke google authorization
   function revokeAccess () {
-    var GoogleAuth = gapi.auth2.getAuthInstance()
+    const GoogleAuth = gapi.auth2.getAuthInstance()
     GoogleAuth.disconnect()
     setSigninStatus()
     gdriveFileidLoaded = null
@@ -949,10 +949,10 @@ var bsController = (function () {
 
   // update display according to whether user is logged in to google
   function setSigninStatus () {
-    var UI = bsUI
-    var GoogleAuth = gapi.auth2.getAuthInstance()
-    var user = GoogleAuth.currentUser.get()
-    var isAuthorized = user.hasGrantedScopes(googleScope)
+    const UI = bsUI
+    const GoogleAuth = gapi.auth2.getAuthInstance()
+    const user = GoogleAuth.currentUser.get()
+    const isAuthorized = user.hasGrantedScopes(googleScope)
     if (isAuthorized) {
       UI.showgoogle()
     } else {
@@ -962,14 +962,14 @@ var bsController = (function () {
 
   // examine the Url and attempt to parse as Google (1st) or Github (2nd)
   function loadCloud (GH, GU, UI) {
-    var fileId = GU.parse(UI)
+    const fileId = GU.parse(UI)
     if (fileId) {
       loadGoogletoScript(UI, fileId, function () {})
     } else {
-      var data = GH.parse(UI)
+      const data = GH.parse(UI)
       loadGithubtoScript(UI, data,
         function (result) {
-          data = GH.parseurl(result.path)
+          const data = GH.parseurl(result.path)
           $(UI.URL_INPUT).val(GH.createurl(data))
           $(UI.FILE_NAME).val(data.name)
           UI.showshareurl(data)
@@ -982,7 +982,7 @@ var bsController = (function () {
 
   // log in to Google and grant basic permissions
   function loginGoogle () {
-    var GoogleAuth = gapi.auth2.getAuthInstance()
+    const GoogleAuth = gapi.auth2.getAuthInstance()
     if (!GoogleAuth.isSignedIn.get()) {
       // User is not signed in. Start Google auth flow.
       GoogleAuth.signIn()
