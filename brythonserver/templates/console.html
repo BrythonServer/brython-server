@@ -2,8 +2,6 @@
 
 {% block body %}
 
-<script id="__main__" type="text/python3" src="{{url_for('static', filename='console.py') }}?ver={{ bsversion }}"></script>
-
 <div class="row" id="nav-row">
     <div class="col-md-12" >
         <span id="navigation">
@@ -46,11 +44,15 @@
 {{ super() }}
 <script type="text/javascript">
     window.onload = function() {
-       brython();
+       brython(1);
        // unpleasant hack to make everything work properly...
        bsUI.graphicsmode();
        bsUI.consolemode();
     }
+</script>
+<script type="text/python3">
+    from interpreter import Interpreter
+    Interpreter("code")
 </script>
 {% endblock %}
 
