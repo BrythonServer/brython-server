@@ -12,17 +12,16 @@
 /* global Blob */
 /* global alert */
 /* global __EXECUTE__BRYTHON__ */
-/* eslint-disable no-unused-vars */
+/* eslint-disable no-unused-vars, no-var */
 
 /*
  * bsConsole
  *
  * Console Proxy routes alert and prompt calls to our own handler.
  */
-const bsConsole = (function () {
+var bsConsole = (function () {
   // var consolequeue = [];
   let consolecontext = ''
-  const CONSOLETIMEOUT = 10
   const CONSOLEID = '#console'
   const OLDPROMPT = window.prompt
   const CONSOLECONTEXTSIZE = 24 // size of a typical old school CRT (VT100)
@@ -99,7 +98,7 @@ const bsConsole = (function () {
  *
  * User Interface Functionality
  */
-const bsUI = (function () {
+var bsUI = (function () {
   const GOOGLE_AUTHORIZE = '#googleloginbutton'
   const GOOGLE_LOAD = '#googleloadbutton'
   const GOOGLE_LOGOUT = '#googlelogoutbutton'
@@ -210,20 +209,6 @@ const bsUI = (function () {
     $('#editor-column').hide()
     $(GRAPHICS_COL_NAME).attr('hidden', false)
     ingraphics = true
-  }
-
-  function setExecMode () {
-    $('#editor-column').attr('class', GRAPHICS_COLUMNS[0])
-    $('#output-column').attr('class', GRAPHICS_COLUMNS[1])
-    $(GRAPHICS_COL_NAME).attr('class', GRAPHICS_COLUMNS[2])
-    $(CANVAS_NAME).height($(GRAPHICS_COL_NAME).clientHeight)
-    $(CANVAS_NAME).width($(GRAPHICS_COL_NAME).clientWidth)
-    $(GRAPHICS_COL_NAME).attr('hidden', true)
-    $('#editor-column').attr('class', CONSOLE_COLUMNS[0])
-    $('#output-column').attr('class', CONSOLE_COLUMNS[1])
-    $(GRAPHICS_COL_NAME).attr('class', CONSOLE_COLUMNS[2])
-    $(GRAPHICS_COL_NAME).attr('hidden', true)
-    $('#editor-column').hide()
   }
 
   // Show github or google link
@@ -349,7 +334,7 @@ const bsUI = (function () {
  *
  * Github Utilities
  */
-const bsGithubUtil = (function () {
+var bsGithubUtil = (function () {
   // create a Github file path
   function createGithubPath (data) {
     let path = data.path
@@ -482,7 +467,7 @@ const bsGoogleUtil = (function () {
  *
  * Miscellaneous actions and network transactions
  */
-const bsController = (function () {
+var bsController = (function () {
   let maincontent = ''
   let mainscript = null
   const __MAIN__ = '__main__'
@@ -649,8 +634,7 @@ const bsController = (function () {
     gapi.client.init({
       // NOTE: OAuth2 'scope' and 'client_id' parameters have moved to initTokenClient().
     })
-      .then(function () {
-      // Load the API discovery document
+      .then(function () { // Load the API discovery document
         gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest')
         gapiInited = true
         checkBeforeStart()
@@ -682,7 +666,7 @@ const bsController = (function () {
   function loadGoogletoScript (UI, fileId, callback) {
     tokenClient.callback = (resp) => {
       if (resp.error !== undefined) {
-        throw resp
+        throw (resp)
       }
 
       const GU = bsGoogleUtil
@@ -772,7 +756,7 @@ const bsController = (function () {
   function loadPicker () {
     tokenClient.callback = (resp) => {
       if (resp.error !== undefined) {
-        throw resp
+        throw (resp)
       }
 
       const oauthToken = gapi.auth.getToken().access_token
@@ -847,7 +831,7 @@ const bsController = (function () {
   function saveGoogle () {
     tokenClient.callback = (resp) => {
       if (resp.error !== undefined) {
-        throw resp
+        throw (resp)
       }
       const oauthToken = gapi.auth.getToken().access_token
       if (oauthToken) {
@@ -923,14 +907,11 @@ const bsController = (function () {
         resource: fileMetadata
       }).then(function (response) {
         switch (response.status) {
-          case 200: {
-            const file = response.result
-            const UI = bsUI
-            $(UI.FILE_NAME).val(file.name)
-            gdriveFileidLoaded = file.id
+          case 200:
+            $(bsUI.FILE_NAME).val(response.result.name)
+            gdriveFileidLoaded = response.result.id
             gdriveSaveFile()
             break
-          }
           default:
             window.alert('Unable to create file in Google Drive')
             break
@@ -966,10 +947,10 @@ const bsController = (function () {
     if (fileId) {
       loadGoogletoScript(UI, fileId, function () {})
     } else {
-      const data = GH.parse(UI)
+      let data = GH.parse(UI)
       loadGithubtoScript(UI, data,
         function (result) {
-          const data = GH.parseurl(result.path)
+          data = GH.parseurl(result.path)
           $(UI.URL_INPUT).val(GH.createurl(data))
           $(UI.FILE_NAME).val(data.name)
           UI.showshareurl(data)
