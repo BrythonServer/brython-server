@@ -21,10 +21,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         'gunicorn==19.9.0',
-        'redis>=3.2.1',
-        'Flask-Session>=0.3.1',
-        'Flask-Caching>=1.7.2',
-        'Flask>=0.12.3',
+        'Flask>=2.1.2',
         'ggame==1.0.11',
     ],
     classifiers=[

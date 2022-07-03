@@ -1,5 +1,5 @@
 """
-Brython-Server utility functions for Github and session/cache management
+Brython-Server utility functions for Github and session management
 Author: E Dennison
 """
 
@@ -13,17 +13,11 @@ from flask import session, url_for
 from .definitions import (
     ENV_GITHUBCLIENTID,
     ENV_GITHUBSECRET,
-    ENV_DEVTOKEN,
     SESSION_GITHUBSTATE,
     URL_GITHUBAUTHORIZE,
     URL_GITHUBRETRIEVETOKEN,
     SESSION_METADATA,
     SESSION_ACCESSTOKEN,
-    CACHE_VERSION,
-    Context,
-    Cachedata,
-    CACHE_TIMEOUT_S,
-    CACHE_CLIENT,
 )
 
 
@@ -71,7 +65,7 @@ def getredirecturl():
 
 
 def checkgithubstate(state):
-    """Verify correct Github STATE has been returned.cachecontent
+    """Verify correct Github STATE has been returned
 
     Return True if matching, False otherwise
     """
@@ -128,18 +122,17 @@ def finishrequestsetup(url, method):
     gitrequest - the request object from urllib.request.Request
     token - the token being used in the request
     """
-    token = session.get(SESSION_ACCESSTOKEN, os.environ.get(ENV_DEVTOKEN))
+    token = session.get(SESSION_ACCESSTOKEN)
     gitrequest = urllib.request.Request(url, method=method)
     gitrequest.add_header("Authorization", "token {0}".format(token))
     gitrequest.add_header("User-Agent", "Brython-Server")
     return gitrequest, token
 
 
-def finishrequest(requestcontext, gitrequest, retrievalmethod, metamethod=None):
+def finishrequest(gitrequest, retrievalmethod, metamethod=None):
     """Boilerplate for finishing the API request to Github
 
     Arguments:
-    requestcontext -- unique data identifying a github resource
     gitrequest -- request object
     token -- session token
     retrievalmethod -- function for extracting file contents from response
@@ -150,15 +143,10 @@ def finishrequest(requestcontext, gitrequest, retrievalmethod, metamethod=None):
     sha - the resource SHA
     """
     jsresponse = sha = None
-    if cachedfileexists(requestcontext):
-        jsresponse, sha, etag = cachedfile(requestcontext)
-        gitrequest.add_header("If-None-Match", etag)
     try:
         response = urllib.request.urlopen(gitrequest)
         jsresponse = json.loads(response.read().decode("utf-8"))
         sha = jsresponse.get("sha", "")
-        etag = response.getheader("ETag")
-        cachefile(requestcontext, jsresponse, sha, etag)
     except (urllib.error.HTTPError) as err:
         if err.code != 304:  # Not Modified - use earlier jsresponse
             raise
@@ -213,10 +201,8 @@ def githubretrievegist(gistid):
     content -- the content of the specific file
     sha -- the file sha (used for subsequent commits, if any)
     """
-    requestcontext = Context("", "", gistid)
     gitrequest, _token = gistrequest(gistid)
     return finishrequest(
-        requestcontext,
         gitrequest,
         lambda x: x["files"][list(x["files"].keys())[0]]["content"].encode(
             "utf-8"
@@ -225,32 +211,21 @@ def githubretrievegist(gistid):
     )  # file name
 
 
-def githubretrievefile(user, repo, path, usecachedfirst=False):
+def githubretrievefile(user, repo, path):
     """Retrieve a specific file from Github via API.
 
     Arguments:
     user -- the Github user ID/name
     repo -- the Github user's repository name
     path -- specific path to file within the repo
-    usecachedfirst -- (boolean) if cache exists, skip Github
 
     Return tuple:
     content -- the content of the specific file
     sha -- the file sha (used for subsequent commits, if any)
     """
     retrievalmethod = lambda x: base64.b64decode(x["content"].encode("utf-8"))
-
-    requestcontext = Context(user, repo, path)
-    if usecachedfirst and cachedfileexists(requestcontext):
-        jsresponse, sha, _etag = cachedfile(requestcontext)
-        binreturn = retrievalmethod(jsresponse)
-        try:
-            return binreturn.decode("utf-8"), sha
-        except UnicodeDecodeError:
-            return binreturn, sha
-    else:
-        gitrequest, _token = githubrequest(user, repo, path)
-        return finishrequest(requestcontext, gitrequest, retrievalmethod)
+    gitrequest, _token = githubrequest(user, repo, path)
+    return finishrequest(gitrequest, retrievalmethod)
 
 
 def githubgetmainfile(user, repo, path):
@@ -265,23 +240,13 @@ def githubgetmainfile(user, repo, path):
     Return: the name of the file
     """
     jsresponse = sha = None
-    requestcontext = Context(user, repo, path)
     gitrequest, _token = githubrequest(user, repo, path)
-    if cachedfileexists(requestcontext):
-        jsresponse, sha, etag = cachedfile(requestcontext)
-        gitrequest.add_header("If-None-Match", etag)
     try:
         response = urllib.request.urlopen(gitrequest)
         jsresponse = json.loads(response.read().decode("utf-8"))
         sha = ""
-        etag = response.getheader("ETag")
-        print("Fresh directory content ... caching")
-        cachefile(requestcontext, jsresponse, sha, etag)
     except (urllib.error.HTTPError) as err:
-        if err.msg == "Not Modified":
-            jsresponse, sha, etag = cachedfile(requestcontext)
-        else:
-            raise
+        raise
     names = [f["name"] for f in filter(lambda x: x["type"] == "file", jsresponse)]
     return selectmainfile(names)
 
@@ -338,49 +303,3 @@ def selectmainfile(names):
         ):
             mainfile = foundname
     return mainfile
-
-
-def cachefilekey(context):
-    """Return a key that is versioned and unique per installation."""
-    _retval = CACHE_VERSION + github_client_id() + json.dumps(context)
-    return _retval.replace("_", "__").replace(" ", "_")
-
-
-def cachefile(context, contents, sha, etag):
-    """Cache specific file content, with metadata.
-
-    Arguments:
-    context -- Context object with user, repo, path
-    contents -- Raw file content (binary or text)
-    sha -- sha string
-    """
-    CACHE_CLIENT.set(
-        cachefilekey(context),
-        json.dumps(Cachedata(contents, sha, etag)),
-        ex=CACHE_TIMEOUT_S,
-    )
-
-
-def cachedfileexists(context):
-    """Determine if a cached copy of file exists.
-
-    Arguments:
-    context -- Context object with user, repo, path
-    Return: True if cached copy exists, False otherwise.
-    """
-    return cachefilekey(context) in CACHE_CLIENT
-
-
-def cachedfile(context):
-    """Retrieve specific cached file content.
-
-    Arguments:
-    context -- the combination of user + repo + path
-
-    Return:
-    content -- the file content
-    sha -- the file sha
-    """
-    raw = json.loads(CACHE_CLIENT[cachefilekey(context)])
-    data = Cachedata(raw[0], raw[1], raw[2])
-    return data.contents, data.sha, data.etag

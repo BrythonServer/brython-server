@@ -85,16 +85,13 @@
             {% if cookieconsent %}
                 if ( "{{ fileid }}" == "") {
                     // presumed github exec
-                    var data = {'user':'{{ user }}', 'repo':'{{ repo }}', 'path':'{{ path }}', 'name':'{{ name }}' };
+                    var data = {'user':'{{ user }}', 'repo':'{{ repo }}', 'path':'{{ path }}', 'branch':'{{ branch }}', 'name':'{{ name }}' };
                     bsController.rungithub(bsConsole, bsUI, data);
                 }
                 else {
                     // presumed google exec
-                    bsController.googleclientload("{{ g_clientid}}", "{{ g_apikey }}", "{{ g_appid }}", function () {
-                        bsController.rungoogle(bsConsole, bsUI, "{{ fileid }}");
-                    }, function () {
-                        bsController.rungoogle(bsConsole, bsUI, "{{ fileid }}");
-                    });
+                    bsController.googleclientload("{{ g_apikey }}", "{{ g_appid }}");
+                    bsController.rungoogle(bsConsole, bsUI, "{{ fileid }}");
                 }
             {% endif %}
         }

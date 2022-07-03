@@ -31,8 +31,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/buzz/{{ buzzversion }}/buzz.min.js"></script>
     <script type="text/javascript" src="{{url_for('static', filename='brython/brython.js')}}?_{{ brythonversion }}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='brython/brython_stdlib.js')}}?_{{ brythonversion }}"></script>
-    <script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <script type="text/python3">
@@ -59,6 +57,8 @@
 {% block foot %}
     {% if cookieconsent %}
     <script type="text/javascript" src="{{ url_for('static', filename='bs.js') }}?ver={{ bsversion }}"></script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="bsController.googleapiload()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="bsController.googlegisinit('{{ g_clientid}}')"></script>
     {% endif %}
 {% endblock %}
     </body>

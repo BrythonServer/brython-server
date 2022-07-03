@@ -154,7 +154,7 @@ var bsUI = (function () {
         $(URL_SUBMIT).click()
       }
     })
-    showWorking()
+    // showWorking()
   }
 
   function setConsoleMode () {
@@ -238,7 +238,7 @@ var bsUI = (function () {
     if (data.user === '' && data.repo === '') {
       element.attr('href', '?gist=' + data.name)
     } else {
-      var baseargs = '?user=' + data.user + '&repo=' + data.repo + '&name=' + data.name
+      var baseargs = '?user=' + data.user + '&repo=' + data.repo + '&branch=' + data.branch + '&name=' + data.name
       if (data.path === '') {
         element.attr('href', baseargs)
       } else {
@@ -623,125 +623,118 @@ var bsController = (function () {
     }
   }
 
-  // load main github script name, insert content in editor
-  function loadGithub (GH, UI) {
-    var data = GH.parse(UI)
-    loadGithubtoScript(UI, data,
-      function (result) {
-        data = GH.parseurl(result.path)
-        $(UI.URL_INPUT).val(GH.createurl(data))
-        UI.showshareurl(data)
-        UI.seteditor(maincontent)
-        UI.clearselect()
-      })
-  }
-
   // Handling Google Drive and Oauth2
-  // See: https://developers.google.com/identity/protocols/OAuth2UserAgent#example
 
   // Required for Google OAuth2
-  // var GoogleAuth;
   var googleScope = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.install'
-  var googleApiKey = false
-  var googleClientId = false
-  var googleAppId = false
-  var postGoogleInitSuccess = function () {}
-  var postGoogleInitFail = function () {}
+  let googleApiKey;
+  let googleAppId;
+
+  // GAPI init with callback https://developers.google.com/identity/oauth2/web/guides/migration-to-gis#gapi-callback
+  let tokenClient;
+  let gapiInited;
+  let gisInited;
+
+  function checkBeforeStart() {
+    if (gapiInited && gisInited) {
+      // Start only when both gapi and gis are initialized
+      var UI = bsUI;
+      UI.hideworking();
+      UI.showgoogle();
+    }
+  }
+
+  function gapiInit() {
+    gapi.client.init({
+      // NOTE: OAuth2 'scope' and 'client_id' parameters have moved to initTokenClient().
+    })
+    .then(function() {  // Load the API discovery document
+      gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+      gapiInited = true;
+      checkBeforeStart();
+    });
+  }
+
+  function gapiLoad() {
+    gapi.load('client', gapiInit)
+  }
+
+  function gisInit(clientid) {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientid,
+      scope: googleScope,
+      callback: '',  // defined at request time
+    });
+    gisInited = true;
+    checkBeforeStart();
+  }
+
+
 
   // Google OAuth2 handleClientLoad
   // also record whether exec or index
-  function handleClientLoad (clientid, apikey, appid, successcb, failcb) {
-    postGoogleInitSuccess = successcb
-    postGoogleInitFail = failcb
-    // Load the API's client and auth2 modules.
-    // Call the initClient function after the modules load.
-    googleClientId = clientid
+  function handleClientLoad (apikey, appid) {
     googleApiKey = apikey
     googleAppId = appid
-    gapi.load('client:auth2', initClient)
-  }
-
-  function initClient () {
-    var UI = bsUI
-    var Console = bsConsole
-
-    // Retrieve the discovery document for version 3 of Google Drive API.
-    // In practice, your app can retrieve one or more discovery documents.
-    var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
-
-    // Initialize the gapi.client object, which app uses to make API requests.
-    // Get API key and client ID from API Console.
-    // 'scope' field specifies space-delimited list of access scopes.
-    gapi.client.init({
-      apiKey: googleApiKey,
-      discoveryDocs: [discoveryUrl],
-      clientId: googleAppId,
-      scope: googleScope
-    }).then(function () {
-      var GoogleAuth = gapi.auth2.getAuthInstance()
-      // Handle initial sign-in state. (Determine if user is already signed in.)
-      var user = GoogleAuth.currentUser.get()
-      // Listen for sign-in state changes.
-      GoogleAuth.isSignedIn.listen(setSigninStatus)
-      // get the google buttons visible
-      setSigninStatus()
-      // now show all of the buttons
-      UI.hideworking()
-      $('span#navigation').removeClass('hidden')
-      // post execute something
-      postGoogleInitFail()
-    }, function () {
-      UI.hideworking()
-      $('span#navigation').removeClass('hidden')
-      // post execute something after a long delay if gapi isn't ready yet
-      setTimeout(function () {
-        postGoogleInitFail()
-        // get the google buttons invisible
-        setSigninStatus()
-      }, typeof (gapi.client.drive) === 'undefined' ? 1000 : 1)
-    })
   }
 
   // read script from google
   function loadGoogletoScript (UI, fileId, callback) {
-    var GU = bsGoogleUtil
-    UI.showworking()
-    var request = gapi.client.drive.files.get({
-      fileId: fileId
-    })
-    request.then(function (response) {
-      // first, get the filename
-      $(UI.FILE_NAME).val(response.result.name)
-      // set up for another "get" for the data
+    tokenClient.callback = (resp) => {
+      if (resp.error !== undefined) {
+        throw(resp);
+      }
+
+      var GU = bsGoogleUtil
+      UI.showworking()
       var request = gapi.client.drive.files.get({
-        fileId: fileId,
-        alt: 'media'
+        fileId: fileId
       })
-      request.then(
-        function (response) {
-          $(UI.URL_INPUT).val(GU.createurl(fileId))
-          maincontent = response.body
-          UI.showlink(GU.createurl(fileId))
-          UI.seteditor(maincontent)
-          UI.clearselect()
-          UI.showgoogleshareurl(fileId)
-          gdriveFileidLoaded = fileId
-          UI.hideworking()
-          callback()
-        },
-        function (error) {
-          UI.hideworking()
-          gdriveFileidLoaded = null
-          window.alert('Something went wrong loading your file from Google Drive!')
-          console.error(error)
+      request.then(function (response) {
+        // first, get the filename
+        $(UI.FILE_NAME).val(response.result.name)
+        // set up for another "get" for the data
+        var request = gapi.client.drive.files.get({
+          fileId: fileId,
+          alt: 'media'
         })
-    },
-    function (error) {
-      UI.hideworking()
-      gdriveFileidLoaded = null
-      window.alert('Not Found')
-      console.error(error)
-    })
+        request.then(
+          function (response) {
+            $(UI.URL_INPUT).val(GU.createurl(fileId))
+            maincontent = response.body
+            UI.showlink(GU.createurl(fileId))
+            UI.seteditor(maincontent)
+            UI.clearselect()
+            UI.showgoogleshareurl(fileId)
+            gdriveFileidLoaded = fileId
+            UI.hideworking()
+            callback()
+          },
+          function (error) {
+            UI.hideworking()
+            gdriveFileidLoaded = null
+            window.alert('Something went wrong loading your file from Google Drive!')
+            console.error(error)
+          })
+      },
+      function (error) {
+        UI.hideworking()
+        gdriveFileidLoaded = null
+        window.alert('Not Found')
+        console.error(error)
+      })
+    }
+    // Conditionally ask users to select the Google Account they'd like to use, 
+    // and explicitly obtrain their consent to open the file picker.
+    // NOTE: To request an access token a user gesture is necessary.
+    if (gapi.client.getToken() === null) {
+      // Prompt the user to select a Google Account and ask for for consent to access their data
+      // when establishing a new session.
+      tokenClient.requestAccessToken({prompt: 'consent'});
+    } else {
+      // Skip display of account chooser and consent dialog for an existing session.
+      tokenClient.requestAccessToken({prompt: ''});
+    }
   }
 
   // from https://stackoverflow.com/questions/39381563/get-file-content-of-google-docs-using-google-drive-api-v3
@@ -769,6 +762,7 @@ var bsController = (function () {
       }, function (error) {
         UI.hideworking()
         console.error(error)
+        alert(error.result.error.message)
       })
       return request
     }
@@ -776,34 +770,46 @@ var bsController = (function () {
 
   // Create and render a Picker object for finding python sources.
   function loadPicker () {
-    var GoogleAuth = gapi.auth2.getAuthInstance()
-    if (!GoogleAuth.isSignedIn.get()) {
-      // User is not signed in. Start Google auth flow.
-      GoogleAuth.signIn()
-    }
-    var oauthToken = gapi.auth.getToken().access_token
-    gapi.load('picker', {
-      callback: function () {
-        if (oauthToken) {
-          var view = new google.picker.DocsView()
-          view.setParent('root')
-          view.setIncludeFolders(true)
-          view.setMimeTypes('text/plain,text/x-python')
-          var picker = new google.picker.PickerBuilder()
-            .enableFeature(google.picker.Feature.NAV_HIDDEN)
-            .enableFeature(google.picker.Feature.MULTISELECT_DISABLED)
-            .setAppId(googleAppId)
-            .setOAuthToken(oauthToken)
-            .addView(view)
-            .addView(new google.picker.DocsUploadView())
-            .setDeveloperKey(googleApiKey)
-            .setCallback(pickerLoadFile)
-            .build()
-
-          picker.setVisible(true)
-        }
+    tokenClient.callback = (resp) => {
+      if (resp.error !== undefined) {
+        throw(resp);
       }
-    })
+
+      var oauthToken = gapi.auth.getToken().access_token
+      gapi.load('picker', {
+        callback: function () {
+          if (oauthToken) {
+            var view = new google.picker.DocsView()
+            view.setParent('root')
+            view.setIncludeFolders(true)
+            view.setMimeTypes('text/plain,text/x-python')
+            var picker = new google.picker.PickerBuilder()
+              .enableFeature(google.picker.Feature.NAV_HIDDEN)
+              .enableFeature(google.picker.Feature.MULTISELECT_DISABLED)
+              .setAppId(googleAppId)
+              .setOAuthToken(oauthToken)
+              .addView(view)
+              .addView(new google.picker.DocsUploadView())
+              .setDeveloperKey(googleApiKey)
+              .setCallback(pickerLoadFile)
+              .build()
+
+            picker.setVisible(true)
+          }
+        }
+      })
+    }
+    // Conditionally ask users to select the Google Account they'd like to use, 
+    // and explicitly obtrain their consent to open the file picker.
+    // NOTE: To request an access token a user gesture is necessary.
+    if (gapi.client.getToken() === null) {
+      // Prompt the user to select a Google Account and ask for for consent to access their data
+      // when establishing a new session.
+      tokenClient.requestAccessToken({prompt: 'consent'});
+    } else {
+      // Skip display of account chooser and consent dialog for an existing session.
+      tokenClient.requestAccessToken({prompt: ''});
+    }
   }
 
   // Save content to Google Drive with ID (already authenticated)
@@ -840,28 +846,34 @@ var bsController = (function () {
 
   // Handle the Google Drive "save" button
   function saveGoogle () {
-    var GoogleAuth = gapi.auth2.getAuthInstance()
-    if (!GoogleAuth.isSignedIn.get()) {
-      // User is not signed in. Start Google auth flow.
-      GoogleAuth.signIn()
-    }
-    var oauthToken = gapi.auth.getToken().access_token
-    if (oauthToken) {
-      if (gdriveFileidLoaded) {
-        gdriveSaveFile()
-      } else {
-        $('#newfileModal').modal()
+    tokenClient.callback = (resp) => {
+      if (resp.error !== undefined) {
+        throw(resp);
       }
+      var oauthToken = gapi.auth.getToken().access_token
+      if (oauthToken) {
+        if (gdriveFileidLoaded) {
+          gdriveSaveFile()
+        } else {
+          $('#newfileModal').modal()
+        }
+      }
+    }
+    // Conditionally ask users to select the Google Account they'd like to use, 
+    // and explicitly obtrain their consent to open the file picker.
+    // NOTE: To request an access token a user gesture is necessary.
+    if (gapi.client.getToken() === null) {
+      // Prompt the user to select a Google Account and ask for for consent to access their data
+      // when establishing a new session.
+      tokenClient.requestAccessToken({prompt: 'consent'});
+    } else {
+      // Skip display of account chooser and consent dialog for an existing session.
+      tokenClient.requestAccessToken({prompt: ''});
     }
   }
 
   // select a newfile directory from google drive
   function directoryPicker (newfile) {
-    var GoogleAuth = gapi.auth2.getAuthInstance()
-    if (!GoogleAuth.isSignedIn.get()) {
-      // User is not signed in. Start Google auth flow.
-      GoogleAuth.signIn()
-    }
     var oauthToken = gapi.auth.getToken().access_token
     gapi.load('picker', {
       callback: function () {
@@ -874,7 +886,7 @@ var bsController = (function () {
           var picker = new google.picker.PickerBuilder()
             .enableFeature(google.picker.Feature.NAV_HIDDEN)
             .enableFeature(google.picker.Feature.MULTISELECT_DISABLED)
-            .setAppId(postGoogleInitSuccess)
+            .setAppId(googleAppId)
             .setOAuthToken(oauthToken)
             .addView(view)
             .setTitle('Select Destination Folder')
@@ -987,7 +999,6 @@ var bsController = (function () {
     runeditor: runEditor,
     init: initBrython,
     googleclientload: handleClientLoad,
-    googleclientinit: initClient,
     googleloadclick: loadPicker,
     googlesaveclick: saveGoogle,
     googlerevoke: revokeAccess,
@@ -995,6 +1006,8 @@ var bsController = (function () {
     googlelogout: revokeAccess,
     googlelogin: loginGoogle,
     googlesavename: saveGoogleWithName,
+    googleapiload: gapiLoad,
+    googlegisinit: gisInit,
     rungoogle: runGoogle
   }
 }())

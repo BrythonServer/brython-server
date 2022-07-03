@@ -9,7 +9,6 @@ import urllib.parse
 import json
 import base64
 import re
-import redis
 from flask import (
     Flask,
     render_template,
@@ -19,9 +18,8 @@ from flask import (
     url_for,
     abort,
     Response,
+    make_response,
 )
-from flask_session import Session
-from flask_caching import Cache
 import ggame.__version__
 from ggame.__version__ import VERSION as GGVERSION, BUZZ_VERSION, PIXI_VERSION
 from .reverseproxied import ReverseProxied
@@ -45,8 +43,6 @@ from .definitions import (
     SESSION_MAINSHA,
     SESSION_MAINFILE,
     SESSION_METADATA,
-    REDIS_HOST,
-    REDIS_PORT,
     Context,
 )
 from .utility import (
@@ -69,18 +65,6 @@ APP.wsgi_app = ReverseProxied(APP.wsgi_app)
 
 APP.secret_key = os.environ.get(ENV_FLASKSECRET, "A0Zr98j/3yX R~XHH!jmN]LWX/,?RT")
 APP.debug = os.environ.get(ENV_DEBUG, False)
-
-# Use memcached for session data
-
-APP.config["SESSION_TYPE"] = "redis"
-APP.config["SESSION_REDIS"] = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
-Session(APP)
-
-# Use memcached for memoizing view functions
-APP.config["CACHE_TYPE"] = "redis"
-APP.config["CACHE_REDIS_HOST"] = REDIS_HOST
-APP.config["CACHE_REDIS_PORT"] = REDIS_PORT
-CACHE = Cache(APP)
 
 # Retrieve Brython Version
 with open(
@@ -131,6 +115,7 @@ def root():
             # Executing an existing file
             user = request.args.get("user", "")
             repo = request.args.get("repo", "")
+            branch = request.args.get("branch", "")
             name = request.args.get("name", request.args.get("gist", ""))
             path = request.args.get("path", "")
             fileid = request.args.get("fileid", "")
@@ -138,6 +123,7 @@ def root():
                 "exec.html",
                 user=user,
                 repo=repo,
+                branch=branch,
                 name=name,
                 path=path,
                 fileid=fileid,
@@ -251,6 +237,9 @@ def root():
             githubforgetauth()
             returnedhtml = redirect(url_for("root"))
     if returnedhtml:
+        resp = make_response(returnedhtml) # FIXME 
+        resp.set_cookie('G_AUTH2_MIGRATION', 'informational')  # FIXME test with enforced before release
+        return resp # FIXME
         return returnedhtml
     abort(404)
     return "You should never see this!"
@@ -302,7 +291,6 @@ def legalnotices(filename):
 
 
 @APP.route("/ggame/<path:filename>")
-@CACHE.cached(timeout=60)
 def ggameimport(filename):
     """Return content from the ggame file tree."""
     try:
@@ -318,7 +306,6 @@ def ggameimport(filename):
 
 
 @APP.route("/ggame.py")
-@CACHE.cached(timeout=600)
 def ggame_py():
     """Return a 404 on any attempt to load ggame.py. This is will
     avoid 'wasting time' before searching for modules in the
@@ -334,7 +321,7 @@ def file(filename):
     """
     filename = urllib.request.pathname2url(filename)
     try:
-        cx = session[SESSION_GITHUBCONTEXT]
+        cx = Context(*session[SESSION_GITHUBCONTEXT])
         content, _sha = githubretrievefile(cx.user, cx.repo, cx.path + "/" + filename)
     except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
         try:
@@ -484,11 +471,18 @@ def v1_load():
             )
     except (urllib.error.HTTPError, FileNotFoundError) as err:
         print("Github error: " + err.msg + ", path was ", user, repo, path)
-        return (
-            json.dumps({"success": False, "message": err.msg}),
-            404,
-            {"ContentType": "application/json"},
-        )
+        if err.msg == "Unauthorized":
+            return (
+                json.dumps({"success": False, "message": "Unauthorized: please log in to Github."}),
+                401,
+                {"ContentType": "application/json"}, 
+            )
+        else:
+            return (
+                json.dumps({"success": False, "message": err.msg}),
+                404,
+                {"ContentType": "application/json"},
+            )
     return (
         json.dumps({"success": False, "message": "You should not see this error."}),
         404,
