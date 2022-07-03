@@ -11,7 +11,7 @@ to get a feel for how it works.
 ## Brief Instructions
 
 When the page loads, you can begin writing Python 3 code right away. To 
-execute your code, press the **GO!** button.
+execute your code, press the **run** button.
 
 ### Github Support
 To load Python 3 source code hosted on Github, you must should first log in to
@@ -19,19 +19,16 @@ Github with the **login** button. Github will ask you to authorize Brython-Serve
 in the next page. 
 
 To load your source, paste the Github URL of your source file or repository 
-into the text control at the top of the page. Press `<Enter>` or the **load** 
+into the text control at the top of the page. Press `<Enter>` or the **refresh** 
 button to retrieve the source from Github.
 
 You may make any changes you want to the source code and re-run it. If you would
 like to save your work back to Github, just press the **commit** button.
 
 ### Google Drive Support
-To load Python 3 source code stored in your Google Drive account, you first have
-to give Brython-Server permission to access your account by pressing the 
-**authorize** button with the Google Drive logo on it. Once you have logged in to
-your Google account and given Brython-Server (or the website that runs on 
-Brython-Server) permission to access your Drive files, you will have Google Drive 
-a **load** and **save** buttons.
+The Google Drive **load** and **save** buttons will activate Google Drive 
+authentication and authorization dialog where you may confirm your desire to let
+Brython-Server access your Google Drive. This confirmation is required periodically.
 
 The Google Drive **load** button directs you to a standard Google Drive file picking
 screen. Only compatible text files are available to pick. Once you have selected a file,
@@ -54,10 +51,11 @@ Note: files that were not created by Brython-Server may not be opened from the *
 button unless you previously opened them with the Google Drive **Open with** context
 menu.
 
-Note: you may access (but not modify) any public Github or Google Drive Python source file without
-logging in to Github, Google, or creating an account. You *can* edit the source file locally
-in your browser but will not be able to commit any changes unless you are logged in
-and have priveleges to do so.
+Note: working with any Github repository or Google Drive source files will require you
+to have an account with these services. If you use these services to access files
+that are not modifiable by you, you will be able to edit them locally in the
+Brython-Server page but will not be able to commit or save any changes back to their
+original source unless you have the priveleges to do so.
 
 ### Turtle
 
@@ -104,8 +102,7 @@ pip install brython-server
 ### Requirements
 
 The essential requirements for Brython-Server are met when you install with pip.
-In addition, you will need to install 
-[redis](https://redis.io/download) and, for a production install, 
+In addition, for a production install you will need 
 [gunicorn](http://docs.gunicorn.org/en/stable/install.html).
 
 Brython-Server will use [Brython](https://github.com/brython-dev/brython) as
@@ -134,10 +131,6 @@ Required for creating a "personalized" Brython-Server instance:
 * sitecontact (An e-mail address to use for contact)
 * siteurl (A full URL to the website)
 * flasksecret (A Flask application secret key)
-
-Required for connecting to a non-standard Redis instance:
-* redishost (An IP address)
-* redisport (The port number)
 
 Note: to generate a unique, random Flask secret key, enter the following in
 a Python console:
@@ -187,7 +180,7 @@ To begin working with Brython Server in development environment:
 
 ### Other Dependencies
 
-Your development environment will need redis to execute and standardjs to 
+Your development environment will need black and standardjs to 
 execute the `run_tests` and `run_js_tests` scripts (in the scripts folder).
 
 ### Execution
@@ -218,8 +211,12 @@ export sitetitle="<insert the name of your development site here>"
 export sitecontact=<insert an e-mail address here>
 export siteurl=<insert the url for your development page here>
 export PORT=<use your port number here>
-source ~/workspace/brython-server/env/bin/activate
-cd ~/workspace/brython-server
+source ./brython-server/env/bin/activate
+cd ./brython-server
+pip install -r requirements.txt
+pushd brythonserver/static/brython
+brython-cli install
+popd
 python3 wsgi.py
 ```
 
