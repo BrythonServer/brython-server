@@ -1,12 +1,12 @@
 #!/bin/bash
 # Note: you must pip install brython in accordance with requirements.txt
+# Note: execute from brython-server
 
-cd ~/workspace/brython-server
 source env/bin/activate
 pip install -r requirements.txt
 mkdir -p brythonserver/static/brython
 pushd brythonserver/static/brython
-python3 -m brython --update
+brython-cli install
 popd
 rm dist/*
 python3 setup.py sdist
