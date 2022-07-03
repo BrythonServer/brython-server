@@ -237,9 +237,6 @@ def root():
             githubforgetauth()
             returnedhtml = redirect(url_for("root"))
     if returnedhtml:
-        resp = make_response(returnedhtml) # FIXME 
-        resp.set_cookie('G_AUTH2_MIGRATION', 'informational')  # FIXME test with enforced before release
-        return resp # FIXME
         return returnedhtml
     abort(404)
     return "You should never see this!"
@@ -258,8 +255,7 @@ def favicon():
 
 @APP.route("/brythonconsole")
 def brythonconsole():
-    """Return template for python/brython console.
-    """
+    """Return template for python/brython console."""
     cookieconsent = request.cookies.get("cookie_consent") == "true"
     return render_template(
         "console.html",
@@ -283,8 +279,7 @@ def brythonimport(filename):
 
 @APP.route("/legalnotices/<filename>")
 def legalnotices(filename):
-    """Return legal notice html
-    """
+    """Return legal notice html"""
     return render_template(
         filename + ".html", title=SITETITLE, contact=SITECONTACT, url=SITEURL
     )
@@ -473,9 +468,14 @@ def v1_load():
         print("Github error: " + err.msg + ", path was ", user, repo, path)
         if err.msg == "Unauthorized":
             return (
-                json.dumps({"success": False, "message": "Unauthorized: please log in to Github."}),
+                json.dumps(
+                    {
+                        "success": False,
+                        "message": "Unauthorized: please log in to Github.",
+                    }
+                ),
                 401,
-                {"ContentType": "application/json"}, 
+                {"ContentType": "application/json"},
             )
         else:
             return (
