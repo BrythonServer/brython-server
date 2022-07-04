@@ -43,7 +43,6 @@
         try:
             exec(content, {"__name__":"__main__"})
         except Exception as exc:
-        #    traceback.print_exc(file=sys.stderr)
             print(traceback.format_exc())
            
     window.__EXECUTE__BRYTHON__ = __EXECUTE__BRYTHON__
