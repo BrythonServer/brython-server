@@ -239,14 +239,10 @@ def githubgetmainfile(user, repo, path):
 
     Return: the name of the file
     """
-    jsresponse = sha = None
+    jsresponse = None
     gitrequest, _token = githubrequest(user, repo, path)
-    try:
-        response = urllib.request.urlopen(gitrequest)
-        jsresponse = json.loads(response.read().decode("utf-8"))
-        sha = ""
-    except (urllib.error.HTTPError) as err:
-        raise
+    response = urllib.request.urlopen(gitrequest)
+    jsresponse = json.loads(response.read().decode("utf-8"))
     names = [f["name"] for f in filter(lambda x: x["type"] == "file", jsresponse)]
     return selectmainfile(names)
 

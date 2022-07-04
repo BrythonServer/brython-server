@@ -4,7 +4,6 @@ Author: E Dennison
 """
 
 from collections import namedtuple
-import os
 
 ENV_GITHUBCLIENTID = "githubclientid"
 ENV_GITHUBSECRET = "githubsecret"

@@ -18,7 +18,6 @@ from flask import (
     url_for,
     abort,
     Response,
-    make_response,
 )
 import ggame.__version__
 from ggame.__version__ import VERSION as GGVERSION, BUZZ_VERSION, PIXI_VERSION
@@ -477,12 +476,11 @@ def v1_load():
                 401,
                 {"ContentType": "application/json"},
             )
-        else:
-            return (
-                json.dumps({"success": False, "message": err.msg}),
-                404,
-                {"ContentType": "application/json"},
-            )
+        return (
+            json.dumps({"success": False, "message": err.msg}),
+            404,
+            {"ContentType": "application/json"},
+        )
     return (
         json.dumps({"success": False, "message": "You should not see this error."}),
         404,
