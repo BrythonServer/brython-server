@@ -14,5 +14,6 @@ jobs:
         with:
           python-version: '3.10'
           architecture: 'x64'
-      - run: ./scripts/run_tests.sh
+      - run: python3 -m venv ./env
       - run: ./scripts/buildrelease.sh
+      - run: ./scripts/run_tests.sh
