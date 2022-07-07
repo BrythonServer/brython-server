@@ -1,4 +1,4 @@
-name: on-push
+name: build and test
 on: [push]
 jobs:
   test-build-and-linters:
