@@ -1,4 +1,4 @@
-![build passing](https://github.com/github/docs/actions/workflows/on-push.yml/badge.svg?event=push)
+![build passing](https://github.com/BrythonServer/brython-server/actions/workflows/on-push.yml/badge.svg?event=push)
 
 # Brython-Server
 
