@@ -9,7 +9,7 @@ jobs:
         with:
           node-version: '14'
       - run: npm install standard --global
-      - run: run_js_tests.sh
+      - run: ./scripts/run_js_tests.sh
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
