@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/BrythonServer/brython-server.svg?branch=master)](https://travis-ci.org/BrythonServer/brython-server)
+![build passing](https://github.com/github/docs/actions/workflows/main.yml/badge.svg?event=push)
 
 # Brython-Server
 
