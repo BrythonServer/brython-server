@@ -8,6 +8,6 @@ brython==3.10.6
 ggame==1.0.11
 pylint==2.5.3
 black==22.6.0
-wheel==0.32.3
+wheel==0.38.1
 twine==1.12.1
 setuptools==62.6.0
