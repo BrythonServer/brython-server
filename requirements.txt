@@ -4,10 +4,10 @@ MarkupSafe==2.1.1
 Werkzeug==2.1.2
 gunicorn==19.9.0
 itsdangerous==2.1.2
-brython==3.10.6
-ggame==1.0.11
+brython==3.11.3
+ggame==1.1.2
+pillow==10.2.0
 pylint==2.5.3
-black==22.6.0
-wheel==0.32.3
-twine==1.12.1
-setuptools==62.6.0
+black==23.12.1
+twine==4.0.2
+wheel

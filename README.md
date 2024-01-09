@@ -91,12 +91,12 @@ APP.run()
 
 ## Deployment
 
-The best way to install Brython-Server is with pip and virtualenv. Create and 
-activate your virtual environment then install Brython-Server with:
+The best way to install Brython-Server is with pip and virtualenv, using Python 3.11+. 
+Create and activate your virtual environment then install Brython-Server with:
 
 
 ```python
-pip install brython-server
+python3.11 -m pip install brython-server
 ```
 
 ### Requirements
@@ -150,18 +150,19 @@ To run the server in stand-alone development mode (never in production!)
 execute (for example) from the Python 3 shell:
 
 ```python
-Python 3.7.0 (default, Oct  4 2018, 21:19:26)
-[GCC 5.4.0 20160609] on linux
+Python 3.11.7 (main, Dec  8 2023, 18:56:58) [GCC 11.4.0] on linux
 Type "help", "copyright", "credits" or "license" for more information.
 >>> from brythonserver.main import APP
-Update Brython scripts to verion 3.7.3
->>> APP.run(host="0.0.0.0", port=3000)
- * Serving Flask app "brythonserver.main" (lazy loading)
+>>> APP.run(host="0.0.0.0", port=8080)
+ * Serving Flask app 'brythonserver.main' (lazy loading)
  * Environment: production
    WARNING: This is a development server. Do not use it in a production deployment.
    Use a production WSGI server instead.
  * Debug mode: off
- * Running on http://0.0.0.0:3000/ (Press CTRL+C to quit)
+ * Running on all addresses (0.0.0.0)
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.111.50:8080 (Press CTRL+C to quit)
  ```
  
 To run the server in a production environment, use gunicorn:
@@ -174,9 +175,9 @@ $ gunicorn -b 0.0.0.0:3000 -w 4   brythonserver.main:APP
 To begin working with Brython Server in development environment:
 
 * Clone this repository and cd into it.
-* Create a virtual environment: `python3 -m venv ./env`
-* Activate the virtual environment: `source ./env/bin/activate`
-* Install the dependencies: `pip install -r requirements.txt`
+* Create a virtual environment: `python3.11 -m venv env`
+* Activate the virtual environment: `source env/bin/activate`
+* Install the dependencies: `python3.11 -m pip install -r requirements.txt`
 
 ### Other Dependencies
 
@@ -193,7 +194,7 @@ where Brython Server can access them:
 cd ~/workspace/brython-server
 mkdir -p brythonserver/static/brython
 cd brythonserver/static/brython
-python3 -m brython --update
+python3.11 -m brython --update
 
 ```
 
@@ -211,13 +212,13 @@ export sitetitle="<insert the name of your development site here>"
 export sitecontact=<insert an e-mail address here>
 export siteurl=<insert the url for your development page here>
 export PORT=<use your port number here>
-source ./brython-server/env/bin/activate
-cd ./brython-server
-pip install -r requirements.txt
+source brython-server/env/bin/activate
+cd brython-server
+python3.11 -m pip install -r requirements.txt
 pushd brythonserver/static/brython
 brython-cli install
 popd
-python3 wsgi.py
+python3.11 wsgi.py
 ```
 
 

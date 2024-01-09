@@ -69,7 +69,7 @@ APP.debug = os.environ.get(ENV_DEBUG, False)
 with open(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), BRYTHON_FOLDER, BRYTHON_JS)
 ) as bjs:
-    BRYTHON_VERSION = re.search('__BRYTHON__.__MAGIC__.*=.*"(.+)"', bjs.read()).group(1)
+    BRYTHON_VERSION = re.search('// implementation \[([0-9, ]+)', bjs.read()).group(1).replace(', ','.')
 
 # Locate the ggame directory
 GGAME_PATH = os.path.dirname(os.path.abspath(ggame.__version__.__file__))
