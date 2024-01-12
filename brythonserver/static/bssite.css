@@ -79,9 +79,16 @@ span.hidden
     margin-top:15px;
     margin-left:-10px;
     font-family: "Lucida Console", Monaco, monospace; 
-    font-size:10pt;
  } 
 
+#console {
+    font-size:10pt;
+}
+
+#code {
+    background-color:#ffffff;
+    font-size:12pt;
+}
 
 #ggame-canvas {
     width:100%;
