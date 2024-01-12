@@ -7,7 +7,8 @@ itsdangerous==2.1.2
 brython==3.11.2
 ggame==1.1.2
 pillow==10.2.0
-pylint==2.5.3
 black==23.12.1
 twine==4.0.2
 wheel
+pylint==3.0.3
+pynose==1.4.8
