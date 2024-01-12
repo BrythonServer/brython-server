@@ -4,7 +4,7 @@ MarkupSafe==2.1.1
 Werkzeug==2.1.2
 gunicorn==19.9.0
 itsdangerous==2.1.2
-brython==3.11.3
+brython==3.11.2
 ggame==1.1.2
 pillow==10.2.0
 pylint==2.5.3
