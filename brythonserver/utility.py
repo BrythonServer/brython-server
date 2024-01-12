@@ -100,10 +100,10 @@ def githubretrievetoken(code):
     }
     data = urllib.parse.urlencode(parameters)
     data = data.encode("utf-8")
-    response = urllib.request.urlopen(gitrequest, data)
-    jsresponse = json.loads(response.read().decode("utf-8"))
-    if "access_token" in jsresponse:
-        session[SESSION_ACCESSTOKEN] = jsresponse.get("access_token")
+    with urllib.request.urlopen(gitrequest, data) as response:
+        jsresponse = json.loads(response.read().decode("utf-8"))
+        if "access_token" in jsresponse:
+            session[SESSION_ACCESSTOKEN] = jsresponse.get("access_token")
 
 
 def githubforgetauth():
@@ -124,7 +124,7 @@ def finishrequestsetup(url, method):
     """
     token = session.get(SESSION_ACCESSTOKEN)
     gitrequest = urllib.request.Request(url, method=method)
-    gitrequest.add_header("Authorization", "token {0}".format(token))
+    gitrequest.add_header("Authorization", f"token {token}")
     gitrequest.add_header("User-Agent", "Brython-Server")
     return gitrequest, token
 
@@ -144,10 +144,10 @@ def finishrequest(gitrequest, retrievalmethod, metamethod=None):
     """
     jsresponse = sha = None
     try:
-        response = urllib.request.urlopen(gitrequest)
-        jsresponse = json.loads(response.read().decode("utf-8"))
-        sha = jsresponse.get("sha", "")
-    except (urllib.error.HTTPError) as err:
+        with urllib.request.urlopen(gitrequest) as response:
+            jsresponse = json.loads(response.read().decode("utf-8"))
+            sha = jsresponse.get("sha", "")
+    except urllib.error.HTTPError as err:
         if err.code != 304:  # Not Modified - use earlier jsresponse
             raise
     binreturn = retrievalmethod(jsresponse)
@@ -170,7 +170,7 @@ def gistrequest(gistid, method="GET"):
     gitrequest - the request object from urllib.request.Request
     token - the token being used in the request
     """
-    url = "https://api.github.com/gists/{0}".format(gistid)
+    url = f"https://api.github.com/gists/{gistid}"
     return finishrequestsetup(url, method)
 
 
@@ -187,7 +187,7 @@ def githubrequest(user, repo, path, method="GET"):
     gitrequest - the request object from urllib.request.Request
     token - the token being used in the request
     """
-    url = "https://api.github.com/repos/{0}/{1}/contents/{2}".format(user, repo, path)
+    url = f"https://api.github.com/repos/{user}/{repo}/contents/{path}"
     return finishrequestsetup(url, method)
 
 
@@ -223,7 +223,10 @@ def githubretrievefile(user, repo, path):
     content -- the content of the specific file
     sha -- the file sha (used for subsequent commits, if any)
     """
-    retrievalmethod = lambda x: base64.b64decode(x["content"].encode("utf-8"))
+
+    def retrievalmethod(x):
+        return base64.b64decode(x["content"].encode("utf-8"))
+
     gitrequest, _token = githubrequest(user, repo, path)
     return finishrequest(gitrequest, retrievalmethod)
 
@@ -241,10 +244,10 @@ def githubgetmainfile(user, repo, path):
     """
     jsresponse = None
     gitrequest, _token = githubrequest(user, repo, path)
-    response = urllib.request.urlopen(gitrequest)
-    jsresponse = json.loads(response.read().decode("utf-8"))
-    names = [f["name"] for f in filter(lambda x: x["type"] == "file", jsresponse)]
-    return selectmainfile(names)
+    with urllib.request.urlopen(gitrequest) as response:
+        jsresponse = json.loads(response.read().decode("utf-8"))
+        names = [f["name"] for f in filter(lambda x: x["type"] == "file", jsresponse)]
+        return selectmainfile(names)
 
 
 def githubpath(user, repo, branch, path, name):
@@ -262,7 +265,7 @@ def githubpath(user, repo, branch, path, name):
     Returns URL to Github file or gist.
     """
     if user != "" and repo != "":
-        retval = "https://github.com/{0}/{1}/blob/{2}/".format(user, repo, branch)
+        retval = f"https://github.com/{format}/{repo}/blob/{branch}/"
     else:
         retval = "https://gist.github.com/"
     if path:
