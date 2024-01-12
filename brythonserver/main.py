@@ -261,9 +261,14 @@ def brythonconsole():
         title=SITETITLE,
         contact=SITECONTACT,
         consolesite=SITETITLE + " Console",
+        buzzversion=BUZZ_VERSION,
+        pixiversion=PIXI_VERSION,
         brythonversion=BRYTHON_VERSION,
         bsversion=VERSION,
         cookieconsent=cookieconsent,
+        g_clientid=G_CLIENTID,
+        g_apikey=G_APIKEY,
+        g_appid=G_APPID,
     )
 
 
