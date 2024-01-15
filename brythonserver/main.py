@@ -67,9 +67,16 @@ APP.debug = os.environ.get(ENV_DEBUG, False)
 
 # Retrieve Brython Version
 with open(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), BRYTHON_FOLDER, BRYTHON_JS)
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), BRYTHON_FOLDER, BRYTHON_JS
+    ),
+    encoding="utf-8",
 ) as bjs:
-    BRYTHON_VERSION = re.search('__BRYTHON__.__MAGIC__.*=.*"(.+)"', bjs.read()).group(1)
+    BRYTHON_VERSION = (
+        re.search(r"// implementation \[([0-9, ]+)", bjs.read())
+        .group(1)
+        .replace(", ", ".")
+    )
 
 # Locate the ggame directory
 GGAME_PATH = os.path.dirname(os.path.abspath(ggame.__version__.__file__))
@@ -261,9 +268,14 @@ def brythonconsole():
         title=SITETITLE,
         contact=SITECONTACT,
         consolesite=SITETITLE + " Console",
+        buzzversion=BUZZ_VERSION,
+        pixiversion=PIXI_VERSION,
         brythonversion=BRYTHON_VERSION,
         bsversion=VERSION,
         cookieconsent=cookieconsent,
+        g_clientid=G_CLIENTID,
+        g_apikey=G_APIKEY,
+        g_appid=G_APPID,
     )
 
 
@@ -293,7 +305,7 @@ def ggameimport(filename):
         if isinstance(content, bytes):
             return Response(content, mimetype="application/octet-stream")
         return Response(content)
-    except (FileNotFoundError) as err:
+    except FileNotFoundError as err:
         print(err)
         abort(404)
     return "You should never see this!"
@@ -320,10 +332,10 @@ def file(filename):
     except (FileNotFoundError, KeyError, urllib.error.HTTPError) as err:
         try:
             if not filename.endswith((".png", ".PNG")):
-                raise FileNotFoundError
+                raise FileNotFoundError from err
             return ggameimport(filename)
-        except (FileNotFoundError) as err:
-            print(err)
+        except FileNotFoundError as err1:
+            print(err1)
             abort(404)
     if isinstance(content, bytes):
         return Response(content, mimetype="application/octet-stream")
@@ -388,9 +400,9 @@ def v1_commit():
     gitrequest.add_header("Accept", "application/json")
     gitrequest.add_header("Content-Length", len(data))
     try:
-        response = urllib.request.urlopen(gitrequest, data)
-        jsresponse = json.loads(response.read().decode("utf-8"))
-        session[SESSION_MAINSHA] = jsresponse.get("content", {}).get("sha", "")
+        with urllib.request.urlopen(gitrequest, data) as response:
+            jsresponse = json.loads(response.read().decode("utf-8"))
+            session[SESSION_MAINSHA] = jsresponse.get("content", {}).get("sha", "")
         return (json.dumps({"success": True}), 200, {"ContentType": "application/json"})
     except urllib.error.HTTPError as err:
         error = err.msg + " " + str(err.code)

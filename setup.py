@@ -19,10 +19,13 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/tiggerntatie/brython-server",
     packages=setuptools.find_packages(),
+    python_requires='>=3.11',
     install_requires=[
         'gunicorn==19.9.0',
-        'Flask>=2.1.2',
-        'ggame==1.0.11',
+        'Flask==2.1.2',
+        'werkzeug==2.1.2',
+        'pillow==10.2.0',
+        'ggame==1.1.3',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
